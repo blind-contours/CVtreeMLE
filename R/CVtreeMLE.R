@@ -1,24 +1,82 @@
 
+#' @title Estimate the joint impact of a mixed exposure using cross-validated targeted learning and decision trees
+#'
+#' @param W A vector of characters indicating which variables in the data to use as covariates.
+#' @param A A vector of characters indicating which variables in the data to use as exposures.
+#' @param Y A character indicating which variable in the data to use as the outcome.
+#' @param data Data frame of (W,A,Y) variables of interest.
+#' @param SL.library Library of algorithms used by Super Learner for estimating both the propensity of exposure and the outcome.
+#' @param n_folds Number of cross-validation folds.
+#' @param family Family ('binomial' or 'gaussian').
+#' @param H.AW_trunc_lvl Truncation level for the clever covariate.
+#' @param n_boot_ensemble Number of bootstrap fits used to identify consistent partitions in the mixture space.
+#' @param n_stable_trees Number of bootstraps a set of variables must be in to be considered a consistent tree for the mixture.
+#' @param minbucket Minimum number of observations needed in a bin to make a partition in the marginal decision trees.
+#' @param verbose If true, creates a sink file where detailed information and diagnostics of the run process are given.
+#' @param parallel Use parallel processing if a backend is registered; enabled by default.
+#'
+#' @return Results object. TODO: add more detail here.
+#' @export
+#'
+#' @section Authors:
+#' David McCoy, University of California, Berkeley
+#'
+#' @section References:
+#' Benjamini, Y., & Hochberg, Y. (1995). \emph{Controlling the false discovery
+#' rate: a practical and powerful approach to multiple testing}. Journal of the
+#' royal statistical society. Series B (Methodological), 289-300.
+#'
+#' Gruber, S., & van der Laan, M. J. (2012). \emph{tmle: An R Package for
+#' Targeted Maximum Likelihood Estimation}. Journal of Statistical Software,
+#' 51(i13).
+#'
+#' Hubbard, A. E., Kherad-Pajouh, S., & van der Laan, M. J. (2016).
+#' \emph{Statistical Inference for Data Adaptive Target Parameters}. The
+#' international journal of biostatistics, 12(1), 3-19.
+#'
+#' Hubbard, A., Munoz, I. D., Decker, A., Holcomb, J. B., Schreiber, M. A.,
+#' Bulger, E. M., ... & Rahbar, M. H. (2013). \emph{Time-Dependent Prediction
+#' and Evaluation of Variable Importance Using SuperLearning in High Dimensional
+#' Clinical Data}. The journal of trauma and acute care surgery, 75(1 0 1), S53.
+#'
+#' Hubbard, A. E., & van der Laan, M. J. (2016). \emph{Mining with inference:
+#' data-adaptive target parameters (pp. 439-452)}. In P. Buhlmann et al. (Ed.),
+#' \emph{Handbook of Big Data}. CRC Press, Taylor & Francis Group, LLC: Boca
+#' Raton, FL.
+#'
+#' van der Laan, M. J. (2006). \emph{Statistical inference for variable
+#' importance}. The International Journal of Biostatistics, 2(1).
+#'
+#' van der Laan, M. J., & Pollard, K. S. (2003). \emph{A new algorithm for
+#' hybrid hierarchical clustering with visualization and the bootstrap}. Journal
+#' of Statistical Planning and Inference, 117(2), 275-303.
+#'
+#' van der Laan, M. J., Polley, E. C., & Hubbard, A. E. (2007). \emph{Super
+#' learner}. Statistical applications in genetics and molecular biology, 6(1).
+#'
+#' van der Laan, M. J., & Rose, S. (2011). \emph{Targeted learning: causal
+#' inference for observational and experimental data}. Springer Science &
+#' Business Media.
+#'
+#' @examples
 CVtreeMLE <- function(W,
                       A,
                       Y,
                       data,
                       SL.library,
                       n_folds,
-                      binary,
+                      family,
                       H.AW_trunc_lvl,
-                      rule_boot_n,
-                      n_stable_tree,
+                      n_boot_ensemble,
+                      n_stable_trees,
                       minbucket,
                       verbose,
                       parallel) {
-  if (binary == TRUE) {
-    family <- "binomial"
+  if (family == "binomial") {
     ## create the CV folds
     data[, "y_scaled"] <- data[[Y]]
     data$folds <- create_cv_folds(n_folds, data$y_scaled)
   } else {
-    family <- "gaussian"
     data[, "y_scaled"] <-
       ((data[[Y]] - min(data[[Y]])) / (max(data[[Y]]) - min(data[[Y]])))
     ## create the CV folds
@@ -26,12 +84,9 @@ CVtreeMLE <- function(W,
   }
 
   if (parallel == TRUE) {
-    library(parallel, quietly = TRUE)
-    library(doParallel, quietly = TRUE)
-    library(foreach, quietly = TRUE)
-    num_cores <- detectCores()
+    num_cores <- parallel::detectCores()
     doParallel::registerDoParallel(num_cores)
-    print(paste("Parallelizing over", num_cores, "Cores"))
+    future::plan(multisession)
   }
 
   data <- as.data.frame(data)
@@ -46,8 +101,7 @@ CVtreeMLE <- function(W,
 
   fold_results_mix_combo_data <- fold_results_mix_Sls <- list()
 
-  results <- foreach(fold_k = unique(data$folds), .combine = "c", .multicombine = TRUE) %dopar% {
-    print(paste("Starting Fold", fold_k))
+  results <- foreach::foreach(fold_k = unique(data$folds), .combine = "c", .multicombine = TRUE) %dopar% {
     ## get training and validation samples
     At <- data[data$folds != fold_k, ]
     Av <- data[data$folds == fold_k, ]
@@ -58,16 +112,14 @@ CVtreeMLE <- function(W,
       select = c(W)
     )
 
-    if (verbose) cat("Fitting Y|W using SL \n")
-
     ## train Y~W learner
-    QbarWSL <- suppressWarnings(SuperLearner(
+    QbarWSL <- SuperLearner::SuperLearner(
       Y = At$y_scaled,
       X = X,
       SL.library = SL.library,
       family = family,
       verbose = FALSE
-    ))
+    )
 
     ## calculate remaining variance unexplained by W in residuals
     QbarW <- predict(QbarWSL, newdata = X)$pred
@@ -90,7 +142,7 @@ CVtreeMLE <- function(W,
     ##############################################################################################################################################
 
     rules <-
-      boot_ensemble_trees(At, formula, rule_boot_n, n_stable_tree, A)
+      fit_mix_rule_ensemble(At, formula, n_boot_ensemble, n_stable_trees, A)
 
     if (dim(rules)[1] == 0) {
       no_rules <- TRUE

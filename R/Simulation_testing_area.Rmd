@@ -1,0 +1,595 @@
+---
+title: "tmle3mixrules testing area"
+author: "David McCoy"
+date: "10/22/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r libraries}
+library(here)
+library(SuperLearner)
+library(rpart)
+library(rpart.plot)
+library(dplyr)
+library(tuple)
+library(future)
+library(readxl)
+library(pre)
+library(qgcomp)
+library(xgboost)
+plan(multisession)
+library(future)
+library(dplyr)
+library(tidyr)
+library(MASS)
+library(stringr)
+library(data.table)
+<<<<<<< HEAD
+library(tidyverse)
+=======
+>>>>>>> c9ee990a07db496f598de4deb43f876f6d7802ff
+
+source(here("R/create_cv_folds.R"))
+source(here("R/New_Sim_Data.R"))
+source(here("R/CV_treeMLE.R"))
+source(here("R/calc_empirical_truth.R"))
+source(here("R/flatten_results.R"))
+source(here("R/evaluate_marginal_rules.R"))
+source(here("R/evaluate_mix_rules.R"))
+
+source(here("R/find_common_mixture_rule.R"))
+source(here("R/find_common_marginal_rule.R"))
+
+source(here("R/marginal_decision_trees.R"))
+
+source(here("R/marginal_nuisance_parameters.R"))
+source(here("R/mixture_nuisance_parameters.R"))
+
+source(here("R/calc_mixtures_ate.R"))
+source(here("R/calc_marginal_ate.R"))
+source(here("R/calc_additive_ate.R"))
+
+source(here("R/base_calc_marg_add_ates.R"))
+
+```
+
+## Create Simulated Data
+
+```{r Sim_1, echo=TRUE}
+
+n_folds <- 4
+n_obs <- 500
+
+tune = list(ntrees = c(20, 50),
+            max_depth = 1:3,
+            shrinkage = c(0.001, 0.01, 0.1))
+
+# Set detailed names = T so we can see the configuration for each function.
+# Also shorten the name prefix.
+learners = create.Learner("SL.xgboost", tune = tune, detailed_names = TRUE, name_prefix = "xgb")
+
+## build SL.library
+SL.library<- c('SL.randomForest',
+                learners$names,
+               "SL.glm",
+               "SL.mean",
+               "SL.glmnet")
+
+sim_data <- make_sim_data_rev_his_m3(
+                                     n_obs = n_obs, ## number of observations
+                                     splits = c(0.99, 2.0, 2.5), ## split points for each mixture
+                                     mins = c(0,0,0), ## minimum values for each mixture
+                                     maxs = c(3,4,5), ## maximum value for each mixture
+                                     mu = c(0,0,0),
+                                     sigma = matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3),
+                                     w1_betas = c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04), ## subspace probability relationship with covariate W1
+                                     w2_betas = c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04), ## subspace probability relationship with covariate W2
+                                     mix_subspace_betas = c(0.00 , 0.08, 0.05, 0.01 , 0.05, 0.033, 0.07, 0.09), ## probability of mixture subspace (for multinomial outcome gen)
+                                     subspace_assoc_strength_betas = c(0, 0, 0, 0, 0, 0, 6, 0), ## mixture subspace impact on outcome Y
+                                     marginal_impact_betas = c(0,0,0), ## marginal impact of mixture component on Y
+                                     eps_sd = 0.01, ## random error
+                                     binary = FALSE)
+
+
+
+## run on simulated data
+test_results <- CV_treeMLE(data = sim_data,
+                                   covariates = c("W", "W2"),
+                                   outcome = "y",
+                                   mix_comps = c(paste("M", seq(3), sep = "")),
+                                   SL.library = SL.library,
+                                   n_folds = n_folds,
+                                   binary = FALSE,
+                                   H.AW_trunc_lvl = 10,
+                                   rule_boot_n = 10,
+                                   n_stable_tree = 5,
+                                   minbucket = 10,
+                                   verbose = TRUE,
+                                   parallel = TRUE)
+
+test_results$`Mixture Results`
+test_results$`Marginal Results`
+test_results$`Additive Results`
+test_results$`Mixture Model RMSE`
+
+## RMSE across folds:
+test_results$fold_mix_rmse
+mean(unlist(test_results$fold_mix_rmse))
+
+## calculate truth for this subspace mixture
+subspace_8_ATE <- calc_truth_rev_his_m3(
+  n_obs = 1000000, ## number of observations
+  splits = c(0.99, 2.0, 2.5), ## split points for each mixture
+  mins = c(0,0,0), ## minimum values for each mixture
+  maxs = c(3,4,5), ## maximum value for each mixture
+  w1_betas = c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04), ## subspace probability relationship with covariate W1
+  w2_betas = c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04), ## subspace probability relationship with covariate W2
+  mix_subspace_betas = c(0.00 , 0.08, 0.05, 0.01 , 0.05, 0.033, 0.07, 0.09), ## probability of mixture subspace (for multinomial outcome gen)
+  subspace_assoc_strength_betas = c(0, 0, 0, 0, 0, 0, 0, 5), ## mixture subspace impact on outcome Y
+  marginal_impact_betas = c(0,0,0), ## marginal impact of mixture component on Y
+  eps_sd = 0.01, ## random error
+  binary = FALSE) ## generate binary outcome?
+
+subspace_8_ATE
+
+## comparison to qgcomp 
+
+Xnm <- c(paste("M", seq(3), sep = ""))
+covars = c("W", "W2")
+
+
+# Run the model and save the results "qc.fit"
+qc.fit <- qgcomp::qgcomp.boot(y~.,expnms = Xnm,  dat=sim_data[,c(Xnm, covars, 'y')], family=gaussian(), B=10)
+qc.fit
+plot(qc.fit)
+
+qc_predictions <- predict(qc.fit)
+gcomp.RMSE <- sqrt((qc_predictions - sim_data["y"])^2/length(sim_data["y"]))
+mean(gcomp.RMSE[,1])
+
+
+```
+
+Applied to Quantile G-Comp Metals Data:
+
+```{r test_on_gcomp_data}
+data("metals", package="qgcomp")
+head(metals)
+
+Xnm <- c(
+    'arsenic','barium','cadmium','calcium','chromium','copper',
+    'iron','lead','magnesium','manganese','mercury','selenium','silver',
+    'sodium','zinc'
+)
+covars = c('nitrate','nitrite','sulfate','ph', 'total_alkalinity','total_hardness')
+
+
+
+# Example 1: linear model
+# Run the model and save the results "qc.fit"
+qc.fit <- qgcomp.noboot(y~.,dat=metals[,c(Xnm, 'y')], family=gaussian())
+qc.fit
+qc_predictions <- predict(qc.fit)
+gcomp.RMSE <- sqrt((qc_predictions - metals["y"])^2/length(metals["y"]))
+mean(gcomp.RMSE[,1])
+
+
+gcomp_metal_results <- test_tmle3mixrules(data = metals,
+                                   covariates = covars,
+                                   outcome = "y",
+                                   mix_comps = Xnm,
+                                   SL.library = SL.library,
+                                   n_folds = 2,
+                                   binary = FALSE, 
+                                   H.AW_trunc_lvl = 10,
+                                   rule_boot_n = 10,
+                                   n_stable_tree = 3)
+
+gcomp_metal_results$`Mixture-Additive Results`
+gcomp_metal_results$`Marginal Results`
+
+gcomp_metal_results$`Additive Model RMSE star`
+gcomp_metal_results$`Additive Model RMSE no star`
+```
+
+Applied to NHANES Data:
+
+
+```{r NHANES_data, message = FALSE, warning=FALSE}
+
+SL.library<- c('SL.randomForest',
+               'SL.glmnet',
+               "SL.glm",
+               "SL.mean")
+
+NHANES_data <- readRDS(here("data/NHANES_data/fully_merged_NHANES_mediation.RDS"))
+
+
+full_covariates <-   c("age_screen_years",
+                "gender",
+                "birth_country",
+                "educ_level",
+                "marital_status",
+                "fam_income",
+                "fam_poverty_ratio",
+                "household_income",
+                "race",
+                "exam_period",
+                "bmi_kg_m2",
+                "energy_kcal_day1",
+                "caffeine_mg_day1",
+                "regular_milk_use",
+                "not_home_meals_past_week",
+                "fast_food_meals_past_week",
+                "ready_to_eat_foods_past_30_days",
+                "frozen_meals_past_30_days",
+                "mod_intensity_work_activities",
+                "diabetes",
+                "insulin_uu_ml",
+                "homa_ir")
+
+covariates <-   c("age_screen_years",
+                "gender",
+                "fam_poverty_ratio",
+                "bmi_kg_m2",
+                "caffeine_mg_day1")
+
+
+NHANES_data$gender <- as.factor(NHANES_data$gender)
+NHANES_data$birth_country <- as.factor(NHANES_data$birth_country)
+NHANES_data$educ_level <- as.factor(NHANES_data$educ_level)
+NHANES_data$marital_status <- as.factor(NHANES_data$marital_status)
+NHANES_data$race <- as.factor(NHANES_data$race)
+NHANES_data$fam_income <- as.factor(NHANES_data$fam_income)
+
+mix_comps <- c("pfas_pfhxs_ng_ml", 
+             "pfas_me_pfosa_acoh_ng_ml", 
+             "pfas_pfdea_ng_ml", 
+             "pfas_pfna_ng_ml", 
+             "pfas_pfua_ng_ml", 
+             "pfas_pfdoa_ng_ml", 
+             "pfas_npfoa_ng_ml",
+             "pfas_sb_pfoa_ng_ml",
+             "pfas_npfos_ng_ml",
+             "pfas_smpfos_ng_ml")
+
+outcome <- "hdl_cholesterol_mmol_l"
+
+NHANES_data_filter <- NHANES_data %>% dplyr::select(full_covariates, mix_comps, outcome)
+
+NHANES_data_NA_rm <-NHANES_data_filter[complete.cases(NHANES_data_filter), ]
+
+summary(NHANES_data_NA_rm)
+
+## comparison to qgcomp 
+
+Xnm <- mix_comps
+covars = covariates
+
+
+# Run the model and save the results "qc.fit"
+qc.fit <- qgcomp.boot(hdl_cholesterol_mmol_l ~ 
+                        full_covariates,
+                      expnms = c("pfas_pfhxs_ng_ml", 
+                                 "pfas_me_pfosa_acoh_ng_ml",
+                                 "pfas_pfdea_ng_ml", 
+                                 "pfas_pfna_ng_ml", 
+                                 "pfas_pfua_ng_ml", 
+                                 "pfas_pfdoa_ng_ml",
+                                 "pfas_npfoa_ng_ml", 
+                                 "pfas_sb_pfoa_ng_ml", 
+                                 "pfas_npfos_ng_ml", 
+                                 "pfas_smpfos_ng_ml"),  
+                      dat = NHANES_data_NA_rm, 
+                      family=gaussian())
+
+qc.fit.adj <- qgcomp.noboot(hdl_cholesterol_mmol_l~.,dat=NHANES_data_NA_rm[,c(Xnm, full_covariates, 'hdl_cholesterol_mmol_l')], expnms=Xnm, family=gaussian(), bayes = T)
+summary(qc.fit.adj)
+plot(qc.fit.adj)
+
+qc_predictions <- predict(qc.fit.adj)
+gcomp.RMSE <- sqrt((qc_predictions - NHANES_data_NA_rm["hdl_cholesterol_mmol_l"])^2/length(NHANES_data_NA_rm["hdl_cholesterol_mmol_l"]))
+mean(gcomp.RMSE[,1])
+
+
+detach("package:qgcomp", unload = TRUE)
+detach("package:mgcv", unload = TRUE)
+
+NHANES_results <- test_tmle3mixrules(data = NHANES_data_NA_rm,
+                                   covariates = covariates,
+                                   outcome = "hdl_cholesterol_mmol_l",
+                                   mix_comps = c("pfas_pfhxs_ng_ml", 
+                                                 "pfas_me_pfosa_acoh_ng_ml", 
+                                                 "pfas_pfdea_ng_ml", 
+                                                 "pfas_pfna_ng_ml", 
+                                                 "pfas_pfua_ng_ml",
+                                                 "pfas_pfdoa_ng_ml",
+                                                 "pfas_npfoa_ng_ml",
+                                                 "pfas_sb_pfoa_ng_ml",
+                                                 "pfas_npfos_ng_ml",
+                                                 "pfas_smpfos_ng_ml"),
+                                   SL.library = SL.library,
+                                   n_folds = 2,
+                                   binary = FALSE,
+                                   H.AW_trunc_lvl = 10,
+                                   rule_boot_n = 20)
+NHANES_results$`Mixture Results`
+NHANES_results$`Marginal Results`
+NHANES_results$`Additive Results`
+NHANES_results$`Additive Model RMSE star`
+```
+
+Applied to PRIME data:
+
+
+```{r PRIME_data}
+
+
+tune = list(ntrees = c(20, 50),
+            max_depth = 1:3,
+            shrinkage = c(0.001, 0.01, 0.1))
+
+# Set detailed names = T so we can see the configuration for each function.
+# Also shorten the name prefix.
+learners = create.Learner("SL.xgboost", tune = tune, detailed_names = TRUE, name_prefix = "xgb")
+
+## build SL.library
+SL.library<- c('SL.randomForest',
+               "SL.glm",
+               "SL.mean",
+               learners$names)
+
+NIEH_mix_sim_dat <- read_xls(here("NIEHS_Data/dataset1.xls"))
+## run on prime data
+
+data <- NIEH_mix_sim_dat
+covariates <- c("Z")
+outcome <- "Y"
+mix_comps <- c(paste("X", seq(7), sep = ""))
+SL.library <- SL.library
+n_folds <- 4
+binary <- FALSE
+H.AW_trunc_lvl <- 10
+rule_boot_n <- 10
+n_stable_tree <- 10
+
+NIEH_results <- CV_treeMLE(data = data,
+                                   covariates = covariates,
+                                   outcome = outcome,
+                                   mix_comps = mix_comps,
+                                   SL.library = SL.library,
+                                   n_folds = n_folds,
+                                   binary = binary,
+                                   H.AW_trunc_lvl = H.AW_trunc_lvl,
+                                   rule_boot_n = rule_boot_n,
+                                   n_stable_tree = n_stable_tree,
+                                   minbucket = 10,
+                                   parallel = TRUE,
+                                   verbose = TRUE)
+
+write.csv(x = NIEH_results$`Marginal Results`, file = here('NIEHS_Data',"NIEHS_marginal_results.csv"))
+write.csv(x = NIEH_results$`Mixture Results`, file = here('NIEHS_Data',"NIEHS_mixture_results.csv"))
+
+
+partial_mixture <- calc_marg_add_ates(modeling_results = NIEH_results, 
+                                         target_mixtures = c("X1", "X5"), 
+                                         H.AW_trunc_lvl = 10)
+
+
+partial_mixture2 <- calc_marg_add_ates(modeling_results = prime_results, 
+                                         target_mixtures = c("X1", "X2", "X4", "X5"), 
+                                         H.AW_trunc_lvl = 10)
+
+qc.fit <- qgcomp.noboot(f = NIEH_mix_sim_dat$Y~., expnms =  mix_comps, dat=NIEH_mix_sim_dat[,-1], family=gaussian(), q = 4)
+qc.fit
+
+qc.fit <- qgcomp.boot(f = NIEH_mix_sim_dat$Y~.^2, expnms =  mix_comps, dat=NIEH_mix_sim_dat[,-1], family=gaussian(), q = 4, B = 200, degree = 2)
+summary(qc.fit$fit)
+
+
+```
+
+
+```{r pre_example_data}
+
+data("carrillo", package = "pre")
+
+data <- carrillo
+covariates <- c("sexo", "edad")
+outcome <- "bdi"
+mix_comps <- c("n1","n2","n3","n4","n5","n6","ntot","e1","e2","e3","e4","e5","e6","etot","open1","open2", "open3","open4","open6","opentot","altot","contot", "open5")
+SL.library <- SL.library
+n_folds <- 2
+binary <- FALSE
+H.AW_trunc_lvl <- 10
+rule_boot_n <- 10
+
+pre_example_results <- test_tmle3mixrules(data = data,
+                                   covariates = covariates,
+                                   outcome = outcome,
+                                   mix_comps = mix_comps,
+                                   SL.library = SL.library,
+                                   n_folds = n_folds,
+                                   binary = binary,
+                                   H.AW_trunc_lvl = H.AW_trunc_lvl, 
+                                   rule_boot_n = rule_boot_n,
+                                   n_stable_tree = 2)
+
+
+```
+
+
+```{r cord blood mtDNA}
+library(readr)
+mtDNA_birth<- read_csv("/Users/davidmccoy/Box/Mixtures_AnnaData/mtDNA_birth.csv")
+mtDNA_birth <- mtDNA_birth[,-1]
+set.seed(123)
+
+#Recode plate number to factor variable
+mtDNA_birth$dna_copyn_assay_plate_child<- as.factor(mtDNA_birth$dna_copyn_assay_plate_child)
+table(mtDNA_birth$dna_copyn_assay_plate_child)
+
+#Recode race to factor variable
+mtDNA_birth$race2_mom_epi_epia_d<- as.factor(mtDNA_birth$race2_mom_epi_epia_d)
+table(mtDNA_birth$race2_mom_epi_epia_d)
+
+#recode other variables to factor variables
+mtDNA_birth$coll_grad<- as.factor(mtDNA_birth$coll_grad)
+mtDNA_birth$gt70k<- as.factor(mtDNA_birth$gt70k)
+mtDNA_birth$smokpreg_final_d<- as.factor(mtDNA_birth$smokpreg_final_d)
+mtDNA_birth$nullip<- as.factor(mtDNA_birth$nullip)
+mtDNA_birth$female_d<- as.factor(mtDNA_birth$female_d)
+
+#save the names of the mixture variables in the variable "Xnm"
+#note: non log2-transformed metals = "As" "Ba", etc. if want to use those instead
+exposure = c("log2As", "log2Ba", "log2Cd", "log2Cs", "log2Hg", "log2Mg", "log2Mn", "log2Pb", "log2Se", "log2Zn")
+
+#log2 transform the outcome
+#note: non log2-transformed outcomes = original value 
+mtDNA_birth$dna_copyn_mean_child<- log2(mtDNA_birth$dna_copyn_mean_child)
+outcome = c("dna_copyn_mean_child")
+
+#save covariates in variable covars
+covars = c('dna_copyn_assay_plate_child', 'age_mom_enroll_d', 'bmi_mom_prepreg_d', 'race2_mom_epi_epia_d', 'coll_grad', 'gt70k', 'smokpreg_final_d', 'nullip', 'female_d')
+```
+
+Prenatal metal mixture and cord blood mitochondrial DNA copy number (mtDNAcn)
+
+```{r run metal mixtures}
+
+num_trees <- c(num_trees = 50,100,200,500,1000)
+SL.ranger_1000 = create.Learner("SL.ranger", tune = num_trees, detailed_names = TRUE, name_prefix = "ranger")
+
+num_degrees <- c(degrees = 2,3)
+SL.earth = create.Learner("SL.earth", tune = num_degrees, detailed_names = TRUE, name_prefix = "earth")
+## build SL.library
+SL.library<- c('SL.randomForest',
+               "SL.glm",
+               "SL.mean",
+               "SL.glmnet",
+               SL.ranger_1000$names,
+               SL.earth$names)
+
+ 
+n_folds <- 10
+mtDNA_birth_results <- CV_treeMLE(data = mtDNA_birth,
+                                   covariates = covars,
+                                   outcome = outcome,
+                                   mix_comps = exposure,
+                                   SL.library = SL.library,
+                                   n_folds = n_folds,
+                                   binary = FALSE,
+                                   H.AW_trunc_lvl = 10,
+                                   rule_boot_n = 10,
+                                   n_stable_tree = 5,
+                                   minbucket = 10,
+                                   parallel = TRUE,
+                                   verbose = TRUE)
+
+write.csv(mtDNA_birth_results$`Marginal Results`, here("Proj_Viva_Results/mtDNAcn.csv")) 
+
+partial_mixture <- fit_post_data_adaptive_counterfactuals(modeling_results = mtDNA_birth_results, 
+                                         target_mixtures = c("log2Ba", "log2Hg"), 
+                                         H.AW_trunc_lvl = 10)
+
+
+```
+
+
+```{r quantile}
+qc.fit <- qgcomp.noboot(f = dna_copyn_mean_child~., expnms = exposure, dat=mtDNA_birth[,c(exposure, covars, outcome)], family=gaussian(), q = 4)
+qc.fit
+```
+
+Prenatal metal mixture and maternal mtDNAcn
+```{r maternal mtDNA}
+library(readr)
+mtDNA_maternal<- read_csv("/Users/davidmccoy/Box/Mixtures_AnnaData/mtDNA_maternal.csv")
+set.seed(123)
+
+#Recode plate number to factor variable
+mtDNA_maternal$dna_copyn_assay_plate_mom<- as.factor(mtDNA_maternal$dna_copyn_assay_plate_mom)
+table(mtDNA_maternal$dna_copyn_assay_plate_mom)
+
+#Recode race to factor variable
+mtDNA_maternal$race2_mom_epi_epia_d<- as.factor(mtDNA_maternal$race2_mom_epi_epia_d)
+table(mtDNA_maternal$race2_mom_epi_epia_d)
+
+#recode other variables to factor variables
+mtDNA_maternal$coll_grad<- as.factor(mtDNA_maternal$coll_grad)
+mtDNA_maternal$gt70k<- as.factor(mtDNA_maternal$gt70k)
+mtDNA_maternal$smokpreg_final_d<- as.factor(mtDNA_maternal$smokpreg_final_d)
+mtDNA_maternal$nullip<- as.factor(mtDNA_maternal$nullip)
+
+#save the names of the mixture variables in the variable "Xnm"
+#note: non log2-transformed metals = "As" "Ba", etc. if want to use those instead
+exposure = c("log2As", "log2Ba", "log2Cd", "log2Cs", "log2Hg", "log2Mg", "log2Mn", "log2Pb", "log2Se", "log2Zn")
+
+#log2 transform the outcome
+#note: non log2-transformed outcomes = original value 
+mtDNA_maternal$dna_copyn_mean_mom<- log2(mtDNA_maternal$dna_copyn_mean_mom)
+outcome = c("dna_copyn_mean_mom")
+
+#save covariates in variable covars
+covars = c('dna_copyn_assay_plate_mom', 'age_mom_enroll_d', 'bmi_mom_prepreg_d', 'race2_mom_epi_epia_d', 'coll_grad', 'gt70k', 'smokpreg_final_d', 'nullip')
+```
+
+```{r run maternal outcomes}
+
+# tune = list(ntrees = c(20, 50),
+#             max_depth = 1:4)
+# # Set detailed names = T so we can see the configuration for each function.
+# # Also shorten the name prefix.
+# learners1 = create.Learner("SL.xgboost", tune = tune, detailed_names = TRUE, name_prefix = "xgb")
+num_trees <- c(num_trees = 50,100,200,500,1000)
+SL.ranger_1000 = create.Learner("SL.ranger", tune = num_trees, detailed_names = TRUE, name_prefix = "ranger")
+
+num_degrees <- c(degrees = 2,3)
+SL.earth = create.Learner("SL.earth", tune = num_degrees, detailed_names = TRUE, name_prefix = "earth")
+## build SL.library
+SL.library<- c('SL.randomForest',
+               "SL.glm",
+               "SL.mean",
+               "SL.glmnet",
+               SL.ranger_1000$names,
+               SL.earth$names)
+
+
+n_folds <- 10
+mtDNA_maternal_results <- CV_treeMLE(data = mtDNA_maternal,
+                                   covariates = covars,
+                                   outcome = outcome,
+                                   mix_comps = exposure,
+                                   SL.library = SL.library,
+                                   n_folds = n_folds,
+                                   binary = FALSE,
+                                   H.AW_trunc_lvl = 10,
+                                   rule_boot_n = 10,
+                                   n_stable_tree = 5,
+                                   minbucket = 10,
+                                   verbose = TRUE,
+                                   parallel = TRUE)
+
+summary(mtDNA_maternal_results$`Additive MSM`)
+
+effect_plot(mtDNA_maternal_results$`Additive MSM`, pred = sum_marg_hits,interval = TRUE, plot.points = TRUE, jitter = .2, cat.geom = "line", point.color = "blue", point.alpha = 0.3)
+
+partial_mixture <- fit_post_counterfactuals(modeling_results = mtDNA_maternal_results, 
+                                         target_mixtures = c("log2Pb", "log2Se"), 
+                                         H.AW_trunc_lvl = 10)
+
+
+qc.fit <- qgcomp.boot(f = dna_copyn_mean_mom~., expnms = exposure, dat=mtDNA_maternal[,c(exposure, covars, outcome)], family=gaussian(), q = 4, B= 200)
+summary(qc.fit$fit)$coefficients
+coef(qc.fit)
+mean((mtDNA_maternal$dna_copyn_mean_mom - predict(qc.fit))^2)
+
+```
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

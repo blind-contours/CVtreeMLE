@@ -1,16 +1,26 @@
 Package: CVtreeMLE
-Title: What the Package Does (One Line, Title Case)
+Title: Cross Validated Decision Trees with Targeted Maximum Likelihood Estimation
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "David",
+           family = "McCoy",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+           email = "david_mccoy@berkeley.edu",
+           comment = c(ORCID = "0000-0002-5515-6307"))
+Description: A methodology for mixed exposure analysis that leverages data-adaptive target parameters, CV-TMLE, and decision trees.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
+Imports: 
+    cvTools,
+    doParallel,
+    dplyr,
+    foreach,
+    future,
+    magrittr,
+    parallel,
+    pre,
+    stats,
+    SuperLearner
