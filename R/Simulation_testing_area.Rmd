@@ -10,54 +10,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r libraries}
-library(here)
-library(SuperLearner)
-library(rpart)
-library(rpart.plot)
-library(dplyr)
-library(tuple)
-library(future)
-library(readxl)
-library(pre)
-library(qgcomp)
-library(xgboost)
-plan(multisession)
-library(future)
-library(dplyr)
-library(tidyr)
-library(MASS)
-library(stringr)
-library(data.table)
-<<<<<<< HEAD
-library(tidyverse)
-=======
->>>>>>> c9ee990a07db496f598de4deb43f876f6d7802ff
-
-source(here("R/create_cv_folds.R"))
-source(here("R/New_Sim_Data.R"))
-source(here("R/CV_treeMLE.R"))
-source(here("R/calc_empirical_truth.R"))
-source(here("R/flatten_results.R"))
-source(here("R/evaluate_marginal_rules.R"))
-source(here("R/evaluate_mix_rules.R"))
-
-source(here("R/find_common_mixture_rule.R"))
-source(here("R/find_common_marginal_rule.R"))
-
-source(here("R/marginal_decision_trees.R"))
-
-source(here("R/marginal_nuisance_parameters.R"))
-source(here("R/mixture_nuisance_parameters.R"))
-
-source(here("R/calc_mixtures_ate.R"))
-source(here("R/calc_marginal_ate.R"))
-source(here("R/calc_additive_ate.R"))
-
-source(here("R/base_calc_marg_add_ates.R"))
-
-```
-
 ## Create Simulated Data
 
 ```{r Sim_1, echo=TRUE}
@@ -71,16 +23,15 @@ tune = list(ntrees = c(20, 50),
 
 # Set detailed names = T so we can see the configuration for each function.
 # Also shorten the name prefix.
-learners = create.Learner("SL.xgboost", tune = tune, detailed_names = TRUE, name_prefix = "xgb")
+learners = SuperLearner::create.Learner("SL.xgboost", tune = tune, detailed_names = TRUE, name_prefix = "xgb")
 
 ## build SL.library
 SL.library<- c('SL.randomForest',
                 learners$names,
                "SL.glm",
-               "SL.mean",
-               "SL.glmnet")
+               "SL.mean")
 
-sim_data <- make_sim_data_rev_his_m3(
+sim_data <- simulate_mixture_cube(
                                      n_obs = n_obs, ## number of observations
                                      splits = c(0.99, 2.0, 2.5), ## split points for each mixture
                                      mins = c(0,0,0), ## minimum values for each mixture
@@ -98,16 +49,17 @@ sim_data <- make_sim_data_rev_his_m3(
 
 
 ## run on simulated data
-test_results <- CV_treeMLE(data = sim_data,
-                                   covariates = c("W", "W2"),
-                                   outcome = "y",
-                                   mix_comps = c(paste("M", seq(3), sep = "")),
+debugonce(CVtreeMLE)
+test_results <- CVtreeMLE(data = sim_data,
+                                   W = c("W", "W2"),
+                                   Y = "y",
+                                   A = c(paste("M", seq(3), sep = "")),
                                    SL.library = SL.library,
                                    n_folds = n_folds,
-                                   binary = FALSE,
+                                   family = "gaussian",
                                    H.AW_trunc_lvl = 10,
-                                   rule_boot_n = 10,
-                                   n_stable_tree = 5,
+                                   n_boot_ensemble = 10,
+                                   n_stable_trees = 5,
                                    minbucket = 10,
                                    verbose = TRUE,
                                    parallel = TRUE)
@@ -344,7 +296,7 @@ SL.library<- c('SL.randomForest',
                "SL.mean",
                learners$names)
 
-NIEH_mix_sim_dat <- read_xls(here("NIEHS_Data/dataset1.xls"))
+NIEH_mix_sim_dat <- readxl::read_xls(here::here("NIEHS_Data/dataset1.xls"))
 ## run on prime data
 
 data <- NIEH_mix_sim_dat
@@ -352,22 +304,22 @@ covariates <- c("Z")
 outcome <- "Y"
 mix_comps <- c(paste("X", seq(7), sep = ""))
 SL.library <- SL.library
-n_folds <- 4
+n_folds <- 5
 binary <- FALSE
 H.AW_trunc_lvl <- 10
 rule_boot_n <- 10
 n_stable_tree <- 10
 
-NIEH_results <- CV_treeMLE(data = data,
-                                   covariates = covariates,
-                                   outcome = outcome,
-                                   mix_comps = mix_comps,
+NIEH_results <- CVtreeMLE(data = data,
+                                   W = covariates,
+                                   Y = outcome,
+                                   A = mix_comps,
                                    SL.library = SL.library,
                                    n_folds = n_folds,
-                                   binary = binary,
+                                   family = "gaussian",
                                    H.AW_trunc_lvl = H.AW_trunc_lvl,
-                                   rule_boot_n = rule_boot_n,
-                                   n_stable_tree = n_stable_tree,
+                                   n_boot_ensemble = rule_boot_n,
+                                   n_stable_trees = n_stable_tree,
                                    minbucket = 10,
                                    parallel = TRUE,
                                    verbose = TRUE)

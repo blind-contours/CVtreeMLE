@@ -1,38 +1,44 @@
-marginal_nuisance_parameters <- function(At, 
-                                         Av, 
-                                         covariates, 
-                                         SL.library, 
-                                         family,
-                                         mix_comps, 
-                                         marg_decisions, 
-                                         fold_k, 
-                                         fold_results_marginal_data,
-                                         fold_results_marg_directions, 
-                                         H.AW_trunc_lvl){
+#' For each marginal mixture component rule found, create a g estimator for the probability of being exposed to the rule thresholds,
+#' and a Q estimator for the outcome E(Y| A = a_mix, W). Get estimates of g and Q using the validation data and
+#' calculate the clever covariate used in the TMLE fluctuation step.
+#'
+#' @param At Training data
+#' @param Av Validation data
+#' @param covariates Vector of characters denoting covariates
+#' @param SL.library Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)
+#' @param family Binomial or gaussian
+#' @param mix_comps Vector of characters that denote the mixture components
+#' @param marg_decisions List of rules found within the fold for each mixture component
+#' @param H.AW_trunc_lvl Truncation level of the clever covariate (induces more bias to reduce variance)
+#' @importFrom SuperLearner All
+#' @importFrom magrittr %>%
+#' @importFrom rlang :=
 
+#' @importFrom dplyr group_by filter top_n
+#' @return Rules object. TODO: add more detail here.
 
+#'
+#' @export
+
+est_marg_nuisance_params <- function(At,
+                                     Av,
+                                     covariates,
+                                     SL.library,
+                                     family,
+                                     mix_comps,
+                                     marg_decisions,
+                                     H.AW_trunc_lvl) {
   marginal_data <- list()
   marg_directions <- list()
-  print(paste("Finished calculating the ATE for mixture rule in", fold_k))
 
   for (i in seq(mix_comps)) {
-    print(
-      paste(
-        "Starting calculation of ATE in validation for mixture rule",
-        mix_comps[i],
-        "estimated in training"
-      )
-    )
-
     At_c <- At
     Av_c <- Av
 
     target_m_rule <- marg_decisions[i][[1]]
-    #direction <- marg_directions[i][[1]]
 
     if (target_m_rule != "1") {
       rule_name <- paste(mix_comps[i], "marg_rule", sep = "_")
-      # target_m_rule <- gsub("-", " -", target_m_rule)
 
       At_c <- At_c %>%
         dplyr::mutate(!!(rule_name) := ifelse(eval(parse(text = target_m_rule)), 1, 0))
@@ -41,15 +47,15 @@ marginal_nuisance_parameters <- function(At,
         dplyr::mutate(!!(rule_name) := ifelse(eval(parse(text = target_m_rule)), 1, 0))
 
       ## covars
-      X_Amarg_T = subset(At_c,
-                         select = c(covariates))
+      X_Amarg_T <- subset(At_c,
+        select = c(covariates)
+      )
 
-      X_Amarg_V = subset(Av_c,
-                         select = c(covariates))
+      X_Amarg_V <- subset(Av_c,
+        select = c(covariates)
+      )
 
-      print(paste("Fitting SL of rule", i, "given W"))
-
-      gHatSL <- SuperLearner(
+      gHatSL <- SuperLearner::SuperLearner(
         Y = At_c[[rule_name]],
         X = X_Amarg_T,
         SL.library = SL.library,
@@ -67,7 +73,7 @@ marginal_nuisance_parameters <- function(At,
 
       H.AW <-
         as.numeric(Av_c[[rule_name]] == 1) / gHat1W - as.numeric(Av_c[[rule_name]] ==
-                                                                   0) / gHat0W
+          0) / gHat0W
 
       H.AW <-
         ifelse(H.AW > H.AW_trunc_lvl, H.AW_trunc_lvl, H.AW)
@@ -85,10 +91,8 @@ marginal_nuisance_parameters <- function(At,
       X_valid_mix <-
         subset(Av_c, select = c(rule_name, covariates))
 
-      print(paste("Fitting SL of Y given W and rule for mixture", i))
-
-      ##QbarAW
-      QbarAWSL_m <- SuperLearner(
+      ## QbarAW
+      QbarAWSL_m <- SuperLearner::SuperLearner(
         Y = At_c$y_scaled,
         X = X_train_mix,
         SL.library = SL.library,
@@ -115,9 +119,9 @@ marginal_nuisance_parameters <- function(At,
 
       ## least optimal submodel
       logitUpdate <-
-        glm(
-          Av_c$y_scaled ~ -1 + H.AW + offset(qlogis(QbarAW)) ,
-          family = 'quasibinomial',
+        stats::glm(
+          Av_c$y_scaled ~ -1 + H.AW + offset(qlogis(QbarAW)),
+          family = "quasibinomial",
           data = At
         )
 
@@ -146,38 +150,26 @@ marginal_nuisance_parameters <- function(At,
         Qbar0W[Qbar0W >= 1.0] <- 0.999
         Qbar0W[Qbar0W <= 0] <- 0.001
 
-        # ## least optimal submodel
-        # logitUpdate <- glm(Av_c$y_scaled ~ -1 + H.AW + offset(qlogis(QbarAW)) ,
-        #                    family='quasibinomial', data = At)
-        #
-        # epsilon <- logitUpdate$coef
-        # QbarAW.star<- plogis(qlogis(QbarAW) + epsilon*H.AW)
-        # Qbar1W.star<- plogis(qlogis(Qbar1W) + epsilon*H.AW)
-        # Qbar0W.star<- plogis(qlogis(Qbar0W) + epsilon*H.AW)
-
-
-        ## add Qbar to the AV dataset
         Av_c$QbarAW <- QbarAW
         Av_c$Qbar1W <- Qbar1W
         Av_c$Qbar0W <- Qbar0W
 
         marginal_data[[i]] <- Av_c
-
-      } else{
+      } else {
         marg_directions[i] <- "negative"
 
         At_c[, rule_name] <- 1 - At_c[, rule_name]
 
         ## covars
-        X_Amarg_T = subset(At_c,
-                           select = c(covariates))
+        X_Amarg_T <- subset(At_c,
+          select = c(covariates)
+        )
 
-        X_Amarg_V = subset(Av_c,
-                           select = c(covariates))
+        X_Amarg_V <- subset(Av_c,
+          select = c(covariates)
+        )
 
-        print(paste("Fitting SL of rule", i, "given W"))
-
-        gHatSL <- SuperLearner(
+        gHatSL <- SuperLearner::SuperLearner(
           Y = At_c[[rule_name]],
           X = X_Amarg_T,
           SL.library = SL.library,
@@ -196,7 +188,7 @@ marginal_nuisance_parameters <- function(At,
 
         H.AW <-
           as.numeric(Av_c[[rule_name]] == 1) / gHat1W - as.numeric(Av_c[[rule_name]] ==
-                                                                     0) / gHat0W
+            0) / gHat0W
 
         H.AW <-
           ifelse(H.AW > H.AW_trunc_lvl, H.AW_trunc_lvl, H.AW)
@@ -215,8 +207,8 @@ marginal_nuisance_parameters <- function(At,
 
         print(paste("Fitting SL of Y given W and rule for mixture", i))
 
-        ##QbarAW
-        QbarAWSL_m <- SuperLearner(
+        ## QbarAW
+        QbarAWSL_m <- SuperLearner::SuperLearner(
           Y = At_c$y_scaled,
           X = X_train_mix,
           SL.library = SL.library,
@@ -246,10 +238,7 @@ marginal_nuisance_parameters <- function(At,
         Av_c$Qbar0W <- Qbar0W
 
         marginal_data[[i]] <- Av_c
-
       }
-
-
     } else {
       print(
         paste(
@@ -260,12 +249,10 @@ marginal_nuisance_parameters <- function(At,
       )
       marg_directions[i] <- NA
     }
-
   }
 
-
-
-  return(list(data =  marginal_data,
-              directions = marg_directions))
-
+  return(list(
+    data = marginal_data,
+    directions = marg_directions
+  ))
 }

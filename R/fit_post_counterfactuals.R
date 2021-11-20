@@ -1,15 +1,33 @@
-fit_post_counterfactuals <- function(modeling_results, target_mixtures, H.AW_trunc_lvl) {
+#' Given a vector of target mixture components, load a \code{CVtreeMLE} results object, get the lists of rules, nuisance parameters, and learners used. Apply counterfactuals to the target
+#' variables of interest and return a dataframe with the ATE, variance estimates and p-values for these counterfactuals.
+#'
+#' Currently uses PRE Predictive Rule Ensembles package but could be generalized
+#'
+#' @param modeling_results A \code{CVtreeMLE} results object
+#' @param target_mixtures Vector of characters indicating which mixture compnents to calculate a new counterfactual parameter on given rules found across the folds for each marginal
+#' mixture component
+#' @param H.AW_trunc_lvl Truncation level of the clever covariate - reduces variance but increases bias of the ATE
+#' @param SL.library Library of algorithms used to fit the counterfactuals
+#' @importFrom stats glm pnorm qnorm
+#' @importFrom magrittr %>%
+#' @importFrom dplyr group_by filter top_n
+#' @return Rules object. TODO: add more detail here.
+
+#'
+#' @export
+
+fit_post_counterfactuals <- function(modeling_results, target_mixtures, H.AW_trunc_lvl, SL.library) {
   ## TODO: Fix whatever the fuck is going on here with the NULL compounding in lists from foreah
-  
+
   marg_comb_fold_data <- modeling_results$`Fold Results Marg Comb Data`
   marg_comb_sls <- modeling_results$`Fold Super Learners Marg Comb`
-  
+
   # marg_comb_fold_data <- unlist(marg_comb_fold_data,recursive=FALSE, use.names = FALSE)
   marg_comb_sls <- unlist(marg_comb_sls,recursive=FALSE, use.names = FALSE)
-  
+
   # marg_comb_fold_data <- marg_comb_fold_data[!sapply(marg_comb_fold_data,is.null)]
   marg_comb_sls <- marg_comb_sls[!sapply(marg_comb_sls,is.null)]
-  
+
 
   updated_resuls_list <- list()
 
@@ -20,8 +38,8 @@ fit_post_counterfactuals <- function(modeling_results, target_mixtures, H.AW_tru
     folds <- i
 
     matches <- unique(grep(paste(target_mixtures, collapse = "|"),
-      names(combo_data),
-      value = TRUE
+                           names(combo_data),
+                           value = TRUE
     ))
 
 
@@ -51,7 +69,7 @@ fit_post_counterfactuals <- function(modeling_results, target_mixtures, H.AW_tru
     # TODO: add try catch if no observations with both marginal exposure rules found
     combo_data$comb_rule <- rowSums(combo_data[, matches])
     combo_data$comb_rule <- ifelse(combo_data$comb_rule == max(combo_data$comb_rule), 1, 0)
-    
+
     # Confirm that some observations exist who were exposed to both rules in the fold
     if (max(combo_data$comb_rule) == 0 ) {
       stop("No observations were exposed to all marginal rules")
@@ -61,13 +79,13 @@ fit_post_counterfactuals <- function(modeling_results, target_mixtures, H.AW_tru
 
     print("Fitting SL to marginal rule for mixture")
 
-    gHatSL <- suppressWarnings(SuperLearner(
+    gHatSL <- SuperLearner::SuperLearner(
       Y = combo_data$comb_rule,
       X = X_Amix_V,
       SL.library = SL.library,
       family = "binomial",
       verbose = FALSE
-    ))
+    )
 
     gHat1W <- gHatSL$SL.predict
     gHat0W <- 1 - gHat1W
@@ -97,15 +115,15 @@ fit_post_counterfactuals <- function(modeling_results, target_mixtures, H.AW_tru
   updated_results_counterfactuals <- do.call(rbind, updated_resuls_list)
 
   ## least optimal submodel
-  logitUpdate <- glm(y_scaled ~ -1 + H.AW + offset(qlogis(QbarAW_combo)),
-    family = "quasibinomial", data = updated_results_counterfactuals
+  logitUpdate <- stats::glm(y_scaled ~ -1 + H.AW + offset(qlogis(QbarAW_combo)),
+                     family = "quasibinomial", data = updated_results_counterfactuals
   )
 
   epsilon <- logitUpdate$coef
 
-  QbarAW.star <- plogis(qlogis(updated_results_counterfactuals$QbarAW_combo) + epsilon * updated_results_counterfactuals$H.AW)
-  Qbar1W.star <- plogis(qlogis(updated_results_counterfactuals$Qbar1W) + epsilon * updated_results_counterfactuals$H.AW)
-  Qbar0W.star <- plogis(qlogis(updated_results_counterfactuals$Qbar0W) + epsilon * updated_results_counterfactuals$H.AW)
+  QbarAW.star <- stats::plogis(stats::qlogis(updated_results_counterfactuals$QbarAW_combo) + epsilon * updated_results_counterfactuals$H.AW)
+  Qbar1W.star <- stats::plogis(stats::qlogis(updated_results_counterfactuals$Qbar1W) + epsilon * updated_results_counterfactuals$H.AW)
+  Qbar0W.star <- stats::plogis(stats::qlogis(updated_results_counterfactuals$Qbar0W) + epsilon * updated_results_counterfactuals$H.AW)
 
   ## back-scale Y
   QbarAW.star <- QbarAW.star * (max(updated_results_counterfactuals$raw_outcome) - min(updated_results_counterfactuals$raw_outcome)) + min(updated_results_counterfactuals$raw_outcome)
@@ -134,7 +152,7 @@ fit_post_counterfactuals <- function(modeling_results, target_mixtures, H.AW_tru
   }
 
   n <- dim(updated_results_counterfactuals)[1]
-  varHat.IC <- var(updated_results_counterfactuals$IC, na.rm = TRUE) / n
+  varHat.IC <- stats::var(updated_results_counterfactuals$IC, na.rm = TRUE) / n
   se <- sqrt(varHat.IC)
 
   alpha <- 0.05
@@ -142,16 +160,16 @@ fit_post_counterfactuals <- function(modeling_results, target_mixtures, H.AW_tru
   Theta <- mean(Thetas)
   # obtain 95% two-sided confidence intervals:
   CI <- c(
-    Theta + qnorm(alpha / 2, lower.tail = T) * se,
-    Theta + qnorm(alpha / 2, lower.tail = F) * se
+    Theta + stats::qnorm(alpha / 2, lower.tail = T) * se,
+    Theta + stats::qnorm(alpha / 2, lower.tail = F) * se
   )
 
   # p-value
-  p.value <- 2 * pnorm(abs(Theta / se), lower.tail = F)
+  p.value <- 2 * stats::pnorm(abs(Theta / se), lower.tail = F)
 
-  
+
   ## TODO: Fix this RMSE output to reflect full combo data not the counterfactuals
-  
+
   ## calculate RMSE
   RMSE <- sqrt((updated_results_counterfactuals$QbarAW.star - updated_results_counterfactuals$raw_outcome)^2 / n)
   RMSE <- mean(RMSE[, 1])

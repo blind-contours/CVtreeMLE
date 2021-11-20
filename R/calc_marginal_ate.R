@@ -1,17 +1,35 @@
+#' @title Calculate the ATE for each rule found for individual mixture components.
+#' @description Aggregate marginal rules for each mixture variable found across the folds. For each rule
+#' extract the relevant nuisance parameter data calculated in the folds. Given the validation data estimates across
+#' the folds, for each tree do a TMLE update step to target the average treatment effect. Update the initial counterfactuals,
+#' calculate the influence curve and using the influence curve calculate variance estimates and p-values.
+#'
+#' @param marginal_data List of dataframes of nuisance parameter data for each mixture
+#' @param mix_comps Vector of characters indicating the mixture components
+#' @param outcome Vector indicating the outcome
+
+#' @importFrom data.table rbindlist
+#' @importFrom dplyr group_by bind_rows
+
+#' @return Rules object. TODO: add more detail here.
+#' @importFrom stats as.formula glm p.adjust plogis predict qlogis qnorm qunif rnorm runif
+#' @importFrom rlang :=
+#'
+#' @export
+
 calc_marginal_ate <- function(marginal_data, mix_comps, outcome){
-  
+
   marg_data <- list()
-  
+
   x <- unlist(marginal_data,recursive=FALSE)
   x <- x[!sapply(x,is.null)]
-  
+
   for (i in seq(mix_comps)) {
     # for(j in seq(marginal_data)){
     marg_data[[i]] <-
-      # marginal_data[[paste("marg data", j)]][[j]][[i]]
-      bind_rows(sapply(x, "[", i))
+      dplyr::bind_rows(sapply(x, "[", i))
     }
-  
+
   marginal_results <-
     as.data.frame(matrix(
       data = NA,
@@ -24,15 +42,15 @@ calc_marginal_ate <- function(marginal_data, mix_comps, outcome){
       "Lower CI",
       "Upper CI",
       "P-value")
-  
+
   rownames(marginal_results) <- mix_comps
-  
+
   updated_marginal_data <- list()
-  
+
   ## find which marginal mixture rule was null across the folds to update bonferonni p-value
-  
+
   no_null_indices <- list()
-  
+
   for (i in seq(length(marg_data))) {
     check <- marg_data[i]
     if (length(check[[1]]) != 0) {
@@ -41,27 +59,27 @@ calc_marginal_ate <- function(marginal_data, mix_comps, outcome){
       no_null_indices <- no_null_indices
     }
   }
-  
+
   no_null_indices <- unlist(no_null_indices)
-  
+
   for (i in seq(marg_data)) {
     if(i %in% no_null_indices == TRUE){
       marg_mix <- marg_data[[i]]
-      
+
       if (length(unique(marg_mix$folds)) == n_folds) {
-        logitUpdate <- glm(y_scaled ~ -1 + H.AW + offset(qlogis(QbarAW)) ,
+        logitUpdate <- stats::glm(y_scaled ~ -1 + H.AW + offset(qlogis(QbarAW)) ,
                            family = 'quasibinomial',
                            data = marg_mix)
-        
+
         epsilon <- logitUpdate$coef
-        
+
         QbarAW.star <-
-          plogis(qlogis(marg_mix$QbarAW) + epsilon * marg_mix$H.AW)
+          stats::plogis(stats::qlogis(marg_mix$QbarAW) + epsilon * marg_mix$H.AW)
         Qbar1W.star <-
-          plogis(qlogis(marg_mix$Qbar1W) + epsilon * marg_mix$H.AW)
+          stats::plogis(stats::qlogis(marg_mix$Qbar1W) + epsilon * marg_mix$H.AW)
         Qbar0W.star <-
-          plogis(qlogis(marg_mix$Qbar0W) + epsilon * marg_mix$H.AW)
-        
+          stats::plogis(stats::qlogis(marg_mix$Qbar0W) + epsilon * marg_mix$H.AW)
+
         ## back-scale Y
         QbarAW.star <-
           QbarAW.star * (max(marg_mix[outcome]) - min(marg_mix[outcome])) + min(marg_mix[outcome])
@@ -69,61 +87,61 @@ calc_marginal_ate <- function(marginal_data, mix_comps, outcome){
           Qbar0W.star * (max(marg_mix[outcome]) - min(marg_mix[outcome])) + min(marg_mix[outcome])
         Qbar1W.star <-
           Qbar1W.star * (max(marg_mix[outcome]) - min(marg_mix[outcome])) + min(marg_mix[outcome])
-        
+
         marg_mix$QbarAW.star <- QbarAW.star
         marg_mix$Qbar0W.star <- Qbar0W.star
         marg_mix$Qbar1W.star <- Qbar1W.star
-        
+
         marg_mix$marg.ATE <-
           marg_mix$Qbar1W.star - marg_mix$Qbar0W.star
-        
+
         Thetas <-
           tapply(marg_mix$marg.ATE, marg_mix$folds, mean, na.rm = TRUE)
-        
+
         for (j in seq(Thetas)) {
           marg_mix[marg_mix$folds == j, "Thetas"] <- Thetas[j][[1]]
         }
-        
+
         ICs = base::by(marg_mix, marg_mix$folds, function(marg_mix) {
           result = with(marg_mix,
                         H.AW * (marg_mix[outcome] - QbarAW.star) + Qbar1W.star - Qbar0W.star - Thetas)
           result
         })
-        
+
         for (k in seq(ICs)) {
           marg_mix[marg_mix$folds == k, "IC"] <- ICs[k]
         }
-        
+
         n <- dim(marg_mix)[1]
-        varHat.IC <- var(marg_mix$IC, na.rm = TRUE) / n
+        varHat.IC <- stats::var(marg_mix$IC, na.rm = TRUE) / n
         se <- sqrt(varHat.IC)
-        
+
         alpha <- 0.05
-        
+
         Theta <- mean(Thetas)
         # obtain 95% two-sided confidence intervals:
         CI <- c(
-          Theta + qnorm(alpha / 2, lower.tail = T) * se,
-          Theta + qnorm(alpha / 2, lower.tail = F) * se
+          Theta + stats::qnorm(alpha / 2, lower.tail = T) * se,
+          Theta + stats::qnorm(alpha / 2, lower.tail = F) * se
         )
-        
+
         # p-value
         p.value <-
-          round(2 * pnorm(abs(Theta / se), lower.tail = F), 4)
-        
+          round(2 * stats::pnorm(abs(Theta / se), lower.tail = F), 4)
+
         p.value.adjust <-
           p.adjust(p.value, method = "bonferroni", n = length(no_null_indices))
-        
-        
+
+
         marginal_results$`Marginal ATE`[i] <- Theta
         marginal_results$`Standard Error`[i] <- se
         marginal_results$`Lower CI`[i] <- CI[1]
         marginal_results$`Upper CI`[i] <- CI[2]
         marginal_results$`P-value`[i] <- p.value
         marginal_results$`P-value Adj`[i] <- p.value.adjust
-        
+
         updated_marginal_data[[i]] <- marg_mix
-        
+
       } else {
         print(
           paste(
@@ -138,10 +156,10 @@ calc_marginal_ate <- function(marginal_data, mix_comps, outcome){
         marginal_results$`Upper CI`[i] <- NA
         marginal_results$`P-value`[i] <- NA
         marginal_results$`P-value Adj`[i] <- NA
-        
+
         updated_marginal_data[[i]] <- NA
       }
-      
+
     } else {
       print(
         paste(
@@ -156,10 +174,10 @@ calc_marginal_ate <- function(marginal_data, mix_comps, outcome){
       marginal_results$`Upper CI`[i] <- NA
       marginal_results$`P-value`[i] <- NA
       marginal_results$`P-value Adj`[i] <- NA
-      
+
       updated_marginal_data[[i]] <- NA
     }
-    
+
   }
   return(list(marginal_results = marginal_results, data = updated_marginal_data))
 }

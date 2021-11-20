@@ -14,7 +14,7 @@ CVtreeMLE(
   family,
   H.AW_trunc_lvl,
   n_boot_ensemble,
-  n_stable_tree,
+  n_stable_trees,
   minbucket,
   verbose,
   parallel
@@ -39,7 +39,7 @@ CVtreeMLE(
 
 \item{n_boot_ensemble}{Number of bootstrap fits used to identify consistent partitions in the mixture space.}
 
-\item{n_stable_tree}{Number of bootstraps a set of variables must be in to be considered a consistent tree for the mixture.}
+\item{n_stable_trees}{Number of bootstraps a set of variables must be in to be considered a consistent tree for the mixture.}
 
 \item{minbucket}{Minimum number of observations needed in a bin to make a partition in the marginal decision trees.}
 

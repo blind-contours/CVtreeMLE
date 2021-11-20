@@ -9,11 +9,11 @@
 #'
 #' @param n_stable_trees Number of times a set of variables must appear in the same rule across the bootstrap to be considered stable
 #' and move to downstream analysis
-#'
-#' @importFrom pre pre
+#' @param A Variable names in the mixture
+
+#' @importFrom pre pre maxdepth_sampler
 #' @importFrom magrittr %>%
 #' @importFrom dplyr group_by filter top_n
-#' @importFrom base sample grep paste
 #' @return Rules object. TODO: add more detail here.
 
 #'
@@ -51,7 +51,7 @@ fit_mix_rule_ensemble <- function(At, formula, rule_boot_n, n_stable_trees, A) {
       tree.unbiased = TRUE,
       removecomplements = TRUE,
       removeduplicates = TRUE,
-      maxdepth = maxdepth_sampler(),
+      maxdepth = pre::maxdepth_sampler(),
       sampfrac = min(1, (11 * sqrt(dim(At)[1]) + 1) / dim(At)[1]),
       nfolds = 10
     )
@@ -70,7 +70,7 @@ fit_mix_rule_ensemble <- function(At, formula, rule_boot_n, n_stable_trees, A) {
   pre_boot_df$direction <- ifelse(pre_boot_df$coefficient > 0, 1, 0)
   rules <- pre_boot_df %>%
     dplyr::group_by(test, direction) %>%
-    dplyr::filter(n() >= n_stable_tree)
+    dplyr::filter(n() >= n_stable_trees)
 
   rules <- rules[!is.na(rules$test), ]
   rules <- rules[!rules$test == 0, ]

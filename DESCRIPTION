@@ -15,12 +15,26 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Imports: 
     cvTools,
+    data.table,
     doParallel,
     dplyr,
+    fastDummies,
     foreach,
     future,
+    here,
+    Hmisc,
     magrittr,
+    MASS,
+    nnls,
     parallel,
     pre,
+    purrr,
+    randomForest,
+    readxl,
+    rlang,
+    rpart,
+    rpart.plot,
     stats,
-    SuperLearner
+    stringr,
+    SuperLearner,
+    tuple
