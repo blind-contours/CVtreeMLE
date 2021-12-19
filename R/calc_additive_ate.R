@@ -1,24 +1,26 @@
 #' Evaluate mixture rules found during the rpart decision tree process
 #'
 #' @param additive_data Data for the cumulative exposure across the folds for each fold specific set of rules
-#' @param outcome Character indicating the outcome of interest
+#' @param n_folds Number of folds used in the cross-validation
+#' @param Y Character indicating the Y of interest
 #' @importFrom dplyr transmute
 #' @return Rules object. TODO: add more detail here.
 #' @importFrom rlang :=
 #'
 #' @export
 
-calc_additive_ate <- function(additive_data, outcome){
+calc_additive_ate <- function(additive_data, Y, n_folds){
 
   ## TODO: figure out why when using doParallel sometimes there is a NULL list appended to the list of lists
   additive_data <- unlist(additive_data,recursive=FALSE)
   additive_data <- additive_data[!sapply(additive_data,is.null)]
 
-  if (length(additive_data) == n_folds) {
-    mix_additive_data = do.call(rbind, lapply(1:length(additive_data), function(i) {
-      fold = additive_data[[i]]
-      fold
-    }))
+  mix_additive_data = do.call(rbind, lapply(1:length(additive_data), function(i) {
+    fold = additive_data[[i]]
+    fold
+  }))
+
+  if(any(is.na(mix_additive_data$QbarAW_additive)) == FALSE){
 
     ## least optimal submodel
     logitUpdate <-
@@ -35,27 +37,23 @@ calc_additive_ate <- function(additive_data, outcome){
 
     mix_additive_data$QbarAW_additive_star <- QbarAW_additive_star
 
-    mix_additive_data$QbarAW_additive <-
-      with(mix_additive_data,
-           QbarAW_additive * (max(mix_additive_data[outcome]) - min(mix_additive_data[outcome])) + min(mix_additive_data[outcome]))
+    mix_additive_data$QbarAW_additive <- scale_to_original(mix_additive_data$QbarAW_additive, max(mix_additive_data[Y]), min(mix_additive_data[Y]))
 
     ## Calculate Additive RMSE for non-updated predictions
     additive.MSM.RMSE <-
-      sqrt((mix_additive_data$QbarAW_additive - mix_additive_data[outcome]) ^
-             2 / length(mix_additive_data[outcome])
+      sqrt((mix_additive_data$QbarAW_additive - mix_additive_data[Y]) ^
+             2 / length(mix_additive_data[Y])
       )
     additive.MSM.RMSE <- mean(additive.MSM.RMSE[, 1])
 
 
     ## Calculate Additive RMSE for updated predictions
-    mix_additive_data$QbarAW_additive_star <-
-      with(mix_additive_data,
-           QbarAW_additive_star * (max(mix_additive_data[outcome]) - min(mix_additive_data[outcome])) + min(mix_additive_data[outcome]))
+    mix_additive_data$QbarAW_additive_star <- scale_to_original(mix_additive_data$QbarAW_additive_star, max(mix_additive_data[Y]), min(mix_additive_data[Y]))
 
     updated_additive.MSM.RMSE <-
       sqrt((
-        mix_additive_data$QbarAW_additive_star - mix_additive_data[outcome]
-      ) ^ 2 / length(mix_additive_data[outcome])
+        mix_additive_data$QbarAW_additive_star - mix_additive_data[Y]
+      ) ^ 2 / length(mix_additive_data[Y])
       )
     updated_additive.MSM.RMSE <-
       mean(updated_additive.MSM.RMSE[, 1])

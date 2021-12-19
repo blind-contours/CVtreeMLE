@@ -8,7 +8,6 @@
 #' @param data Full data which rules are evaluated
 #' @param mix_comps Vector of mixture components
 #' @param marginal_results Dataframe holding the results for each marginal component rule
-#' @param fold_directions Direction of the rule, positive or negative - used to align the rules to create a common marginal rule
 #' @param n_folds Total number of folds
 
 #' @importFrom data.table rbindlist
@@ -22,14 +21,10 @@
 #'
 #' @export
 #'
-find_common_marginal_rules <- function(fold_rules, data, mix_comps, marginal_results, fold_directions, n_folds) {
+find_common_marginal_rules <- function(fold_rules, data, mix_comps, marginal_results, n_folds) {
 
   fold_rules <- unlist(fold_rules, recursive = FALSE)
   fold_rules <- fold_rules[!sapply(fold_rules, is.null)]
-
-  fold_directions <- unlist(fold_directions, recursive = FALSE)
-  fold_directions <- fold_directions[!sapply(fold_directions, is.null)]
-
 
   ## Get final marginal rule for mixture 1 across folds
   marg_rules <- list()
@@ -41,10 +36,20 @@ find_common_marginal_rules <- function(fold_rules, data, mix_comps, marginal_res
   for (i in seq(mix_comps)) {
     var <- mix_comps[i]
     mixture_data <- subset(data, select = mix_comps)
-    rules <- sapply(fold_rules, "[", i)
-    directions <- sapply(fold_directions, "[", i)
 
-    if (any(unlist(rules) == "1") == FALSE) {
+    rules <- list()
+    for (rule in seq(length(fold_rules))) {
+      temp <- fold_rules[[rule]]
+      temp <- temp %>% filter(.data$target_m == var)
+      rules[[rule]] <- temp
+    }
+    rules <- do.call(rbind, rules)
+
+    # rules <- do.call(rbind, lapply(fold_rules, subset, target_m == var))
+    directions <- rules$directions
+    rules <- rules$rules
+
+    if (any(rules == "No Rules Found") == FALSE) {
       combined_rule <- list()
       for (j in seq(rules)) {
         direction <- directions[[j]]
@@ -128,7 +133,7 @@ find_common_marginal_rules <- function(fold_rules, data, mix_comps, marginal_res
 
         var_min_1 <-
           fold_rules_df %>%
-          group_by(all_folds) %>%
+          dplyr::group_by(all_folds) %>%
           summarise(min = min(!!(as.name(var))))
         var_min_1 <- subset(var_min_1, all_folds == 1, select = min)
 
@@ -189,7 +194,6 @@ find_common_marginal_rules <- function(fold_rules, data, mix_comps, marginal_res
     cbind(marginal_results, unlist(mins))
   marginal_results <-
     cbind(marginal_results, unlist(maxs))
-
 
 
   colnames(marginal_results)[7] <- "Marginal Rules"

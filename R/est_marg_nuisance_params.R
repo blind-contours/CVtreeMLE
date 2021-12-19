@@ -4,10 +4,10 @@
 #'
 #' @param At Training data
 #' @param Av Validation data
-#' @param covariates Vector of characters denoting covariates
+#' @param W Vector of characters denoting covariates
 #' @param SL.library Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)
 #' @param family Binomial or gaussian
-#' @param mix_comps Vector of characters that denote the mixture components
+#' @param A Vector of characters that denote the mixture components
 #' @param marg_decisions List of rules found within the fold for each mixture component
 #' @param H.AW_trunc_lvl Truncation level of the clever covariate (induces more bias to reduce variance)
 #' @importFrom SuperLearner All
@@ -22,23 +22,23 @@
 
 est_marg_nuisance_params <- function(At,
                                      Av,
-                                     covariates,
+                                     W,
                                      SL.library,
                                      family,
-                                     mix_comps,
+                                     A,
                                      marg_decisions,
                                      H.AW_trunc_lvl) {
   marginal_data <- list()
-  marg_directions <- list()
+  marg_decisions$directions <- NA
 
-  for (i in seq(mix_comps)) {
+  for (i in seq(A)) {
     At_c <- At
     Av_c <- Av
 
-    target_m_rule <- marg_decisions[i][[1]]
+    target_m_rule <- marg_decisions[marg_decisions$target_m == A[i],]$rules
 
-    if (target_m_rule != "1") {
-      rule_name <- paste(mix_comps[i], "marg_rule", sep = "_")
+    if (target_m_rule != "No Rules Found") {
+      rule_name <- paste(A[i], "marg_rule", sep = "_")
 
       At_c <- At_c %>%
         dplyr::mutate(!!(rule_name) := ifelse(eval(parse(text = target_m_rule)), 1, 0))
@@ -47,13 +47,9 @@ est_marg_nuisance_params <- function(At,
         dplyr::mutate(!!(rule_name) := ifelse(eval(parse(text = target_m_rule)), 1, 0))
 
       ## covars
-      X_Amarg_T <- subset(At_c,
-        select = c(covariates)
-      )
+      X_Amarg_T <- At_c[W]
 
-      X_Amarg_V <- subset(Av_c,
-        select = c(covariates)
-      )
+      X_Amarg_V <- Av_c[W]
 
       gHatSL <- SuperLearner::SuperLearner(
         Y = At_c[[rule_name]],
@@ -63,33 +59,16 @@ est_marg_nuisance_params <- function(At,
         verbose = FALSE
       )
 
-      gHat1W <- predict(gHatSL, X_Amarg_V)$pred
-      n <- length(gHat1W)
-      gHat0W <- 1 - gHat1W
+      gHat1W <- bound_precision(predict(gHatSL, X_Amarg_V)$pred)
 
-      gHatAW <- rep(NA, n)
-      gHatAW[Av_c[rule_name] == 1] <- gHat1W[Av_c[rule_name] == 1]
-      gHatAW[Av_c[rule_name] == 0] <- gHat0W[Av_c[rule_name] == 0]
-
-      H.AW <-
-        as.numeric(Av_c[[rule_name]] == 1) / gHat1W - as.numeric(Av_c[[rule_name]] ==
-          0) / gHat0W
-
-      H.AW <-
-        ifelse(H.AW > H.AW_trunc_lvl, H.AW_trunc_lvl, H.AW)
-
-      H.AW <-
-        ifelse(H.AW < -H.AW_trunc_lvl, -H.AW_trunc_lvl, H.AW)
+      H.AW <- calc_clever_covariate(gHat1W = gHat1W, data = Av_c, exposure = rule_name, H.AW_trunc_lvl = 10, type = "reg")
 
       ## add treatment mechanism results to Av_c dataframe
       Av_c$gHat1W <- gHat1W
       Av_c$H.AW <- H.AW
 
-      X_train_mix <-
-        subset(At_c, select = c(rule_name, covariates))
-
-      X_valid_mix <-
-        subset(Av_c, select = c(rule_name, covariates))
+      X_train_mix <- At_c[c(rule_name, W)]
+      X_valid_mix <- Av_c[c(rule_name, W)]
 
       ## QbarAW
       QbarAWSL_m <- SuperLearner::SuperLearner(
@@ -104,51 +83,26 @@ est_marg_nuisance_params <- function(At,
       X_m1[[rule_name]] <- 1 # under exposure
       X_m0[[rule_name]] <- 0 # under control
 
-      QbarAW <- predict(QbarAWSL_m, newdata = X_valid_mix)$pred
-      Qbar1W <- predict(QbarAWSL_m, newdata = X_m1)$pred
-      Qbar0W <- predict(QbarAWSL_m, newdata = X_m0)$pred
+      QbarAW <- bound_precision(predict(QbarAWSL_m, newdata = X_valid_mix)$pred)
+      Qbar1W <- bound_precision(predict(QbarAWSL_m, newdata = X_m1)$pred)
+      Qbar0W <- bound_precision(predict(QbarAWSL_m, newdata = X_m0)$pred)
 
-      QbarAW[QbarAW >= 1.0] <- 0.999
-      QbarAW[QbarAW <= 0] <- 0.001
+      flux_results <- fit_least_fav_submodel(H.AW, data = Av, QbarAW, Qbar1W, Qbar0W)
 
-      Qbar1W[Qbar1W >= 1.0] <- 0.999
-      Qbar1W[Qbar1W <= 0] <- 0.001
-
-      Qbar0W[Qbar0W >= 1.0] <- 0.999
-      Qbar0W[Qbar0W <= 0] <- 0.001
-
-      ## least optimal submodel
-      logitUpdate <-
-        stats::glm(
-          Av_c$y_scaled ~ -1 + H.AW + offset(qlogis(QbarAW)),
-          family = "quasibinomial",
-          data = At
-        )
-
-      epsilon <- logitUpdate$coef
-      QbarAW.star <- plogis(qlogis(QbarAW) + epsilon * H.AW)
-      Qbar1W.star <- plogis(qlogis(Qbar1W) + epsilon * H.AW)
-      Qbar0W.star <- plogis(qlogis(Qbar0W) + epsilon * H.AW)
+      QbarAW.star <- flux_results$QbarAW.star
+      Qbar1W.star <- flux_results$Qbar1W.star
+      Qbar0W.star <- flux_results$Qbar0W.star
 
       if (mean(Qbar1W.star - Qbar0W.star, na.rm = TRUE) > 0) {
-        marg_directions[i] <- "positive"
+        marg_decisions$directions[i] <- "positive"
 
         X_m1 <- X_m0 <- X_valid_mix
         X_m1[[rule_name]] <- 1 # under exposure
         X_m0[[rule_name]] <- 0 # under control
 
-        QbarAW <- predict(QbarAWSL_m, newdata = X_valid_mix)$pred
-        Qbar1W <- predict(QbarAWSL_m, newdata = X_m1)$pred
-        Qbar0W <- predict(QbarAWSL_m, newdata = X_m0)$pred
-
-        QbarAW[QbarAW >= 1.0] <- 0.999
-        QbarAW[QbarAW <= 0] <- 0.001
-
-        Qbar1W[Qbar1W >= 1.0] <- 0.999
-        Qbar1W[Qbar1W <= 0] <- 0.001
-
-        Qbar0W[Qbar0W >= 1.0] <- 0.999
-        Qbar0W[Qbar0W <= 0] <- 0.001
+        QbarAW <- bound_precision(predict(QbarAWSL_m, newdata = X_valid_mix)$pred)
+        Qbar1W <- bound_precision(predict(QbarAWSL_m, newdata = X_m1)$pred)
+        Qbar0W <- bound_precision(predict(QbarAWSL_m, newdata = X_m0)$pred)
 
         Av_c$QbarAW <- QbarAW
         Av_c$Qbar1W <- Qbar1W
@@ -156,18 +110,13 @@ est_marg_nuisance_params <- function(At,
 
         marginal_data[[i]] <- Av_c
       } else {
-        marg_directions[i] <- "negative"
+        marg_decisions$directions[i] <- "negative"
 
         At_c[, rule_name] <- 1 - At_c[, rule_name]
 
         ## covars
-        X_Amarg_T <- subset(At_c,
-          select = c(covariates)
-        )
-
-        X_Amarg_V <- subset(Av_c,
-          select = c(covariates)
-        )
+        X_Amarg_T <- At_c[W]
+        X_Amarg_V <- Av_c[W]
 
         gHatSL <- SuperLearner::SuperLearner(
           Y = At_c[[rule_name]],
@@ -178,32 +127,15 @@ est_marg_nuisance_params <- function(At,
         )
 
         gHat1W <- predict(gHatSL, newdata = X_Amarg_V)$pred
-        gHat0W <- 1 - gHat1W
 
-        gHatAW <- rep(NA, n)
-        gHatAW[Av_c[[rule_name]] == 1] <-
-          gHat1W[Av_c[[rule_name]] == 1]
-        gHatAW[Av_c[[rule_name]] == 0] <-
-          gHat0W[Av_c[[rule_name]] == 0] ## this gives an incorrect length error but the estimates all look fine so don't know what's up yet
-
-        H.AW <-
-          as.numeric(Av_c[[rule_name]] == 1) / gHat1W - as.numeric(Av_c[[rule_name]] ==
-            0) / gHat0W
-
-        H.AW <-
-          ifelse(H.AW > H.AW_trunc_lvl, H.AW_trunc_lvl, H.AW)
-
-        H.AW <-
-          ifelse(H.AW < -H.AW_trunc_lvl, -H.AW_trunc_lvl, H.AW)
+        H.AW <- calc_clever_covariate(gHat1W, data = Av_c, exposure = rule_name, H.AW_trunc_lvl = 10, type = "reg")
 
         ## add treatment mechanism results to Av_c dataframe
         Av_c$gHat1W <- gHat1W
         Av_c$H.AW <- H.AW
 
-        X_train_mix <-
-          subset(At_c, select = c(rule_name, covariates))
-        X_valid_mix <-
-          subset(Av_c, select = c(rule_name, covariates))
+        X_train_mix <-At_c[c(rule_name, W)]
+        X_valid_mix <-Av_c[c(rule_name, W)]
 
         print(paste("Fitting SL of Y given W and rule for mixture", i))
 
@@ -220,18 +152,9 @@ est_marg_nuisance_params <- function(At,
         X_m1[[rule_name]] <- 1 # under exposure
         X_m0[[rule_name]] <- 0 # under control
 
-        QbarAW <- predict(QbarAWSL_m, newdata = X_valid_mix)$pred
-        Qbar1W <- predict(QbarAWSL_m, newdata = X_m1)$pred
-        Qbar0W <- predict(QbarAWSL_m, newdata = X_m0)$pred
-
-        QbarAW[QbarAW >= 1.0] <- 0.999
-        QbarAW[QbarAW <= 0] <- 0.001
-
-        Qbar1W[Qbar1W >= 1.0] <- 0.999
-        Qbar1W[Qbar1W <= 0] <- 0.001
-
-        Qbar0W[Qbar0W >= 1.0] <- 0.999
-        Qbar0W[Qbar0W <= 0] <- 0.001
+        QbarAW <- bound_precision(predict(QbarAWSL_m, newdata = X_valid_mix)$pred)
+        Qbar1W <- bound_precision(predict(QbarAWSL_m, newdata = X_m1)$pred)
+        Qbar0W <- bound_precision(predict(QbarAWSL_m, newdata = X_m0)$pred)
 
         Av_c$QbarAW <- QbarAW
         Av_c$Qbar1W <- Qbar1W
@@ -243,16 +166,16 @@ est_marg_nuisance_params <- function(At,
       print(
         paste(
           "No ATEs calculated in the validation for",
-          mix_comps[i],
+          A[i],
           "due to no rule found in training set for marginal impact"
         )
       )
-      marg_directions[i] <- NA
+      marg_decisions$directions[i] <- NA
     }
   }
 
   return(list(
-    data = marginal_data,
-    directions = marg_directions
+    "data" = marginal_data,
+    "marg_decisions" = marg_decisions
   ))
 }

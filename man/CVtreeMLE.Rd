@@ -9,15 +9,13 @@ CVtreeMLE(
   A,
   Y,
   data,
+  back_iter_SL,
   SL.library,
   n_folds,
   family,
   H.AW_trunc_lvl,
-  n_boot_ensemble,
-  n_stable_trees,
-  minbucket,
-  verbose,
-  parallel
+  parallel,
+  verbose
 )
 }
 \arguments{
@@ -29,6 +27,8 @@ CVtreeMLE(
 
 \item{data}{Data frame of (W,A,Y) variables of interest.}
 
+\item{back_iter_SL}{Stack of estimators used in the SL during the iterative backfitting for \code{Y|W}, this should be an SL3 object}
+
 \item{SL.library}{Library of algorithms used by Super Learner for estimating both the propensity of exposure and the outcome.}
 
 \item{n_folds}{Number of cross-validation folds.}
@@ -37,15 +37,9 @@ CVtreeMLE(
 
 \item{H.AW_trunc_lvl}{Truncation level for the clever covariate.}
 
-\item{n_boot_ensemble}{Number of bootstrap fits used to identify consistent partitions in the mixture space.}
-
-\item{n_stable_trees}{Number of bootstraps a set of variables must be in to be considered a consistent tree for the mixture.}
-
-\item{minbucket}{Minimum number of observations needed in a bin to make a partition in the marginal decision trees.}
+\item{parallel}{Use parallel processing if a backend is registered; enabled by default.}
 
 \item{verbose}{If true, creates a sink file where detailed information and diagnostics of the run process are given.}
-
-\item{parallel}{Use parallel processing if a backend is registered; enabled by default.}
 }
 \value{
 Results object. TODO: add more detail here.

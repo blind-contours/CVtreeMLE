@@ -6,6 +6,8 @@
 #' @param input_mix_rules List of dataframes of rules found for a mixture across the folds
 #' @param input_mix_data Nuisance parameter data for mixture rules found across the folds
 #' @param outcome Character indicating the outcome variable
+#' @param n_folds Number of folds used in cross-validation
+
 
 #' @importFrom data.table rbindlist
 #' @importFrom dplyr group_by
@@ -16,7 +18,7 @@
 #'
 #' @export
 
-calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome){
+calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds){
 
   input_mix_rules <- unlist(input_mix_rules,recursive=FALSE, use.names = FALSE)
   input_mix_rules <- input_mix_rules[!sapply(input_mix_rules,is.null)]
@@ -28,9 +30,9 @@ calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome){
   if(anyNA(unlist(input_mix_rules)) == FALSE){
 
     fold_mix_rules <-
-      data.table::rbindlist(input_mix_rules, idcol = "fold", fill=TRUE)
+      data.table::rbindlist(input_mix_rules)
     fold_mix_rules <-
-      fold_mix_rules %>% group_by(test, direction) %>% filter(n() >= n_folds)
+      fold_mix_rules %>% dplyr::group_by(test, direction) %>% dplyr::filter(n() >= n_folds)
 
     groups <- fold_mix_rules %>%
       dplyr::group_by(test, direction)
@@ -69,80 +71,29 @@ calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome){
       # Extract the results from each CV-TMLE fold and rbind into a single dataframe.
       mix_data = do.call(rbind, intxn_rule_data_list)
 
-      ## least optimal submodel
-      logitUpdate <-
-        glm(y_scaled ~ -1 + H.AW + offset(qlogis(QbarAW)) ,
-            family = 'quasibinomial',
-            data = mix_data)
-
-      epsilon <- logitUpdate$coef
-
-      QbarAW.star <-
-        stats::plogis(stats::qlogis(mix_data$QbarAW) + epsilon * mix_data$H.AW)
-      Qbar1W.star <-
-        stats::plogis(stats::qlogis(mix_data$Qbar1W) + epsilon * mix_data$H.AW)
-      Qbar0W.star <-
-        stats::plogis(stats::qlogis(mix_data$Qbar0W) + epsilon * mix_data$H.AW)
+      flux_results <- fit_least_fav_submodel(mix_data$H.AW, mix_data, mix_data$QbarAW, mix_data$Qbar1W, mix_data$Qbar0W)
+      QbarAW.star <- flux_results$QbarAW.star
+      Qbar1W.star <- flux_results$Qbar1W.star
+      Qbar0W.star <- flux_results$Qbar0W.star
 
       ## back-scale Y
-      QbarAW.star <-
-        QbarAW.star * (max(mix_data[outcome]) - min(mix_data[outcome])) + min(mix_data[outcome])
-      Qbar0W.star <-
-        Qbar0W.star * (max(mix_data[outcome]) - min(mix_data[outcome])) + min(mix_data[outcome])
-      Qbar1W.star <-
-        Qbar1W.star * (max(mix_data[outcome]) - min(mix_data[outcome])) + min(mix_data[outcome])
+      mix_data$QbarAW.star <- scale_to_original(scaled_vals = QbarAW.star, max_orig = max(mix_data[outcome]), min(mix_data[outcome]))
+      mix_data$Qbar0W.star <- scale_to_original(scaled_vals = Qbar0W.star, max_orig = max(mix_data[outcome]), min(mix_data[outcome]))
+      mix_data$Qbar1W.star <- scale_to_original(scaled_vals = Qbar1W.star, max_orig = max(mix_data[outcome]), min(mix_data[outcome]))
 
-      mix_data$QbarAW.star <- QbarAW.star
-      mix_data$Qbar0W.star <- Qbar0W.star
-      mix_data$Qbar1W.star <- Qbar1W.star
-
-      mix_data$mix.ATE <- mix_data$Qbar1W.star - mix_data$Qbar0W.star
-
-      Thetas <-
-        tapply(mix_data$mix.ATE, mix_data$folds, mean, na.rm = TRUE)
-
-      for (i in seq(Thetas)) {
-        mix_data[mix_data$folds == i, "Thetas"] <- Thetas[i][[1]]
-      }
-
-      ICs = base::by(mix_data, mix_data$folds, function(mix_data) {
-        result = with(mix_data,
-                      H.AW * (mix_data[outcome] - QbarAW.star) + Qbar1W.star - Qbar0W.star - Thetas)
-        result
-      })
-
-      for (i in seq(ICs)) {
-        mix_data[mix_data$folds == i, "IC"] <- ICs[i]
-      }
-
-      n <- dim(mix_data)[1]
-      varHat.IC <- stats::var(mix_data$IC, na.rm = TRUE) / n
-      se <- sqrt(varHat.IC)
-
-      alpha <- 0.05
-
-      Theta <- mean(Thetas)
-      # obtain 95% two-sided confidence intervals:
-      CI <- c(Theta + stats::qnorm(alpha / 2, lower.tail = T) * se,
-              Theta + stats::qnorm(alpha / 2, lower.tail = F) * se)
-
-      # p-value
-      p.value <- 2 * stats::pnorm(abs(Theta / se), lower.tail = F)
-
-      p.value.adjust <-
-        stats::p.adjust(p.value, method = "bonferroni", n = length(group_list))
+      ATE_results <- calc_ATE_estimates(data = mix_data, ATE_var = "mix.ATE", outcome = outcome, p_adjust_n = length(group_list))
 
       ## calculate RMSE
       RMSE <-
         sqrt((mix_data$QbarAW.star - mix_data[outcome]) ^ 2 / length(mix_data[outcome]))
       RMSE <- mean(RMSE[, 1])
 
-      mixture_results$`Mixture ATE`[group] <- Theta
-      mixture_results$`Standard Error`[group] <- se
-      mixture_results$`Lower CI`[group] <- CI[1]
-      mixture_results$`Upper CI`[group] <- CI[2]
-      mixture_results$`P-value`[group] <- round(p.value,6)
-      mixture_results$`P-value Adj`[group] <- round(p.value.adjust, 6)
+      mixture_results$`Mixture ATE`[group] <- ATE_results$ATE
+      mixture_results$`Standard Error`[group] <- ATE_results$SE
+      mixture_results$`Lower CI`[group] <- ATE_results$CI[1]
+      mixture_results$`Upper CI`[group] <-ATE_results$CI[2]
+      mixture_results$`P-value`[group] <- round(ATE_results$`p-value`,6)
+      mixture_results$`P-value Adj`[group] <- round(ATE_results$`adj p-value`, 6)
       mixture_results$`vars`[group] <- vars
 
     }

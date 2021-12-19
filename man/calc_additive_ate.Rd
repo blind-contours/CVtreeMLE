@@ -4,12 +4,14 @@
 \alias{calc_additive_ate}
 \title{Evaluate mixture rules found during the rpart decision tree process}
 \usage{
-calc_additive_ate(additive_data, outcome)
+calc_additive_ate(additive_data, Y, n_folds)
 }
 \arguments{
 \item{additive_data}{Data for the cumulative exposure across the folds for each fold specific set of rules}
 
-\item{outcome}{Character indicating the outcome of interest}
+\item{Y}{Character indicating the Y of interest}
+
+\item{n_folds}{Number of folds used in the cross-validation}
 }
 \value{
 Rules object. TODO: add more detail here.

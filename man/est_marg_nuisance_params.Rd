@@ -9,10 +9,10 @@ calculate the clever covariate used in the TMLE fluctuation step.}
 est_marg_nuisance_params(
   At,
   Av,
-  covariates,
+  W,
   SL.library,
   family,
-  mix_comps,
+  A,
   marg_decisions,
   H.AW_trunc_lvl
 )
@@ -22,13 +22,13 @@ est_marg_nuisance_params(
 
 \item{Av}{Validation data}
 
-\item{covariates}{Vector of characters denoting covariates}
+\item{W}{Vector of characters denoting covariates}
 
 \item{SL.library}{Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)}
 
 \item{family}{Binomial or gaussian}
 
-\item{mix_comps}{Vector of characters that denote the mixture components}
+\item{A}{Vector of characters that denote the mixture components}
 
 \item{marg_decisions}{List of rules found within the fold for each mixture component}
 

@@ -6,7 +6,8 @@
 #'
 #' @param marginal_data List of dataframes of nuisance parameter data for each mixture
 #' @param mix_comps Vector of characters indicating the mixture components
-#' @param outcome Vector indicating the outcome
+#' @param Y Vector indicating the Y
+#' @param n_folds Number of folds used in cross-validation
 
 #' @importFrom data.table rbindlist
 #' @importFrom dplyr group_by bind_rows
@@ -17,7 +18,7 @@
 #'
 #' @export
 
-calc_marginal_ate <- function(marginal_data, mix_comps, outcome){
+calc_marginal_ate <- function(marginal_data, mix_comps, Y, n_folds){
 
   marg_data <- list()
 
@@ -67,80 +68,28 @@ calc_marginal_ate <- function(marginal_data, mix_comps, outcome){
       marg_mix <- marg_data[[i]]
 
       if (length(unique(marg_mix$folds)) == n_folds) {
-        logitUpdate <- stats::glm(y_scaled ~ -1 + H.AW + offset(qlogis(QbarAW)) ,
-                           family = 'quasibinomial',
-                           data = marg_mix)
 
-        epsilon <- logitUpdate$coef
-
-        QbarAW.star <-
-          stats::plogis(stats::qlogis(marg_mix$QbarAW) + epsilon * marg_mix$H.AW)
-        Qbar1W.star <-
-          stats::plogis(stats::qlogis(marg_mix$Qbar1W) + epsilon * marg_mix$H.AW)
-        Qbar0W.star <-
-          stats::plogis(stats::qlogis(marg_mix$Qbar0W) + epsilon * marg_mix$H.AW)
+        flux_results <- fit_least_fav_submodel(H.AW = marg_mix$H.AW, data = marg_mix, QbarAW = marg_mix$QbarAW, Qbar1W = marg_mix$Qbar1W, Qbar0W = marg_mix$Qbar0W)
 
         ## back-scale Y
-        QbarAW.star <-
-          QbarAW.star * (max(marg_mix[outcome]) - min(marg_mix[outcome])) + min(marg_mix[outcome])
-        Qbar0W.star <-
-          Qbar0W.star * (max(marg_mix[outcome]) - min(marg_mix[outcome])) + min(marg_mix[outcome])
-        Qbar1W.star <-
-          Qbar1W.star * (max(marg_mix[outcome]) - min(marg_mix[outcome])) + min(marg_mix[outcome])
+        QbarAW.star <- scale_to_original(scaled_vals = flux_results$QbarAW.star, max_orig = max(marg_mix[Y]), min_orig = min(marg_mix[Y]))
+        Qbar0W.star <- scale_to_original(scaled_vals = flux_results$Qbar0W.star, max_orig = max(marg_mix[Y]), min_orig = min(marg_mix[Y]))
+        Qbar1W.star <- scale_to_original(scaled_vals = flux_results$Qbar1W.star, max_orig = max(marg_mix[Y]), min_orig = min(marg_mix[Y]))
 
         marg_mix$QbarAW.star <- QbarAW.star
         marg_mix$Qbar0W.star <- Qbar0W.star
         marg_mix$Qbar1W.star <- Qbar1W.star
 
-        marg_mix$marg.ATE <-
-          marg_mix$Qbar1W.star - marg_mix$Qbar0W.star
+        ATE_results <- calc_ATE_estimates(data = marg_mix, ATE_var = "marg.ATE", outcome = Y, p_adjust_n = length(no_null_indices))
 
-        Thetas <-
-          tapply(marg_mix$marg.ATE, marg_mix$folds, mean, na.rm = TRUE)
+        marginal_results$`Marginal ATE`[i] <- ATE_results$ATE
+        marginal_results$`Standard Error`[i] <- ATE_results$SE
+        marginal_results$`Lower CI`[i] <- ATE_results$CI[1]
+        marginal_results$`Upper CI`[i] <- ATE_results$CI[2]
+        marginal_results$`P-value`[i] <- ATE_results$`p-value`
+        marginal_results$`P-value Adj`[i] <- ATE_results$`adj p-value`
 
-        for (j in seq(Thetas)) {
-          marg_mix[marg_mix$folds == j, "Thetas"] <- Thetas[j][[1]]
-        }
-
-        ICs = base::by(marg_mix, marg_mix$folds, function(marg_mix) {
-          result = with(marg_mix,
-                        H.AW * (marg_mix[outcome] - QbarAW.star) + Qbar1W.star - Qbar0W.star - Thetas)
-          result
-        })
-
-        for (k in seq(ICs)) {
-          marg_mix[marg_mix$folds == k, "IC"] <- ICs[k]
-        }
-
-        n <- dim(marg_mix)[1]
-        varHat.IC <- stats::var(marg_mix$IC, na.rm = TRUE) / n
-        se <- sqrt(varHat.IC)
-
-        alpha <- 0.05
-
-        Theta <- mean(Thetas)
-        # obtain 95% two-sided confidence intervals:
-        CI <- c(
-          Theta + stats::qnorm(alpha / 2, lower.tail = T) * se,
-          Theta + stats::qnorm(alpha / 2, lower.tail = F) * se
-        )
-
-        # p-value
-        p.value <-
-          round(2 * stats::pnorm(abs(Theta / se), lower.tail = F), 4)
-
-        p.value.adjust <-
-          p.adjust(p.value, method = "bonferroni", n = length(no_null_indices))
-
-
-        marginal_results$`Marginal ATE`[i] <- Theta
-        marginal_results$`Standard Error`[i] <- se
-        marginal_results$`Lower CI`[i] <- CI[1]
-        marginal_results$`Upper CI`[i] <- CI[2]
-        marginal_results$`P-value`[i] <- p.value
-        marginal_results$`P-value Adj`[i] <- p.value.adjust
-
-        updated_marginal_data[[i]] <- marg_mix
+        updated_marginal_data[[i]] <- ATE_results$data
 
       } else {
         print(

@@ -7,7 +7,7 @@ extract the relevant nuisance parameter data calculated in the folds. Given the 
 the folds, for each tree do a TMLE update step to target the average treatment effect. Update the initial counterfactuals,
 calculate the influence curve and using the influence curve calculate variance estimates and p-values.}
 \usage{
-calc_mixtures_ate(input_mix_rules, input_mix_data, outcome)
+calc_mixtures_ate(input_mix_rules, input_mix_data, outcome, n_folds)
 }
 \arguments{
 \item{input_mix_rules}{List of dataframes of rules found for a mixture across the folds}
@@ -15,6 +15,8 @@ calc_mixtures_ate(input_mix_rules, input_mix_data, outcome)
 \item{input_mix_data}{Nuisance parameter data for mixture rules found across the folds}
 
 \item{outcome}{Character indicating the outcome variable}
+
+\item{n_folds}{Number of folds used in cross-validation}
 }
 \value{
 Rules object. TODO: add more detail here.

@@ -14,22 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r Sim_1, echo=TRUE}
 
-n_folds <- 4
 n_obs <- 500
-
-tune = list(ntrees = c(20, 50),
-            max_depth = 1:3,
-            shrinkage = c(0.001, 0.01, 0.1))
-
-# Set detailed names = T so we can see the configuration for each function.
-# Also shorten the name prefix.
-learners = SuperLearner::create.Learner("SL.xgboost", tune = tune, detailed_names = TRUE, name_prefix = "xgb")
-
-## build SL.library
-SL.library<- c('SL.randomForest',
-                learners$names,
-               "SL.glm",
-               "SL.mean")
 
 sim_data <- simulate_mixture_cube(
                                      n_obs = n_obs, ## number of observations
@@ -47,22 +32,41 @@ sim_data <- simulate_mixture_cube(
                                      binary = FALSE)
 
 
+# make SL learner libraries for fitting g and Q
+lrnr_glm <- Lrnr_glm$new()
+lrnr_bayesglm <- Lrnr_bayesglm$new()
+lrnr_gam <- Lrnr_gam$new()
+lrnr_lasso <- Lrnr_glmnet$new(alpha = 1)
+lrnr_earth <- Lrnr_earth$new()
+lrnr_ranger <- Lrnr_ranger$new()
+lrnr_xgboost100 <- Lrnr_xgboost$new(nrounds = 100, early_stopping_rounds = 10)
+lrnr_xgboost50 <- Lrnr_xgboost$new(nrounds = 50, early_stopping_rounds = 5)
+lrnr_xgboost20 <- Lrnr_xgboost$new(nrounds = 20)
+# put all the learners together (this is just one way to do it)
+learners <- c(lrnr_glm, lrnr_bayesglm,
+lrnr_gam, lrnr_ranger,
+lrnr_xgboost100, lrnr_xgboost50, lrnr_xgboost20)
 
+Q1_stack <- make_learner(Stack, learners)
+
+SL.library<- c('SL.randomForest',
+               'SL.earth',
+               "SL.glm",
+               "SL.mean")
+
+lrp <- utils::getFromNamespace(".list.rules.party", "partykit")
 ## run on simulated data
-debugonce(CVtreeMLE)
 test_results <- CVtreeMLE(data = sim_data,
                                    W = c("W", "W2"),
                                    Y = "y",
                                    A = c(paste("M", seq(3), sep = "")),
+                                   Q1_stack = Q1_stack,
                                    SL.library = SL.library,
-                                   n_folds = n_folds,
+                                   n_folds = 2,
                                    family = "gaussian",
                                    H.AW_trunc_lvl = 10,
-                                   n_boot_ensemble = 10,
-                                   n_stable_trees = 5,
-                                   minbucket = 10,
-                                   verbose = TRUE,
-                                   parallel = TRUE)
+                                   parallel = TRUE,
+                                   min_diff = 0.01)
 
 test_results$`Mixture Results`
 test_results$`Marginal Results`
@@ -280,21 +284,27 @@ Applied to PRIME data:
 
 
 ```{r PRIME_data}
+# make SL learner libraries for fitting g and Q
+lrnr_glm <- Lrnr_glm$new()
+lrnr_bayesglm <- Lrnr_bayesglm$new()
+lrnr_gam <- Lrnr_gam$new()
+lrnr_lasso <- Lrnr_glmnet$new(alpha = 1)
+lrnr_earth <- Lrnr_earth$new()
+lrnr_ranger <- Lrnr_ranger$new()
+lrnr_xgboost100 <- Lrnr_xgboost$new(nrounds = 100, early_stopping_rounds = 10)
+lrnr_xgboost50 <- Lrnr_xgboost$new(nrounds = 50, early_stopping_rounds = 5)
+lrnr_xgboost20 <- Lrnr_xgboost$new(nrounds = 20)
+# put all the learners together (this is just one way to do it)
+learners <- c(lrnr_glm, lrnr_bayesglm,
+lrnr_gam, lrnr_ranger,
+lrnr_xgboost100, lrnr_xgboost50, lrnr_xgboost20)
 
+Q1_stack <- make_learner(Stack, learners)
 
-tune = list(ntrees = c(20, 50),
-            max_depth = 1:3,
-            shrinkage = c(0.001, 0.01, 0.1))
-
-# Set detailed names = T so we can see the configuration for each function.
-# Also shorten the name prefix.
-learners = create.Learner("SL.xgboost", tune = tune, detailed_names = TRUE, name_prefix = "xgb")
-
-## build SL.library
 SL.library<- c('SL.randomForest',
+               'SL.earth',
                "SL.glm",
-               "SL.mean",
-               learners$names)
+               "SL.mean")
 
 NIEH_mix_sim_dat <- readxl::read_xls(here::here("NIEHS_Data/dataset1.xls"))
 ## run on prime data
@@ -304,25 +314,19 @@ covariates <- c("Z")
 outcome <- "Y"
 mix_comps <- c(paste("X", seq(7), sep = ""))
 SL.library <- SL.library
-n_folds <- 5
-binary <- FALSE
-H.AW_trunc_lvl <- 10
-rule_boot_n <- 10
-n_stable_tree <- 10
 
+lrp <<- utils::getFromNamespace(".list.rules.party", "partykit")
+
+## run on simulated data
 NIEH_results <- CVtreeMLE(data = data,
                                    W = covariates,
-                                   Y = outcome,
                                    A = mix_comps,
+                                   Y = outcome,
+                                   back_iter_SL = Q1_stack,
                                    SL.library = SL.library,
-                                   n_folds = n_folds,
+                                   n_folds = 4,
                                    family = "gaussian",
-                                   H.AW_trunc_lvl = H.AW_trunc_lvl,
-                                   n_boot_ensemble = rule_boot_n,
-                                   n_stable_trees = n_stable_tree,
-                                   minbucket = 10,
-                                   parallel = TRUE,
-                                   verbose = TRUE)
+                                   parallel = TRUE)
 
 write.csv(x = NIEH_results$`Marginal Results`, file = here('NIEHS_Data',"NIEHS_marginal_results.csv"))
 write.csv(x = NIEH_results$`Mixture Results`, file = here('NIEHS_Data',"NIEHS_mixture_results.csv"))
@@ -414,34 +418,45 @@ Prenatal metal mixture and cord blood mitochondrial DNA copy number (mtDNAcn)
 
 ```{r run metal mixtures}
 
-num_trees <- c(num_trees = 50,100,200,500,1000)
-SL.ranger_1000 = create.Learner("SL.ranger", tune = num_trees, detailed_names = TRUE, name_prefix = "ranger")
 
-num_degrees <- c(degrees = 2,3)
-SL.earth = create.Learner("SL.earth", tune = num_degrees, detailed_names = TRUE, name_prefix = "earth")
-## build SL.library
+# make SL learner libraries for fitting g and Q
+lrnr_glm <- Lrnr_glm$new()
+lrnr_bayesglm <- Lrnr_bayesglm$new()
+lrnr_gam <- Lrnr_gam$new()
+lrnr_lasso <- Lrnr_glmnet$new(alpha = 1)
+lrnr_earth <- Lrnr_earth$new()
+lrnr_ranger <- Lrnr_ranger$new()
+lrnr_xgboost100 <- Lrnr_xgboost$new(nrounds = 100, early_stopping_rounds = 10)
+lrnr_xgboost50 <- Lrnr_xgboost$new(nrounds = 50, early_stopping_rounds = 5)
+lrnr_xgboost20 <- Lrnr_xgboost$new(nrounds = 20)
+# put all the learners together (this is just one way to do it)
+learners <- c(lrnr_glm, lrnr_bayesglm,
+lrnr_gam, lrnr_ranger,
+lrnr_xgboost100, lrnr_xgboost50, lrnr_xgboost20)
+
+Q1_stack <- make_learner(Stack, learners)
+
 SL.library<- c('SL.randomForest',
+               'SL.earth',
                "SL.glm",
-               "SL.mean",
-               "SL.glmnet",
-               SL.ranger_1000$names,
-               SL.earth$names)
+               "SL.mean")
 
- 
-n_folds <- 10
-mtDNA_birth_results <- CV_treeMLE(data = mtDNA_birth,
-                                   covariates = covars,
-                                   outcome = outcome,
-                                   mix_comps = exposure,
+lrp <- utils::getFromNamespace(".list.rules.party", "partykit")
+## run on simulated data
+ptm <- proc.time()
+mtDNA_maternal_results <- CVtreeMLE(data = mtDNA_birth,
+                                   W = covars,
+                                   Y = outcome,
+                                   A = exposure,
+                                   Q1_stack = Q1_stack,
                                    SL.library = SL.library,
-                                   n_folds = n_folds,
-                                   binary = FALSE,
+                                   n_folds = 4 ,
+                                   family = "gaussian",
                                    H.AW_trunc_lvl = 10,
-                                   rule_boot_n = 10,
-                                   n_stable_tree = 5,
-                                   minbucket = 10,
                                    parallel = TRUE,
-                                   verbose = TRUE)
+                                   min_diff = 0.01)
+proc.time() - ptm
+
 
 write.csv(mtDNA_birth_results$`Marginal Results`, here("Proj_Viva_Results/mtDNAcn.csv")) 
 
@@ -493,39 +508,43 @@ covars = c('dna_copyn_assay_plate_mom', 'age_mom_enroll_d', 'bmi_mom_prepreg_d',
 
 ```{r run maternal outcomes}
 
-# tune = list(ntrees = c(20, 50),
-#             max_depth = 1:4)
-# # Set detailed names = T so we can see the configuration for each function.
-# # Also shorten the name prefix.
-# learners1 = create.Learner("SL.xgboost", tune = tune, detailed_names = TRUE, name_prefix = "xgb")
-num_trees <- c(num_trees = 50,100,200,500,1000)
-SL.ranger_1000 = create.Learner("SL.ranger", tune = num_trees, detailed_names = TRUE, name_prefix = "ranger")
+# make SL learner libraries for fitting g and Q
+lrnr_glm <- Lrnr_glm$new()
+lrnr_bayesglm <- Lrnr_bayesglm$new()
+lrnr_gam <- Lrnr_gam$new()
+lrnr_lasso <- Lrnr_glmnet$new(alpha = 1)
+lrnr_earth <- Lrnr_earth$new()
+lrnr_ranger <- Lrnr_ranger$new()
+lrnr_xgboost100 <- Lrnr_xgboost$new(nrounds = 100, early_stopping_rounds = 10)
+lrnr_xgboost50 <- Lrnr_xgboost$new(nrounds = 50, early_stopping_rounds = 5)
+lrnr_xgboost20 <- Lrnr_xgboost$new(nrounds = 20)
+# put all the learners together (this is just one way to do it)
+learners <- c(lrnr_glm, lrnr_bayesglm,
+lrnr_gam, lrnr_ranger,
+lrnr_xgboost100, lrnr_xgboost50, lrnr_xgboost20)
 
-num_degrees <- c(degrees = 2,3)
-SL.earth = create.Learner("SL.earth", tune = num_degrees, detailed_names = TRUE, name_prefix = "earth")
-## build SL.library
+Q1_stack <- make_learner(Stack, learners)
+
 SL.library<- c('SL.randomForest',
+               'SL.earth',
                "SL.glm",
-               "SL.mean",
-               "SL.glmnet",
-               SL.ranger_1000$names,
-               SL.earth$names)
+               "SL.mean")
 
+## run on prime data
 
-n_folds <- 10
-mtDNA_maternal_results <- CV_treeMLE(data = mtDNA_maternal,
-                                   covariates = covars,
-                                   outcome = outcome,
-                                   mix_comps = exposure,
+## run on simulated data
+mtDNA_maternal_results <- CVtreeMLE(data = mtDNA_maternal,
+                                   W = covars,
+                                   Y = outcome,
+                                   A = exposure,
+                                   Q1_stack = Q1_stack,
                                    SL.library = SL.library,
-                                   n_folds = n_folds,
-                                   binary = FALSE,
+                                   n_folds = 4,
+                                   family = "gaussian",
                                    H.AW_trunc_lvl = 10,
-                                   rule_boot_n = 10,
-                                   n_stable_tree = 5,
-                                   minbucket = 10,
-                                   verbose = TRUE,
-                                   parallel = TRUE)
+                                   parallel = TRUE,
+                                   min_diff = 0.01)
+
 
 summary(mtDNA_maternal_results$`Additive MSM`)
 

@@ -4,7 +4,7 @@
 #'
 #' @param At Training data
 #' @param Av Validation data
-#' @param covariates Vector of characters denoting covariates
+#' @param W Vector of characters denoting covariates
 #' @param no_rules TRUE/FALSE indicator for if no mixture rules were found
 #'
 #' @param SL.library Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)
@@ -19,7 +19,7 @@
 #'
 #' @export
 
-est_mix_nuisance_params <- function(At, Av, covariates, no_rules, SL.library, family, rules, H.AW_trunc_lvl) {
+est_mix_nuisance_params <- function(At, Av, W, no_rules, SL.library, family, rules, H.AW_trunc_lvl) {
   At_mix <- At
   Av_mix <- Av
 
@@ -41,11 +41,11 @@ est_mix_nuisance_params <- function(At, Av, covariates, no_rules, SL.library, fa
 
         ## select covariates
         X_Amix_T <- subset(At_mix,
-          select = c(covariates)
+          select = c(W)
         )
 
         X_Amix_V <- subset(Av_mix,
-          select = c(covariates)
+          select = c(W)
         )
 
         gHatSL <- SuperLearner::SuperLearner(
@@ -57,32 +57,14 @@ est_mix_nuisance_params <- function(At, Av, covariates, no_rules, SL.library, fa
         )
 
         gHat1W <- predict(gHatSL, newdata = X_Amix_V)$pred
-        n <- length(gHat1W)
-        gHat0W <- 1 - gHat1W
 
-        gHatAW <- rep(NA, n)
-        gHatAW[Av_mix$A_mix == 1] <- gHat1W[Av_mix$A_mix == 1]
-        gHatAW[Av_mix$A_mix == 0] <- gHat0W[Av_mix$A_mix == 0]
-
-        H.AW <-
-          as.numeric(Av_mix$A_mix == 1) / gHat1W - as.numeric(Av_mix$A_mix == 0) /
-            gHat0W
-
-        H.AW <-
-          ifelse(H.AW > H.AW_trunc_lvl, H.AW_trunc_lvl, H.AW)
-
-        H.AW <-
-          ifelse(H.AW < -H.AW_trunc_lvl, -H.AW_trunc_lvl, H.AW)
+        H.AW <- calc_clever_covariate(gHat1W = gHat1W, data = Av_mix, exposure = "A_mix", H.AW_trunc_lvl = 10)
 
         ## add treatment mechanism results to validation dataframe
 
+        X_train_mix <- At_mix[c("A_mix", W)]
 
-        X_train_mix <-
-          subset(At_mix, select = c("A_mix", covariates))
-
-        X_valid_mix <-
-          subset(Av_mix, select = c("A_mix", covariates))
-
+        X_valid_mix <- Av_mix[c("A_mix", W)]
 
         ## QbarAW
         QbarAWSL_m <- SuperLearner::SuperLearner(
@@ -97,35 +79,17 @@ est_mix_nuisance_params <- function(At, Av, covariates, no_rules, SL.library, fa
         X_m1$A_mix <- 1 # under exposure
         X_m0$A_mix <- 0 # under control
 
-        QbarAW <- predict(QbarAWSL_m, newdata = X_train_mix)$pred
-        Qbar1W <- predict(QbarAWSL_m, newdata = X_m1)$pred
-        Qbar0W <- predict(QbarAWSL_m, newdata = X_m0)$pred
-
-        QbarAW[QbarAW >= 1.0] <- 0.999
-        QbarAW[QbarAW <= 0] <- 0.001
-
-        Qbar1W[Qbar1W >= 1.0] <- 0.999
-        Qbar1W[Qbar1W <= 0] <- 0.001
-
-        Qbar0W[Qbar0W >= 1.0] <- 0.999
-        Qbar0W[Qbar0W <= 0] <- 0.001
+        QbarAW <- bound_precision(predict(QbarAWSL_m, newdata = X_train_mix)$pred)
+        Qbar1W <- bound_precision(predict(QbarAWSL_m, newdata = X_m1)$pred)
+        Qbar0W <- bound_precision(predict(QbarAWSL_m, newdata = X_m0)$pred)
 
         X_m1 <- X_m0 <- X_valid_mix
         X_m1$A_mix <- 1 # under exposure
         X_m0$A_mix <- 0 # under control
 
-        QbarAW <- predict(QbarAWSL_m, newdata = X_valid_mix)$pred
-        Qbar1W <- predict(QbarAWSL_m, newdata = X_m1)$pred
-        Qbar0W <- predict(QbarAWSL_m, newdata = X_m0)$pred
-
-        QbarAW[QbarAW >= 1.0] <- 0.999
-        QbarAW[QbarAW <= 0] <- 0.001
-
-        Qbar1W[Qbar1W >= 1.0] <- 0.999
-        Qbar1W[Qbar1W <= 0] <- 0.001
-
-        Qbar0W[Qbar0W >= 1.0] <- 0.999
-        Qbar0W[Qbar0W <= 0] <- 0.001
+        QbarAW <- bound_precision(predict(QbarAWSL_m, newdata = X_valid_mix)$pred)
+        Qbar1W <- bound_precision(predict(QbarAWSL_m, newdata = X_m1)$pred)
+        Qbar0W <- bound_precision(predict(QbarAWSL_m, newdata = X_m0)$pred)
 
         ## add Qbar to the AV dataset
         Av_mix$QbarAW <- QbarAW

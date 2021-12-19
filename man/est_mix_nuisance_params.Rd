@@ -9,7 +9,7 @@ calculate the clever covariate used in the TMLE fluctuation step.}
 est_mix_nuisance_params(
   At,
   Av,
-  covariates,
+  W,
   no_rules,
   SL.library,
   family,
@@ -22,7 +22,7 @@ est_mix_nuisance_params(
 
 \item{Av}{Validation data}
 
-\item{covariates}{Vector of characters denoting covariates}
+\item{W}{Vector of characters denoting covariates}
 
 \item{no_rules}{TRUE/FALSE indicator for if no mixture rules were found}
 

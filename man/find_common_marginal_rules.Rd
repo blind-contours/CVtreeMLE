@@ -9,7 +9,6 @@ find_common_marginal_rules(
   data,
   mix_comps,
   marginal_results,
-  fold_directions,
   n_folds
 )
 }
@@ -21,8 +20,6 @@ find_common_marginal_rules(
 \item{mix_comps}{Vector of mixture components}
 
 \item{marginal_results}{Dataframe holding the results for each marginal component rule}
-
-\item{fold_directions}{Direction of the rule, positive or negative - used to align the rules to create a common marginal rule}
 
 \item{n_folds}{Total number of folds}
 }

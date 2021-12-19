@@ -4,7 +4,7 @@
 \alias{evaluate_marginal_rules}
 \title{Evaluate mixture rules found during the rpart decision tree process}
 \usage{
-evaluate_marginal_rules(data, marg_decisions, mix_comps, marg_directions)
+evaluate_marginal_rules(data, marg_decisions, mix_comps)
 }
 \arguments{
 \item{data}{Input data}
@@ -12,8 +12,6 @@ evaluate_marginal_rules(data, marg_decisions, mix_comps, marg_directions)
 \item{marg_decisions}{List of rules determined for each mixture component}
 
 \item{mix_comps}{Vector of characters denoting mixture components}
-
-\item{marg_directions}{Directionality of the marginal mixture rule}
 }
 \value{
 Rules object. TODO: add more detail here.

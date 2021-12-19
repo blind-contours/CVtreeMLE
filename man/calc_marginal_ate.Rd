@@ -4,14 +4,16 @@
 \alias{calc_marginal_ate}
 \title{Calculate the ATE for each rule found for individual mixture components.}
 \usage{
-calc_marginal_ate(marginal_data, mix_comps, outcome)
+calc_marginal_ate(marginal_data, mix_comps, Y, n_folds)
 }
 \arguments{
 \item{marginal_data}{List of dataframes of nuisance parameter data for each mixture}
 
 \item{mix_comps}{Vector of characters indicating the mixture components}
 
-\item{outcome}{Vector indicating the outcome}
+\item{Y}{Vector indicating the Y}
+
+\item{n_folds}{Number of folds used in cross-validation}
 }
 \value{
 Rules object. TODO: add more detail here.
