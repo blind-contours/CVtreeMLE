@@ -41,14 +41,16 @@ exposed. Here, a joint exposure is data-adaptively defined based on
 decision trees applied to a set of exposure variables while flexibly
 controlling for covariates non-parametrically. For more information on
 data- adaptive parameters see (Dı́az and van der Laan 2012). In each
-V-fold during cross- validation, `CVtreeMLE`: 1. Performs an iterative
-backfitting of a Super Learner for Y\|W, the expected outcome given
-covariates, and Y\|A, the expected outcome given the mixture variables.
-Consider the estimator for Y\|W as h(x) and the estimator for Y\|A as
-g(x). After initialization, h(x) is fit with an offset for predictions
-from g(x). Likewise, g(x) is fit offset with predictions from h(x). This
-procedure iterates until convergence, or when there is no change in fit
-between either estimator.
+V-fold during cross- validation, `CVtreeMLE`:
+
+1.  Performs an iterative backfitting of a Super Learner for Y\|W, the
+    expected outcome given covariates, and Y\|A, the expected outcome
+    given the mixture variables. Consider the estimator for Y\|W as h(x)
+    and the estimator for Y\|A as g(x). After initialization, h(x) is
+    fit with an offset for predictions from g(x). Likewise, g(x) is fit
+    offset with predictions from h(x). This procedure iterates until
+    convergence, or when there is no change in fit between either
+    estimator.
 
 2.  The same iterative backfitting is conducted but for Y\|M\_i and
     Y\|W,M\_ne\_i - or rather, iteratively backfitting decision trees to
@@ -151,33 +153,229 @@ remotes::install_github("blind-contours/CVtreeMLE@devel")
 ## Example
 
 To illustrate how `CVtreeMLE` may be used to ascertain the effect of a
-treatment, consider the following example:
+joint exposure, consider the following example:
+
+First load the package and other packages needed
 
 ``` r
 library(CVtreeMLE)
 library(sl3)
+library(kableExtra)
+
+
 set.seed(429153)
-# simulate simple data
-n_obs <- 500
+```
 
+Use the `simulate_mixture_cube` function to generate simulated data that
+represents ground-truth. Here, we create three continuous mixture
+variables, *A*, that are correlated and baseline covariates, *W*, that
+are potential confounders. Our outcome will be generated such that
+individuals with a specific set of exposures have a different outcome
+compared to individuals who are not exposed to this combination of
+exposure levels.
 
+![](inst/The_Cube.png) The above figure illustrates the data we will
+generate using this function. Here, individuals exposed to
+*M*<sub>1</sub> at values less than 1.0, *M*<sub>2</sub> at levels more
+than 2.0, and *M*<sub>3</sub> at levels at or greater than 2.5 have an
+outcome of 6, compared to individuals not exposed to this combination of
+thresholds who have an expected outcome of 0 - thus our ATE is 6. Two
+covariates *W* confound this relationship. Let’s simulate this scenario.
+
+``` r
+n_obs <- 500 # number of observations we want to simulate
+splits <- c(0.99, 2.0, 2.5) # split points for each mixture
+mins <- c(0, 0, 0) # minimum values for each mixture
+maxs <- c(3, 4, 5) # maximum value for each mixture
+mu <- c(0, 0, 0) # mu for each mixture
+sigma <- matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3) # variance/covariance of mixture variables
+w1_betas <- c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04) # subspace probability relationship with covariate W1
+w2_betas <- c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04) # subspace probability relationship with covariate W2
+mix_subspace_betas <- c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09) # probability of mixture subspace (for multinomial outcome generation)
+subspace_assoc_strength_betas <- c(0, 0, 0, 0, 0, 0, 6, 0) # mixture subspace impact on outcome Y, here the subspace where M1 is lower and M2 and M3 are higher based on values in splits
+marginal_impact_betas <- c(0, 0, 0) # marginal impact of mixture component on Y
+eps_sd <- 0.01 # random error
+binary <- FALSE # if outcome is binary
+```
+
+``` r
 sim_data <- simulate_mixture_cube(
-  n_obs = n_obs, ## number of observations
-  splits = c(0.99, 2.0, 2.5), ## split points for each mixture
-  mins = c(0, 0, 0), ## minimum values for each mixture
-  maxs = c(3, 4, 5), ## maximum value for each mixture
-  mu = c(0, 0, 0),
-  sigma = matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3),
-  w1_betas = c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04), ## subspace probability relationship with covariate W1
-  w2_betas = c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04), ## subspace probability relationship with covariate W2
-  mix_subspace_betas = c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09), ## probability of mixture subspace (for multinomial outcome gen)
-  subspace_assoc_strength_betas = c(0, 0, 0, 0, 0, 0, 6, 0), ## mixture subspace impact on outcome Y
-  marginal_impact_betas = c(0, 0, 0), ## marginal impact of mixture component on Y
-  eps_sd = 0.01, ## random error
-  binary = FALSE
+  n_obs = n_obs, 
+  splits = splits,
+  mins = mins,
+  maxs = maxs,
+  mu = mu,
+  sigma = sigma,
+  w1_betas = w1_betas,
+  w2_betas = w2_betas,
+  mix_subspace_betas = mix_subspace_betas,
+  subspace_assoc_strength_betas = subspace_assoc_strength_betas,
+  marginal_impact_betas = marginal_impact_betas,
+  eps_sd = eps_sd,
+  binary = binary
 )
 
-# make SL learner libraries for fitting g and Q
+head(sim_data) %>%
+  kbl(caption = "Simulated Data") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+<table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Simulated Data
+</caption>
+<thead>
+<tr>
+<th style="text-align:right;">
+W
+</th>
+<th style="text-align:right;">
+W2
+</th>
+<th style="text-align:right;">
+M1
+</th>
+<th style="text-align:right;">
+M2
+</th>
+<th style="text-align:right;">
+M3
+</th>
+<th style="text-align:right;">
+y
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.3125971
+</td>
+<td style="text-align:right;">
+0.0281233
+</td>
+<td style="text-align:right;">
+0.0918698
+</td>
+<td style="text-align:right;">
+2.1287872
+</td>
+<td style="text-align:right;">
+0.5587179
+</td>
+<td style="text-align:right;">
+0.3523733
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.4677867
+</td>
+<td style="text-align:right;">
+0.1344452
+</td>
+<td style="text-align:right;">
+2.2546606
+</td>
+<td style="text-align:right;">
+0.0433708
+</td>
+<td style="text-align:right;">
+1.2521522
+</td>
+<td style="text-align:right;">
+0.6081815
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+-0.7798901
+</td>
+<td style="text-align:right;">
+-0.5718299
+</td>
+<td style="text-align:right;">
+0.1683829
+</td>
+<td style="text-align:right;">
+2.3168107
+</td>
+<td style="text-align:right;">
+0.1473310
+</td>
+<td style="text-align:right;">
+-1.3717913
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+-0.0760508
+</td>
+<td style="text-align:right;">
+-0.6356721
+</td>
+<td style="text-align:right;">
+1.3832386
+</td>
+<td style="text-align:right;">
+0.9429022
+</td>
+<td style="text-align:right;">
+2.9218706
+</td>
+<td style="text-align:right;">
+-0.7252087
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+-0.1238976
+</td>
+<td style="text-align:right;">
+-0.3105393
+</td>
+<td style="text-align:right;">
+0.4341428
+</td>
+<td style="text-align:right;">
+3.0653637
+</td>
+<td style="text-align:right;">
+1.6723064
+</td>
+<td style="text-align:right;">
+-0.4330232
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.2149969
+</td>
+<td style="text-align:right;">
+0.1632984
+</td>
+<td style="text-align:right;">
+1.0384095
+</td>
+<td style="text-align:right;">
+2.2392699
+</td>
+<td style="text-align:right;">
+0.1746694
+</td>
+<td style="text-align:right;">
+0.3813563
+</td>
+</tr>
+</tbody>
+</table>
+
+Here, we set up our Super Learner using `SL3` for the iterative
+backfitting procedure. These learners will fit *Y*\|*W* offset by
+*Y*\|*A* as we fit decision trees to the exposure variables both jointly
+and individially.
+
+``` r
 lrnr_glm <- Lrnr_glm$new()
 lrnr_bayesglm <- Lrnr_bayesglm$new()
 lrnr_gam <- Lrnr_gam$new()
@@ -193,13 +391,22 @@ lrnr_gam, lrnr_ranger,
 lrnr_xgboost100, lrnr_xgboost50, lrnr_xgboost20)
 
 Q1_stack <- make_learner(Stack, learners)
+```
 
+This second stack of learners will be used in our Q and g mechanisms
+after we identify rules using the first stack.
+
+``` r
 SL.library<- c('SL.randomForest',
                'SL.earth',
                "SL.glm",
                "SL.mean")
+```
 
-## run on simulated data
+We will now pass the simulated data, learners, and variable names for
+each node in *O* = *W*, *A*, *Y* to the `CVtreeMLE` function:
+
+``` r
 sim_results <- CVtreeMLE(data = sim_data,
                                    W = c("W", "W2"),
                                    Y = "y",
@@ -215,56 +422,280 @@ sim_results <- CVtreeMLE(data = sim_data,
 #> [1] "iter:  2 SL:  0.272886304726474 ctree: 0.27288655720532 Diff:  2.52478846052284e-07 Rule:"
 #> [1] "iter:  1 SL:  0.312034027924391 ctree: 0.312034027924391 Diff:  0 Rule:"
 #> [1] "iter:  2 SL:  0.312034027924391 ctree: 0.312034027924391 Diff:  0 Rule:"
-#> [1] "iter:  1 SL:  0.00328254089146472 ctree: 0.272450429463324 Diff:  0.26916788857186 Rule: M1 <= 0.698033232091907"                        
-#> [2] "iter:  1 SL:  0.00328254089146472 ctree: 0.272450429463324 Diff:  0.26916788857186 Rule: M1 > 0.698033232091907 & M1 <= 1.92445913525497"
-#> [3] "iter:  1 SL:  0.00328254089146472 ctree: 0.272450429463324 Diff:  0.26916788857186 Rule: M1 > 0.698033232091907 & M1 > 1.92445913525497" 
-#> [1] "iter:  2 SL:  0.00366496758785031 ctree: 0.000901298530461516 Diff:  0.00276366905738879 Rule: M1 <= 0.698033232091907"
-#> [2] "iter:  2 SL:  0.00366496758785031 ctree: 0.000901298530461516 Diff:  0.00276366905738879 Rule: M1 > 0.698033232091907" 
-#> [1] "iter:  1 SL:  0.27224327763226 ctree: 0.272133220878407 Diff:  0.000110056753852394 Rule: M2 <= 2.00110418303427 & M2 <= 1.10148691524405"
-#> [2] "iter:  1 SL:  0.27224327763226 ctree: 0.272133220878407 Diff:  0.000110056753852394 Rule: M2 <= 2.00110418303427 & M2 > 1.10148691524405" 
-#> [3] "iter:  1 SL:  0.27224327763226 ctree: 0.272133220878407 Diff:  0.000110056753852394 Rule: M2 > 2.00110418303427"                          
-#> [1] "iter:  2 SL:  0.271569590806612 ctree: 0.27224327763226 Diff:  0.000673686825648112 Rule: M2 <= 2.00110418303427 & M2 <= 1.10148691524405"
-#> [2] "iter:  2 SL:  0.271569590806612 ctree: 0.27224327763226 Diff:  0.000673686825648112 Rule: M2 <= 2.00110418303427 & M2 > 1.10148691524405" 
-#> [3] "iter:  2 SL:  0.271569590806612 ctree: 0.27224327763226 Diff:  0.000673686825648112 Rule: M2 > 2.00110418303427"                          
-#> [1] "iter:  1 SL:  0.272804634550957 ctree: 0.272772560110105 Diff:  3.20744408526807e-05 Rule: M3 <= 2.53274239624712 & M3 <= 1.3571113984252"
-#> [2] "iter:  1 SL:  0.272804634550957 ctree: 0.272772560110105 Diff:  3.20744408526807e-05 Rule: M3 <= 2.53274239624712 & M3 > 1.3571113984252" 
-#> [3] "iter:  1 SL:  0.272804634550957 ctree: 0.272772560110105 Diff:  3.20744408526807e-05 Rule: M3 > 2.53274239624712"                         
-#> [1] "iter:  2 SL:  0.272132675381959 ctree: 0.272804634550957 Diff:  0.000671959168998038 Rule: M3 <= 2.53274239624712 & M3 <= 1.21148852076342"
-#> [2] "iter:  2 SL:  0.272132675381959 ctree: 0.272804634550957 Diff:  0.000671959168998038 Rule: M3 <= 2.53274239624712 & M3 > 1.21148852076342" 
-#> [3] "iter:  2 SL:  0.272132675381959 ctree: 0.272804634550957 Diff:  0.000671959168998038 Rule: M3 > 2.53274239624712"                          
-#> [1] "iter:  1 SL:  0.310644290661673 ctree: 0.310939596540529 Diff:  0.000295305878855401 Rule: M1 <= 0.934177674302425"                        
-#> [2] "iter:  1 SL:  0.310644290661673 ctree: 0.310939596540529 Diff:  0.000295305878855401 Rule: M1 > 0.934177674302425 & M1 <= 1.87817514713179"
-#> [3] "iter:  1 SL:  0.310644290661673 ctree: 0.310939596540529 Diff:  0.000295305878855401 Rule: M1 > 0.934177674302425 & M1 > 1.87817514713179" 
-#> [1] "iter:  2 SL:  0.310112532942556 ctree: 0.310644290661673 Diff:  0.000531757719117454 Rule: M1 <= 0.934177674302425"
-#> [2] "iter:  2 SL:  0.310112532942556 ctree: 0.310644290661673 Diff:  0.000531757719117454 Rule: M1 > 0.934177674302425" 
-#> [1] "iter:  1 SL:  0.311455600437983 ctree: 0.311439709389857 Diff:  1.58910481259378e-05 Rule: M2 <= 2.00708027766665"
-#> [2] "iter:  1 SL:  0.311455600437983 ctree: 0.311439709389857 Diff:  1.58910481259378e-05 Rule: M2 > 2.00708027766665" 
-#> [1] "iter:  2 SL:  0.311452290431762 ctree: 0.311455600437983 Diff:  3.31000622177946e-06 Rule: M2 <= 2.00708027766665"                        
-#> [2] "iter:  2 SL:  0.311452290431762 ctree: 0.311455600437983 Diff:  3.31000622177946e-06 Rule: M2 > 2.00708027766665 & M2 <= 2.92370001907995"
-#> [3] "iter:  2 SL:  0.311452290431762 ctree: 0.311455600437983 Diff:  3.31000622177946e-06 Rule: M2 > 2.00708027766665 & M2 > 2.92370001907995" 
-#> [1] "iter:  1 SL:  0.311794455780445 ctree: 0.311930500577001 Diff:  0.000136044796556101 Rule: M3 <= 2.47762214185431"
-#> [2] "iter:  1 SL:  0.311794455780445 ctree: 0.311930500577001 Diff:  0.000136044796556101 Rule: M3 > 2.47762214185431" 
-#> [1] "iter:  2 SL:  0.311261165216538 ctree: 0.311794455780445 Diff:  0.000533290563906885 Rule: M3 <= 2.5099802112645"                        
-#> [2] "iter:  2 SL:  0.311261165216538 ctree: 0.311794455780445 Diff:  0.000533290563906885 Rule: M3 > 2.5099802112645 & M3 <= 3.74706103658575"
-#> [3] "iter:  2 SL:  0.311261165216538 ctree: 0.311794455780445 Diff:  0.000533290563906885 Rule: M3 > 2.5099802112645 & M3 > 3.74706103658575"
-
-sim_results$`Mixture Results`
-#>   Mixture ATE Standard Error Lower CI Upper CI P-value P-value Adj   vars
-#> 1    5.999865     0.01985289 5.960954 6.038776       0           0 M1M2M3
-#>                                                    Mixture Interaction Rules
-#> 1 M1 > 0.021 & M1 < 0.934 & M2 > 2.034 & M2 < 3.994 & M3 > 2.534 & M3 < 4.98
-#>   Fraction Covered
-#> 1        0.9666667
-sim_results$`Marginal Results`
-#>    Marginal ATE Standard Error  Lower CI Upper CI      P-value  P-value Adj
-#> M1    1.3958243      0.1862784 1.0307254 1.760923 6.720602e-14 2.016181e-13
-#> M2    1.1846510      0.2186746 0.7560567 1.613245 6.046683e-08 1.814005e-07
-#> M3    0.9885222      0.2256091 0.5463365 1.430708 1.178267e-05 3.534802e-05
-#>                 Marginal Rules Fraction Overlap          Min      Max
-#> M1 M1 > 0.00859 & M1 < 0.69216        0.7945205 0.0011496947 2.988107
-#> M2  M2 > 2.9311 & M2 < 3.99468        0.5141700 0.0002521947 3.994680
-#> M3 M3 > 3.75935 & M3 < 4.98025        0.5364807 0.0028737772 4.980251
+#> [1] "iter:  1 SL:  0.00427735048842659 ctree: 0.273335652636759 Diff:  0.269058302148332 Rule: M1 <= 0.698033232091907"
+#> [2] "iter:  1 SL:  0.00427735048842659 ctree: 0.273335652636759 Diff:  0.269058302148332 Rule: M1 > 0.698033232091907" 
+#> [1] "iter:  2 SL:  0.00393015821462217 ctree: 0.000497733055877251 Diff:  0.00343242515874492 Rule: M1 <= 0.698033232091907"                        
+#> [2] "iter:  2 SL:  0.00393015821462217 ctree: 0.000497733055877251 Diff:  0.00343242515874492 Rule: M1 > 0.698033232091907 & M1 <= 1.92445913525497"
+#> [3] "iter:  2 SL:  0.00393015821462217 ctree: 0.000497733055877251 Diff:  0.00343242515874492 Rule: M1 > 0.698033232091907 & M1 > 1.92445913525497" 
+#> [1] "iter:  1 SL:  0.272192794588837 ctree: 0.272082737834985 Diff:  0.000110056753852394 Rule: M2 <= 2.00110418303427 & M2 <= 1.10148691524405"
+#> [2] "iter:  1 SL:  0.272192794588837 ctree: 0.272082737834985 Diff:  0.000110056753852394 Rule: M2 <= 2.00110418303427 & M2 > 1.10148691524405" 
+#> [3] "iter:  1 SL:  0.272192794588837 ctree: 0.272082737834985 Diff:  0.000110056753852394 Rule: M2 > 2.00110418303427"                          
+#> [1] "iter:  2 SL:  0.271646043313318 ctree: 0.272192794588837 Diff:  0.000546751275519453 Rule: M2 <= 2.00110418303427 & M2 <= 1.10148691524405"
+#> [2] "iter:  2 SL:  0.271646043313318 ctree: 0.272192794588837 Diff:  0.000546751275519453 Rule: M2 <= 2.00110418303427 & M2 > 1.10148691524405" 
+#> [3] "iter:  2 SL:  0.271646043313318 ctree: 0.272192794588837 Diff:  0.000546751275519453 Rule: M2 > 2.00110418303427"                          
+#> [1] "iter:  1 SL:  0.272218696422447 ctree: 0.272186621981594 Diff:  3.20744408527363e-05 Rule: M3 <= 2.53274239624712 & M3 <= 1.3571113984252"
+#> [2] "iter:  1 SL:  0.272218696422447 ctree: 0.272186621981594 Diff:  3.20744408527363e-05 Rule: M3 <= 2.53274239624712 & M3 > 1.3571113984252" 
+#> [3] "iter:  1 SL:  0.272218696422447 ctree: 0.272186621981594 Diff:  3.20744408527363e-05 Rule: M3 > 2.53274239624712"                         
+#> [1] "iter:  2 SL:  0.271537487779395 ctree: 0.272218696422447 Diff:  0.000681208643052211 Rule: M3 <= 2.53274239624712 & M3 <= 1.21148852076342"
+#> [2] "iter:  2 SL:  0.271537487779395 ctree: 0.272218696422447 Diff:  0.000681208643052211 Rule: M3 <= 2.53274239624712 & M3 > 1.21148852076342" 
+#> [3] "iter:  2 SL:  0.271537487779395 ctree: 0.272218696422447 Diff:  0.000681208643052211 Rule: M3 > 2.53274239624712"                          
+#> [1] "iter:  1 SL:  0.310029197192652 ctree: 0.310324503071508 Diff:  0.000295305878855401 Rule: M1 <= 0.934177674302425"                        
+#> [2] "iter:  1 SL:  0.310029197192652 ctree: 0.310324503071508 Diff:  0.000295305878855401 Rule: M1 > 0.934177674302425 & M1 <= 1.87817514713179"
+#> [3] "iter:  1 SL:  0.310029197192652 ctree: 0.310324503071508 Diff:  0.000295305878855401 Rule: M1 > 0.934177674302425 & M1 > 1.87817514713179" 
+#> [1] "iter:  2 SL:  0.309449198200367 ctree: 0.310029197192652 Diff:  0.000579998992285002 Rule: M1 <= 0.934177674302425"
+#> [2] "iter:  2 SL:  0.309449198200367 ctree: 0.310029197192652 Diff:  0.000579998992285002 Rule: M1 > 0.934177674302425" 
+#> [1] "iter:  1 SL:  0.311127753961492 ctree: 0.311111862913366 Diff:  1.58910481259378e-05 Rule: M2 <= 2.00708027766665"
+#> [2] "iter:  1 SL:  0.311127753961492 ctree: 0.311111862913366 Diff:  1.58910481259378e-05 Rule: M2 > 2.00708027766665" 
+#> [1] "iter:  2 SL:  0.311124451526345 ctree: 0.311127753961492 Diff:  3.30243514740092e-06 Rule: M2 <= 2.00708027766665"                        
+#> [2] "iter:  2 SL:  0.311124451526345 ctree: 0.311127753961492 Diff:  3.30243514740092e-06 Rule: M2 > 2.00708027766665 & M2 <= 2.92370001907995"
+#> [3] "iter:  2 SL:  0.311124451526345 ctree: 0.311127753961492 Diff:  3.30243514740092e-06 Rule: M2 > 2.00708027766665 & M2 > 2.92370001907995" 
+#> [1] "iter:  1 SL:  0.311212879047554 ctree: 0.31134892384411 Diff:  0.000136044796556101 Rule: M3 <= 2.47762214185431"                        
+#> [2] "iter:  1 SL:  0.311212879047554 ctree: 0.31134892384411 Diff:  0.000136044796556101 Rule: M3 > 2.47762214185431 & M3 <= 3.52845867188475"
+#> [3] "iter:  1 SL:  0.311212879047554 ctree: 0.31134892384411 Diff:  0.000136044796556101 Rule: M3 > 2.47762214185431 & M3 > 3.52845867188475" 
+#> [1] "iter:  2 SL:  0.311209540825269 ctree: 0.311212879047554 Diff:  3.33822228443248e-06 Rule: M3 <= 2.5099802112645"                        
+#> [2] "iter:  2 SL:  0.311209540825269 ctree: 0.311212879047554 Diff:  3.33822228443248e-06 Rule: M3 > 2.5099802112645 & M3 <= 3.74706103658575"
+#> [3] "iter:  2 SL:  0.311209540825269 ctree: 0.311212879047554 Diff:  3.33822228443248e-06 Rule: M3 > 2.5099802112645 & M3 > 3.74706103658575"
+#> Warning in qlogis(QbarAW): NaNs produced
+#> Warning in qlogis(bound_precision(QbarAW)): NaNs produced
+#> Warning in qlogis(bound_precision(Qbar1W)): NaNs produced
+#> Warning in qlogis(bound_precision(Qbar0W)): NaNs produced
 ```
+
+Let’s look at the marginal results first. These are the rules found for
+each individual variable in the vector of exposures while controlling
+for other exposures and covariates.
+
+``` r
+marginal_results <- sim_results$`Marginal Results`
+head(marginal_results) %>%
+  kbl(caption = "Marginal Results") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+<table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Marginal Results
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+Marginal ATE
+</th>
+<th style="text-align:right;">
+Standard Error
+</th>
+<th style="text-align:right;">
+Lower CI
+</th>
+<th style="text-align:right;">
+Upper CI
+</th>
+<th style="text-align:right;">
+P-value
+</th>
+<th style="text-align:right;">
+P-value Adj
+</th>
+<th style="text-align:left;">
+Marginal Rules
+</th>
+<th style="text-align:right;">
+Fraction Overlap
+</th>
+<th style="text-align:right;">
+Min
+</th>
+<th style="text-align:right;">
+Max
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+M1
+</td>
+<td style="text-align:right;">
+1.2899360
+</td>
+<td style="text-align:right;">
+0.2285134
+</td>
+<td style="text-align:right;">
+0.8420580
+</td>
+<td style="text-align:right;">
+1.737814
+</td>
+<td style="text-align:right;">
+0.0e+00
+</td>
+<td style="text-align:right;">
+0.00e+00
+</td>
+<td style="text-align:left;">
+M1 &gt; 0.00859 & M1 &lt; 0.93418
+</td>
+<td style="text-align:right;">
+0.6186441
+</td>
+<td style="text-align:right;">
+0.0011497
+</td>
+<td style="text-align:right;">
+2.988107
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+M2
+</td>
+<td style="text-align:right;">
+1.2164025
+</td>
+<td style="text-align:right;">
+0.2227403
+</td>
+<td style="text-align:right;">
+0.7798395
+</td>
+<td style="text-align:right;">
+1.652966
+</td>
+<td style="text-align:right;">
+0.0e+00
+</td>
+<td style="text-align:right;">
+1.00e-07
+</td>
+<td style="text-align:left;">
+M2 &gt; 2.9311 & M2 &lt; 3.99468
+</td>
+<td style="text-align:right;">
+0.5141700
+</td>
+<td style="text-align:right;">
+0.0002522
+</td>
+<td style="text-align:right;">
+3.994680
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+M3
+</td>
+<td style="text-align:right;">
+0.9940858
+</td>
+<td style="text-align:right;">
+0.2224727
+</td>
+<td style="text-align:right;">
+0.5580473
+</td>
+<td style="text-align:right;">
+1.430124
+</td>
+<td style="text-align:right;">
+7.9e-06
+</td>
+<td style="text-align:right;">
+2.36e-05
+</td>
+<td style="text-align:left;">
+M3 &gt; 3.75935 & M3 &lt; 4.98025
+</td>
+<td style="text-align:right;">
+0.5364807
+</td>
+<td style="text-align:right;">
+0.0028738
+</td>
+<td style="text-align:right;">
+4.980251
+</td>
+</tr>
+</tbody>
+</table>
+
+``` r
+mixture_results <- sim_results$`Mixture Results`
+head(mixture_results) %>%
+  kbl(caption = "Mixture Results") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+<table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Mixture Results
+</caption>
+<thead>
+<tr>
+<th style="text-align:right;">
+Mixture ATE
+</th>
+<th style="text-align:right;">
+Standard Error
+</th>
+<th style="text-align:right;">
+Lower CI
+</th>
+<th style="text-align:right;">
+Upper CI
+</th>
+<th style="text-align:right;">
+P-value
+</th>
+<th style="text-align:right;">
+P-value Adj
+</th>
+<th style="text-align:left;">
+vars
+</th>
+<th style="text-align:left;">
+Mixture Interaction Rules
+</th>
+<th style="text-align:right;">
+Fraction Covered
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+5.999856
+</td>
+<td style="text-align:right;">
+0.019824
+</td>
+<td style="text-align:right;">
+5.961002
+</td>
+<td style="text-align:right;">
+6.03871
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:left;">
+M1M2M3
+</td>
+<td style="text-align:left;">
+M1 &gt; 0.021 & M1 &lt; 0.934 & M2 &gt; 2.034 & M2 &lt; 3.994 & M3 &gt;
+2.534 & M3 &lt; 4.98
+</td>
+<td style="text-align:right;">
+0.9666667
+</td>
+</tr>
+</tbody>
+</table>
 
 ------------------------------------------------------------------------
 
@@ -367,13 +798,13 @@ National Institutess of Health.
 
 ## License
 
-© 2017-2021 [Nima S. Hejazi](https://nimahejazi.org)
+© 2017-2021 [David B. McCoy](https://davidmccoy.org)
 
 The contents of this repository are distributed under the MIT license.
 See below for details:
 
     MIT License
-    Copyright (c) 2017-2021 Nima S. Hejazi
+    Copyright (c) 2017-2021 David B. McCoy
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
     in the Software without restriction, including without limitation the rights

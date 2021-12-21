@@ -32,7 +32,7 @@ calc_additive_ate <- function(additive_data, Y, n_folds){
 
     QbarAW_additive_star <-
       stats::plogis(
-        stats::qlogis(mix_additive_data$QbarAW_additive) + epsilon * mix_additive_data$HAW_additive
+        stats::qlogis(bound_precision(mix_additive_data$QbarAW_additive)) + epsilon * mix_additive_data$HAW_additive
       )
 
     mix_additive_data$QbarAW_additive_star <- QbarAW_additive_star

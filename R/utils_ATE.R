@@ -130,9 +130,9 @@ fit_least_fav_submodel <- function(H.AW, data, QbarAW, Qbar1W, Qbar0W) {
     )
 
   epsilon <- logitUpdate$coef
-  QbarAW.star <- plogis(qlogis(QbarAW) + epsilon * H.AW)
-  Qbar1W.star <- plogis(qlogis(Qbar1W) + epsilon * H.AW)
-  Qbar0W.star <- plogis(qlogis(Qbar0W) + epsilon * H.AW)
+  QbarAW.star <- plogis(qlogis(bound_precision(QbarAW)) + epsilon * H.AW)
+  Qbar1W.star <- plogis(qlogis(bound_precision(Qbar1W)) + epsilon * H.AW)
+  Qbar0W.star <- plogis(qlogis(bound_precision(Qbar0W)) + epsilon * H.AW)
 
   return(list("QbarAW.star" = QbarAW.star, "Qbar1W.star" = Qbar1W.star, "Qbar0W.star" =  Qbar0W.star))
 }
