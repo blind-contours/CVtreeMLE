@@ -4,7 +4,7 @@
 \alias{fit_iterative_mix_rule_backfitting}
 \title{Iteratively Backfit a Super Learner, h(x) = Y|W, and an Ensemble Decision Algorithm, g(x), Y|M_x until Convergence.}
 \usage{
-fit_iterative_mix_rule_backfitting(At, A, W, Y, Q1_stack, fold)
+fit_iterative_mix_rule_backfitting(At, A, W, Y, Q1_stack, fold, verbose)
 }
 \arguments{
 \item{At}{Training dataframe}
@@ -18,6 +18,8 @@ fit_iterative_mix_rule_backfitting(At, A, W, Y, Q1_stack, fold)
 \item{Q1_stack}{Stack of algorithms made in SL 3 used in ensemble machine learning to fit Y|W}
 
 \item{fold}{Current fold in the cross-validation}
+
+\item{verbose}{Run in verbose setting}
 }
 \value{
 Rules object. TODO: add more detail here.

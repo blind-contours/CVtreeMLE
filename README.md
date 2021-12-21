@@ -161,6 +161,8 @@ First load the package and other packages needed
 library(CVtreeMLE)
 library(sl3)
 library(kableExtra)
+library(ggplot2)
+library(jtools)
 
 
 set.seed(429153)
@@ -418,47 +420,13 @@ sim_results <- CVtreeMLE(data = sim_data,
                                    H.AW_trunc_lvl = 10,
                                    parallel = TRUE,
                                    verbose = FALSE)
-#> [1] "iter:  1 SL:  0.27288655720532 ctree: 0.27288655720532 Diff:  0 Rule:"
-#> [1] "iter:  2 SL:  0.272886304726474 ctree: 0.27288655720532 Diff:  2.52478846052284e-07 Rule:"
-#> [1] "iter:  1 SL:  0.312034027924391 ctree: 0.312034027924391 Diff:  0 Rule:"
-#> [1] "iter:  2 SL:  0.312034027924391 ctree: 0.312034027924391 Diff:  0 Rule:"
-#> [1] "iter:  1 SL:  0.00427735048842659 ctree: 0.273335652636759 Diff:  0.269058302148332 Rule: M1 <= 0.698033232091907"
-#> [2] "iter:  1 SL:  0.00427735048842659 ctree: 0.273335652636759 Diff:  0.269058302148332 Rule: M1 > 0.698033232091907" 
-#> [1] "iter:  2 SL:  0.00393015821462217 ctree: 0.000497733055877251 Diff:  0.00343242515874492 Rule: M1 <= 0.698033232091907"                        
-#> [2] "iter:  2 SL:  0.00393015821462217 ctree: 0.000497733055877251 Diff:  0.00343242515874492 Rule: M1 > 0.698033232091907 & M1 <= 1.92445913525497"
-#> [3] "iter:  2 SL:  0.00393015821462217 ctree: 0.000497733055877251 Diff:  0.00343242515874492 Rule: M1 > 0.698033232091907 & M1 > 1.92445913525497" 
-#> [1] "iter:  1 SL:  0.272192794588837 ctree: 0.272082737834985 Diff:  0.000110056753852394 Rule: M2 <= 2.00110418303427 & M2 <= 1.10148691524405"
-#> [2] "iter:  1 SL:  0.272192794588837 ctree: 0.272082737834985 Diff:  0.000110056753852394 Rule: M2 <= 2.00110418303427 & M2 > 1.10148691524405" 
-#> [3] "iter:  1 SL:  0.272192794588837 ctree: 0.272082737834985 Diff:  0.000110056753852394 Rule: M2 > 2.00110418303427"                          
-#> [1] "iter:  2 SL:  0.271646043313318 ctree: 0.272192794588837 Diff:  0.000546751275519453 Rule: M2 <= 2.00110418303427 & M2 <= 1.10148691524405"
-#> [2] "iter:  2 SL:  0.271646043313318 ctree: 0.272192794588837 Diff:  0.000546751275519453 Rule: M2 <= 2.00110418303427 & M2 > 1.10148691524405" 
-#> [3] "iter:  2 SL:  0.271646043313318 ctree: 0.272192794588837 Diff:  0.000546751275519453 Rule: M2 > 2.00110418303427"                          
-#> [1] "iter:  1 SL:  0.272218696422447 ctree: 0.272186621981594 Diff:  3.20744408527363e-05 Rule: M3 <= 2.53274239624712 & M3 <= 1.3571113984252"
-#> [2] "iter:  1 SL:  0.272218696422447 ctree: 0.272186621981594 Diff:  3.20744408527363e-05 Rule: M3 <= 2.53274239624712 & M3 > 1.3571113984252" 
-#> [3] "iter:  1 SL:  0.272218696422447 ctree: 0.272186621981594 Diff:  3.20744408527363e-05 Rule: M3 > 2.53274239624712"                         
-#> [1] "iter:  2 SL:  0.271537487779395 ctree: 0.272218696422447 Diff:  0.000681208643052211 Rule: M3 <= 2.53274239624712 & M3 <= 1.21148852076342"
-#> [2] "iter:  2 SL:  0.271537487779395 ctree: 0.272218696422447 Diff:  0.000681208643052211 Rule: M3 <= 2.53274239624712 & M3 > 1.21148852076342" 
-#> [3] "iter:  2 SL:  0.271537487779395 ctree: 0.272218696422447 Diff:  0.000681208643052211 Rule: M3 > 2.53274239624712"                          
-#> [1] "iter:  1 SL:  0.310029197192652 ctree: 0.310324503071508 Diff:  0.000295305878855401 Rule: M1 <= 0.934177674302425"                        
-#> [2] "iter:  1 SL:  0.310029197192652 ctree: 0.310324503071508 Diff:  0.000295305878855401 Rule: M1 > 0.934177674302425 & M1 <= 1.87817514713179"
-#> [3] "iter:  1 SL:  0.310029197192652 ctree: 0.310324503071508 Diff:  0.000295305878855401 Rule: M1 > 0.934177674302425 & M1 > 1.87817514713179" 
-#> [1] "iter:  2 SL:  0.309449198200367 ctree: 0.310029197192652 Diff:  0.000579998992285002 Rule: M1 <= 0.934177674302425"
-#> [2] "iter:  2 SL:  0.309449198200367 ctree: 0.310029197192652 Diff:  0.000579998992285002 Rule: M1 > 0.934177674302425" 
-#> [1] "iter:  1 SL:  0.311127753961492 ctree: 0.311111862913366 Diff:  1.58910481259378e-05 Rule: M2 <= 2.00708027766665"
-#> [2] "iter:  1 SL:  0.311127753961492 ctree: 0.311111862913366 Diff:  1.58910481259378e-05 Rule: M2 > 2.00708027766665" 
-#> [1] "iter:  2 SL:  0.311124451526345 ctree: 0.311127753961492 Diff:  3.30243514740092e-06 Rule: M2 <= 2.00708027766665"                        
-#> [2] "iter:  2 SL:  0.311124451526345 ctree: 0.311127753961492 Diff:  3.30243514740092e-06 Rule: M2 > 2.00708027766665 & M2 <= 2.92370001907995"
-#> [3] "iter:  2 SL:  0.311124451526345 ctree: 0.311127753961492 Diff:  3.30243514740092e-06 Rule: M2 > 2.00708027766665 & M2 > 2.92370001907995" 
-#> [1] "iter:  1 SL:  0.311212879047554 ctree: 0.31134892384411 Diff:  0.000136044796556101 Rule: M3 <= 2.47762214185431"                        
-#> [2] "iter:  1 SL:  0.311212879047554 ctree: 0.31134892384411 Diff:  0.000136044796556101 Rule: M3 > 2.47762214185431 & M3 <= 3.52845867188475"
-#> [3] "iter:  1 SL:  0.311212879047554 ctree: 0.31134892384411 Diff:  0.000136044796556101 Rule: M3 > 2.47762214185431 & M3 > 3.52845867188475" 
-#> [1] "iter:  2 SL:  0.311209540825269 ctree: 0.311212879047554 Diff:  3.33822228443248e-06 Rule: M3 <= 2.5099802112645"                        
-#> [2] "iter:  2 SL:  0.311209540825269 ctree: 0.311212879047554 Diff:  3.33822228443248e-06 Rule: M3 > 2.5099802112645 & M3 <= 3.74706103658575"
-#> [3] "iter:  2 SL:  0.311209540825269 ctree: 0.311212879047554 Diff:  3.33822228443248e-06 Rule: M3 > 2.5099802112645 & M3 > 3.74706103658575"
 #> Warning in qlogis(QbarAW): NaNs produced
 #> Warning in qlogis(bound_precision(QbarAW)): NaNs produced
 #> Warning in qlogis(bound_precision(Qbar1W)): NaNs produced
 #> Warning in qlogis(bound_precision(Qbar0W)): NaNs produced
+#> Warning in qlogis(QbarAW_additive): NaNs produced
+#> Warning in stats::qlogis(bound_precision(mix_additive_data$QbarAW_additive)):
+#> NaNs produced
 ```
 
 Let’s look at the marginal results first. These are the rules found for
@@ -518,28 +486,28 @@ Max
 M1
 </td>
 <td style="text-align:right;">
-1.2899360
+1.3775659
 </td>
 <td style="text-align:right;">
-0.2285134
+0.1865153
 </td>
 <td style="text-align:right;">
-0.8420580
+1.0120025
 </td>
 <td style="text-align:right;">
-1.737814
+1.743129
 </td>
 <td style="text-align:right;">
-0.0e+00
+0.00e+00
 </td>
 <td style="text-align:right;">
 0.00e+00
 </td>
 <td style="text-align:left;">
-M1 &gt; 0.00859 & M1 &lt; 0.93418
+M1 &gt; 0.00859 & M1 &lt; 0.69216
 </td>
 <td style="text-align:right;">
-0.6186441
+0.7945205
 </td>
 <td style="text-align:right;">
 0.0011497
@@ -553,19 +521,19 @@ M1 &gt; 0.00859 & M1 &lt; 0.93418
 M2
 </td>
 <td style="text-align:right;">
-1.2164025
+1.2091433
 </td>
 <td style="text-align:right;">
-0.2227403
+0.2215554
 </td>
 <td style="text-align:right;">
-0.7798395
+0.7749027
 </td>
 <td style="text-align:right;">
-1.652966
+1.643384
 </td>
 <td style="text-align:right;">
-0.0e+00
+0.00e+00
 </td>
 <td style="text-align:right;">
 1.00e-07
@@ -588,22 +556,22 @@ M2 &gt; 2.9311 & M2 &lt; 3.99468
 M3
 </td>
 <td style="text-align:right;">
-0.9940858
+0.9942746
 </td>
 <td style="text-align:right;">
-0.2224727
+0.2267847
 </td>
 <td style="text-align:right;">
-0.5580473
+0.5497847
 </td>
 <td style="text-align:right;">
-1.430124
+1.438765
 </td>
 <td style="text-align:right;">
-7.9e-06
+1.16e-05
 </td>
 <td style="text-align:right;">
-2.36e-05
+3.49e-05
 </td>
 <td style="text-align:left;">
 M3 &gt; 3.75935 & M3 &lt; 4.98025
@@ -666,16 +634,16 @@ Fraction Covered
 <tbody>
 <tr>
 <td style="text-align:right;">
-5.999856
+5.999859
 </td>
 <td style="text-align:right;">
-0.019824
+0.0198432
 </td>
 <td style="text-align:right;">
-5.961002
+5.960967
 </td>
 <td style="text-align:right;">
-6.03871
+6.038751
 </td>
 <td style="text-align:right;">
 0
@@ -696,6 +664,28 @@ M1 &gt; 0.021 & M1 &lt; 0.934 & M2 &gt; 2.034 & M2 &lt; 3.994 & M3 &gt;
 </tr>
 </tbody>
 </table>
+
+Across the folds, the expected outcome given the cumulative sum of
+marginal exposures is also estimated. That is, answering a question such
+as “What is the exposure specific mean for each additional exposure
+level.”
+
+``` r
+effect_plot(sim_results$`Additive MSM`, 
+            pred = sum_marg_hits, 
+            interval = TRUE, 
+            y.label = "Expected Outcome",
+            x.label = "Cumulative Exposure",
+            cat.geom = "line",
+            colors = "black")
+```
+
+![](README-polot%20cumulative%20sum%20effects-1.png)<!-- -->
+
+In the plot above, we see the expected outcome given exposure to none of
+the rules found for each individual variable, exposure to any 1 rule for
+*M*<sub>1</sub>, *M*<sub>2</sub> or *M*<sub>3</sub>, any two or all
+three.
 
 ------------------------------------------------------------------------
 

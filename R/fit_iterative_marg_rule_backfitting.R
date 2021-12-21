@@ -8,7 +8,7 @@
 #' @param W A vector of characters indicating variables that are covariates#'
 #' @param Q1_stack Stack of algorithms made in SL 3 used in ensemble machine learning to fit Y|W
 #' @param fold Current fold in the cross-validation
-#'
+#' @param verbose Run in verbose setting
 #' @return Rules object. TODO: add more detail here.
 #' @import partykit
 #' @importFrom magrittr %>%
@@ -23,7 +23,8 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
                                                 At,
                                                 W,
                                                 Q1_stack,
-                                                fold) {
+                                                fold,
+                                                verbose) {
 
 
   n <- dim(At)[1]
@@ -129,7 +130,9 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
       At$Qbar_ne_M_W_initial <- Qbar_ne_M_W_initial
       At$Qbar_M_W_initial <- At$Qbar_M_W_now
 
-      print(paste("iter: ", iter, "SL: ", delta_h, "ctree:", delta_g, "Diff: ", diff, "Rule:",  list.rules.party(ctree_fit)))
+      if (verbose){
+        print(paste("iter: ", iter, "SL: ", delta_h, "ctree:", delta_g, "Diff: ", diff, "Rule:",  list.rules.party(ctree_fit)))
+      }
 
       if (iter == 1) {
         stop <- FALSE

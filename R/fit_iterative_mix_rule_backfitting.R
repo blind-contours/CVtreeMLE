@@ -8,6 +8,7 @@
 #' @param Y Variable name for the outcome
 #' @param Q1_stack Stack of algorithms made in SL 3 used in ensemble machine learning to fit Y|W
 #' @param fold Current fold in the cross-validation
+#' @param verbose Run in verbose setting
 #' @import sl3
 #' @importFrom pre pre maxdepth_sampler
 #' @importFrom magrittr %>%
@@ -16,7 +17,7 @@
 
 #' @export
 
-fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold) {
+fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, verbose) {
   pre_boot_list <- list()
 
   task <- sl3::make_sl3_Task(
@@ -118,8 +119,9 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold) {
 
     diff <- abs(delta_g - delta_h)
 
-    print(paste("iter: ", iter, "SL: ", delta_h, "ctree:", delta_g, "Diff: ", diff, "Rule:"))
-
+    if (verbose){
+      print(paste("iter: ", iter, "SL Change: ", delta_h, "ctree Change:", delta_g, "Diff: ", diff, "Rules:", dim(pre_coefs_no_zero)[1]))
+    }
 
     At$QbarW_initial <- At$QbarW_now
     At$QbarAW_initial <- At$QbarAW_now

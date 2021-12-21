@@ -124,7 +124,7 @@ CVtreeMLE <- function(W,
     ###################### Fit Iterative Backwards Rule Ensembles to the Mixture Components ########################################
 
     rules <-
-      fit_iterative_mix_rule_backfitting(At = At, A = A, W = W, Y = Y, Q1_stack = back_iter_SL, fold = fold_k)
+      fit_iterative_mix_rule_backfitting(At = At, A = A, W = W, Y = Y, Q1_stack = back_iter_SL, fold = fold_k, verbose)
 
     rules
   }
@@ -143,7 +143,8 @@ CVtreeMLE <- function(W,
       At = At,
       W = W,
       Q1_stack = back_iter_SL,
-      fold = fold_k)
+      fold = fold_k,
+      verbose)
 
     marg_decisions
   }

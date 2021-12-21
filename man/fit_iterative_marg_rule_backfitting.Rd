@@ -4,7 +4,7 @@
 \alias{fit_iterative_marg_rule_backfitting}
 \title{Iteratively Backfit a Super Learner, h(x) = Y|M_neX,W, and Indiviidual Decision Algorithms, g(x), for each Y|M_x until Convergence.}
 \usage{
-fit_iterative_marg_rule_backfitting(mix_comps, At, W, Q1_stack, fold)
+fit_iterative_marg_rule_backfitting(mix_comps, At, W, Q1_stack, fold, verbose)
 }
 \arguments{
 \item{mix_comps}{A vector of characters indicating variables for the mixture components}
@@ -16,6 +16,8 @@ fit_iterative_marg_rule_backfitting(mix_comps, At, W, Q1_stack, fold)
 \item{Q1_stack}{Stack of algorithms made in SL 3 used in ensemble machine learning to fit Y|W}
 
 \item{fold}{Current fold in the cross-validation}
+
+\item{verbose}{Run in verbose setting}
 }
 \value{
 Rules object. TODO: add more detail here.

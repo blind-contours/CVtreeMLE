@@ -56,6 +56,7 @@ SL.library<- c('SL.randomForest',
 
 lrp <- utils::getFromNamespace(".list.rules.party", "partykit")
 ## run on simulated data
+ptm <- proc.time
 test_results <- CVtreeMLE(data = sim_data,
                                    W = c("W", "W2"),
                                    Y = "y",
@@ -67,6 +68,8 @@ test_results <- CVtreeMLE(data = sim_data,
                                    H.AW_trunc_lvl = 10,
                                    parallel = TRUE,
                                    min_diff = 0.01)
+ptm - proc.time
+
 
 test_results$`Mixture Results`
 test_results$`Marginal Results`

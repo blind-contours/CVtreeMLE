@@ -152,6 +152,8 @@ First load the package and other packages needed
 library(CVtreeMLE)
 library(sl3)
 library(kableExtra)
+library(ggplot2)
+library(jtools)
 
 
 set.seed(429153)
@@ -265,6 +267,22 @@ head(mixture_results) %>%
   kbl(caption = "Mixture Results") %>%
   kable_classic(full_width = F, html_font = "Cambria")
 ```
+
+Across the folds, the expected outcome given the cumulative sum of marginal exposures is also estimated. That is, answering a question such as "What is the exposure specific mean for each additional exposure level".
+
+```{r polot cumulative sum effects}
+effect_plot(sim_results$`Additive MSM`, 
+            pred = sum_marg_hits, 
+            interval = TRUE, 
+            y.label = "Expected Outcome",
+            x.label = "Cumulative Exposure",
+            cat.geom = "line",
+            colors = "black")
+
+```
+
+In the plot above, we see the expected outcome given exposure to none of the rules found for each individual variable, exposure to any 1 rule for $M_1$, $M_2$ or $M_3$, any two or all three. 
+
 
 
 ---
