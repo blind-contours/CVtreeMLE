@@ -7,14 +7,14 @@
 list.rules.party(x, i = NULL, ...)
 }
 \arguments{
-\item{x}{Partkit glmtree model object}
+\item{x}{Partykit glmtree model object}
 
 \item{i}{null}
 
 \item{...}{additional arguments}
 }
 \value{
-Vector of rules
+List of rules
 }
 \description{
 Get rules from partykit object in rule fitting

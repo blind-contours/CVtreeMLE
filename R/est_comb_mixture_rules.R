@@ -49,7 +49,7 @@ est_comb_mixture_rules <- function(At, Av, W, Y, rules, no_rules, SL.library) {
         subset(Av_c, select = W)
       )
 
-    QbarAWSL_m <- SuperLearner::SuperLearner(
+    QbarAWSL_m <- SuperLearner(
       Y = At_c$y_scaled,
       X = At_mix_comb,
       SL.library = SL.library,

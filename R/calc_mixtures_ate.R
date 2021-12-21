@@ -32,7 +32,7 @@ calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds)
     fold_mix_rules <-
       data.table::rbindlist(input_mix_rules)
     fold_mix_rules <-
-      fold_mix_rules %>% dplyr::group_by(test, direction) %>% dplyr::filter(n() >= n_folds)
+      fold_mix_rules %>% dplyr::group_by(test, direction) %>% dplyr::filter(dplyr::n() >= n_folds)
 
     groups <- fold_mix_rules %>%
       dplyr::group_by(test, direction)

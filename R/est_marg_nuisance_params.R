@@ -10,7 +10,8 @@
 #' @param A Vector of characters that denote the mixture components
 #' @param marg_decisions List of rules found within the fold for each mixture component
 #' @param H.AW_trunc_lvl Truncation level of the clever covariate (induces more bias to reduce variance)
-#' @importFrom SuperLearner All
+#'
+#' @import SuperLearner
 #' @importFrom magrittr %>%
 #' @importFrom rlang :=
 
@@ -51,7 +52,7 @@ est_marg_nuisance_params <- function(At,
 
       X_Amarg_V <- Av_c[W]
 
-      gHatSL <- SuperLearner::SuperLearner(
+      gHatSL <- SuperLearner(
         Y = At_c[[rule_name]],
         X = X_Amarg_T,
         SL.library = SL.library,
@@ -71,7 +72,7 @@ est_marg_nuisance_params <- function(At,
       X_valid_mix <- Av_c[c(rule_name, W)]
 
       ## QbarAW
-      QbarAWSL_m <- SuperLearner::SuperLearner(
+      QbarAWSL_m <- SuperLearner(
         Y = At_c$y_scaled,
         X = X_train_mix,
         SL.library = SL.library,
@@ -118,7 +119,7 @@ est_marg_nuisance_params <- function(At,
         X_Amarg_T <- At_c[W]
         X_Amarg_V <- Av_c[W]
 
-        gHatSL <- SuperLearner::SuperLearner(
+        gHatSL <- SuperLearner(
           Y = At_c[[rule_name]],
           X = X_Amarg_T,
           SL.library = SL.library,
@@ -140,7 +141,7 @@ est_marg_nuisance_params <- function(At,
         print(paste("Fitting SL of Y given W and rule for mixture", i))
 
         ## QbarAW
-        QbarAWSL_m <- SuperLearner::SuperLearner(
+        QbarAWSL_m <- SuperLearner(
           Y = At_c$y_scaled,
           X = X_train_mix,
           SL.library = SL.library,

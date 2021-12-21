@@ -1,4 +1,21 @@
-
+#' @title Calculate the cumulative sum exposure based on marginals found in the fold
+#' @description For each marginal mixture component rule found, create a g estimator for the probability of being exposed to the rule thresholds,
+#' and a Q estimator for the outcome E(Y| A = a_mix, W). Get estimates of g and Q using the validation data and
+#' calculate the clever covariate used in the TMLE fluctuation step.
+#'
+#' @param At_c Training data
+#' @param Av_c Validation data
+#' @param W Vector of characters denoting covariates
+#' @param SL.library Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)
+#' @param H.AW_trunc_lvl Truncation level of the clever covariate (induces more bias to reduce variance)
+#'
+#' @import SuperLearner
+#' @importFrom magrittr %>%
+#' @importFrom rlang :=
+#' @importFrom dplyr group_by filter top_n
+#' @return Rules object. TODO: add more detail here.
+#'
+#' @export
 
 
 est_cum_sum_exposure <- function(At_c, Av_c, W, SL.library, H.AW_trunc_lvl) {
@@ -28,8 +45,7 @@ est_cum_sum_exposure <- function(At_c, Av_c, W, SL.library, H.AW_trunc_lvl) {
       Av_c$binarized_cat <-
         as.numeric(Av_c$sum_marg_hits == target.lvl)
 
-
-      gHatSL <- SuperLearner::SuperLearner(
+      gHatSL <- SuperLearner(
         Y = At_c$binarized_cat,
         X = X_train_covars,
         SL.library = SL.library,
@@ -51,7 +67,7 @@ est_cum_sum_exposure <- function(At_c, Av_c, W, SL.library, H.AW_trunc_lvl) {
     X_valid_mix <- Av_c[, c("sum_marg_hits", W)]
 
     ## QbarAW
-    QbarAWSL_m <- SuperLearner::SuperLearner(
+    QbarAWSL_m <- SuperLearner(
       Y = At_c$y_scaled,
       X = X_train_mix,
       SL.library = SL.library,

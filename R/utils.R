@@ -23,9 +23,12 @@ pull_out_rule_vars <- function(x, A) {
 }
 
 ###################################################################
+#' @title Filter data based on fold
+#' @param data Input data
+#' @param fold_k Current fold
 
 #' @importFrom rlang .data
-filter_rules <- function(data) {
+filter_rules <- function(data, fold_k) {
   data <- data %>%
     dplyr::filter(.data$fold == fold_k)
   return(data)
@@ -33,10 +36,10 @@ filter_rules <- function(data) {
 
 ###################################################################
 #' @title Get rules from partykit object in rule fitting
-#' @param x Partkit glmtree model object
+#' @param x Partykit glmtree model object
 #' @param i null
 #' @param ... additional arguments
-#' @return Vector of rules
+#' @return List of rules
 #' @import partykit
 
 # Copied from internal partykit function

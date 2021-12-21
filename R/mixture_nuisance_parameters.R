@@ -11,6 +11,8 @@
 #' @param family Binomial or gaussian
 #' @param rules Dataframe of rules found during the PRE fitting process
 #' @param H.AW_trunc_lvl Truncation level of the clever covariate (induces more bias to reduce variance)
+#'
+#' @import SuperLearner
 #' @importFrom pre pre
 #' @importFrom magrittr %>%
 #' @importFrom dplyr group_by filter top_n
@@ -48,7 +50,7 @@ est_mix_nuisance_params <- function(At, Av, W, no_rules, SL.library, family, rul
           select = c(W)
         )
 
-        gHatSL <- SuperLearner::SuperLearner(
+        gHatSL <- SuperLearner(
           Y = At_mix$A_mix,
           X = X_Amix_T,
           SL.library = SL.library,
@@ -67,7 +69,7 @@ est_mix_nuisance_params <- function(At, Av, W, no_rules, SL.library, family, rul
         X_valid_mix <- Av_mix[c("A_mix", W)]
 
         ## QbarAW
-        QbarAWSL_m <- SuperLearner::SuperLearner(
+        QbarAWSL_m <- SuperLearner(
           Y = At_mix$y_scaled,
           X = X_train_mix,
           SL.library = SL.library,

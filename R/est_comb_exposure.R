@@ -1,3 +1,25 @@
+#' @title Estimate the expected outcome for the combination of marginal thresholds identified in the fold.
+#' @description Estimate the expected outcome given exposure to the combination of marginal exposures. This is different
+#' compared to the cumulative sum; whereas with the cumulative sum, the exposure is the additive effect of each
+#' marginal rule found in the fold, here each marginal rule is included in a Super Learner as a binary vector and
+#' therefore this can pick up possible nonlinearity between the combination of binary exposures.
+#'
+#' @param At Training data
+#' @param Av Validation data
+#' @param Y Outcome variable
+#' @param W Vector of characters denoting covariates
+#' @param marg_rule_train Dataframe of binary vectors for marginal rules identified in the training fold
+#' @param marg_rule_valid Dataframe of binary vectors for marginal rules identified in the validation fold
+#' @param SL.library Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)
+#'
+#' @import SuperLearner
+#' @importFrom magrittr %>%
+#' @importFrom rlang :=
+#' @importFrom dplyr group_by filter top_n
+#' @return Rules object. TODO: add more detail here.
+#'
+#' @export
+
 est_comb_exposure <- function(At, Av, Y, W, marg_rule_train, marg_rule_valid, SL.library) {
 
   if (all(is.na(marg_rule_train)) == FALSE) {
@@ -17,7 +39,7 @@ est_comb_exposure <- function(At, Av, Y, W, marg_rule_train, marg_rule_valid, SL
 
     Av_marg_comb <- Av_marg_comb[, colSums(is.na(Av_marg_comb)) < nrow(Av_marg_comb)]
 
-    QbarAWSL_m <- SuperLearner::SuperLearner(
+    QbarAWSL_m <- SuperLearner(
       Y = At_mc$y_scaled,
       X = At_marg_comb,
       SL.library = SL.library,

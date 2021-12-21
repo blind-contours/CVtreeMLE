@@ -8,6 +8,7 @@
 #' @param Y Variable name for the outcome
 #' @param Q1_stack Stack of algorithms made in SL 3 used in ensemble machine learning to fit Y|W
 #' @param fold Current fold in the cross-validation
+#' @import sl3
 #' @importFrom pre pre maxdepth_sampler
 #' @importFrom magrittr %>%
 #' @importFrom dplyr group_by filter top_n
@@ -137,7 +138,7 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold) {
 
   rules <- pre_boot_df %>%
     dplyr::group_by(test, direction) %>%
-    dplyr::filter(n() >= iter/2)
+    dplyr::filter(dplyr::n() >= iter/2)
 
   rules <- rules[!is.na(rules$test), ]
   rules <- rules[!rules$test == 0, ]

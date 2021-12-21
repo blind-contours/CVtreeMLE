@@ -156,8 +156,8 @@ CVtreeMLE <- function(W,
     At <- data[data$folds != fold_k, ]
     Av <- data[data$folds == fold_k, ]
 
-    rules <- filter_rules(fold_mixture_rules)
-    marg_decisions <- filter_rules(fold_marginal_rules)
+    rules <- filter_rules(fold_mixture_rules, fold_k = fold_k)
+    marg_decisions <- filter_rules(fold_marginal_rules, fold_k = fold_k)
 
     if (dim(rules)[1] == 1) {
       if (rules$description == "No Rules Found") {
