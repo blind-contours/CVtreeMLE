@@ -1,5 +1,6 @@
 Package: CVtreeMLE
-Title: Cross Validated Decision Trees with Targeted Maximum Likelihood Estimation
+Title: Cross Validated Decision Trees with Targeted Maximum Likelihood
+    Estimation
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "David",
@@ -7,12 +8,11 @@ Authors@R:
            role = c("aut", "cre"),
            email = "david_mccoy@berkeley.edu",
            comment = c(ORCID = "0000-0002-5515-6307"))
-Description: A methodology for mixed exposure analysis that leverages data-adaptive target parameters, CV-TMLE, and decision trees.
+Description: A methodology for mixed exposure analysis that leverages
+    data-adaptive target parameters, CV-TMLE, and decision trees.
 License: MIT + file LICENSE
-Encoding: UTF-8
-LazyData: true
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.2
+Depends: 
+    R (>= 2.10)
 Imports: 
     assertthat,
     cvTools,
@@ -22,24 +22,21 @@ Imports:
     fastDummies,
     foreach,
     future,
-    here,
     Hmisc,
     magrittr,
     MASS,
-    nnls,
     parallel,
     partykit,
     pre,
     purrr,
-    randomForest,
-    readxl,
     rlang,
-    rpart,
-    rpart.plot,
     sl3,
     stats,
     stringr,
     SuperLearner,
-    tuple
-Depends: 
-    R (>= 2.10)
+    tidyr,
+    utils
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2

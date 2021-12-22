@@ -235,6 +235,7 @@ SL.library<- c('SL.randomForest',
 We will now pass the simulated data, learners, and variable names for each node in $O = W,A,Y$ to the `CVtreeMLE` function:
 
 ```{r run simulation}
+ptm <- proc.time
 
 sim_results <- CVtreeMLE(data = sim_data,
                                    W = c("W", "W2"),
@@ -242,11 +243,14 @@ sim_results <- CVtreeMLE(data = sim_data,
                                    A = c(paste("M", seq(3), sep = "")),
                                    back_iter_SL = Q1_stack,
                                    SL.library = SL.library,
-                                   n_folds = 2,
+                                   n_folds = 4,
                                    family = "gaussian",
                                    H.AW_trunc_lvl = 10,
                                    parallel = TRUE,
                                    verbose = FALSE)
+
+ptm - proc.time
+
 ```
 
 Let's look at the marginal results first. These are the rules found for each individual variable in the vector of exposures while controlling for other exposures and covariates. 
@@ -270,14 +274,16 @@ head(mixture_results) %>%
 
 Across the folds, the expected outcome given the cumulative sum of marginal exposures is also estimated. That is, answering a question such as "What is the exposure specific mean for each additional exposure level".
 
-```{r polot cumulative sum effects}
-effect_plot(sim_results$`Additive MSM`, 
+```{r plot cumulative sum effects, fig.keep='all'}
+cumulative_sum_plot <- effect_plot(sim_results$`Additive MSM`, 
             pred = sum_marg_hits, 
             interval = TRUE, 
             y.label = "Expected Outcome",
             x.label = "Cumulative Exposure",
             cat.geom = "line",
             colors = "black")
+
+cumulative_sum_plot
 
 ```
 

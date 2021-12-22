@@ -15,7 +15,6 @@
 #' @importFrom stringr str_detect
 #' @importFrom stats na.omit
 #' @importFrom purrr discard
-#' @importFrom rpart.plot rpart.rules
 #'
 #' @export
 
