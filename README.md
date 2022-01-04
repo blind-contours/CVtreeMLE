@@ -1,7 +1,8 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# R/`CVtreeMLE`
+# CVtreeMLE <img src="inst/figures/CVtreeMLE_stickerv3.png" height="139" align="right"/>
+
 
 <!-- badges: start -->
 
