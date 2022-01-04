@@ -38,46 +38,17 @@ __Authors:__ [David McCoy](https://davidmccoy.org)
 ## What is `CVtreeMLE`?
 
 The `CVtreeMLE` (Cross-Validated Decision Trees with Targeted Maximum Likelihood
-Estmation) R package is designed to provide facilities for the construction
+Estmation) R package is designed to provide statistical software for the construction
 of efficient estimators of an average treatment effect (ATE) causal parameter 
 defined as the counterfactual mean of an outcome if all individuals were jointly 
 exposed to a combination of exposure levels in a mixed exposure compared to if all
 individuals were not exposed. Here, a joint exposure is data-adaptively defined 
 based on decision trees applied to a set of exposure variables while flexibly 
 controlling for covariates non-parametrically. For more information on data-
-adaptive parameters see [@diaz2012population]. In each V-fold during cross-
-validation, `CVtreeMLE`:
+adaptive parameters see [@Hubbard2016]. `CVtreeMLE` uses data-adaptive parameters 
+by implementing V-fold cross-validation
 
-1. Performs an iterative backfitting of a Super Learner for Y|W, the expected 
-outcome given covariates, and Y|A, the expected outcome given the mixture
-variables. Consider the estimator for Y|W as h(x) and the estimator for Y|A as
-g(x). After initialization, h(x) is fit with an offset for predictions from g(x).
-Likewise, g(x) is fit offset with predictions from h(x). This procedure iterates until
-convergence, or when there is no change in fit between either estimator.
 
-2. The same iterative backfitting is conducted but for Y|M_i and Y|W,M_ne_i - 
-or rather, iteratively backfitting decision trees to each mixture variable individually
-while controlling for covariates and other mixture variables in the complementary 
-non-parametric Super Learner. 
-
-3. If decision trees are found for the mixture measured as an interaction and/or
-any marginal mixture component which explain the outcome while flexibly controlling
-for covariates, the binary indicators are created which indicate observations that 
-meet the respective rule(s) in the tree. 
-
-4. For each decision tree, the propensity score is estimated (the probability of
-being exposed to the respective levels of the exposure(s)), or the g mechanism.
-Similarly, the Q mechanism, or the outcome estimator is created which estimates the
-expected outcome given exposure to the rule and covariates.
-
-5. Once these nuisance parameters are estimated, a pooled targeted maximum likelihood
-estimation is done to estimate the average treatment effect for the data-adaptively 
-identified exposures (thresholds). This average treatment effect is our target parameter
-and is pooled over the validation data in each V-fold. 
-
-6. Tables are given which include the ATE for each variable or sets of variables found
-across all the folds alongside variance estimates from the efficient influence curve. 
-Average rules are created which are made from observations that meet each fold-specific rule. 
 
 `CVtreeMLE` integrates with the [`sl3`
 package](https://github.com/tlverse/sl3) [@coyle2020sl3] to allow for ensemble

@@ -87,6 +87,7 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, verb
     )
     # preds_offset <- sl_fit_backfit$predict()
     preds_no_offset <- sl_fit_backfit$predict(sl_fit_backfit_no_offset)
+    preds_offset <- sl_fit_backfit$predict(task)
 
     At$QbarW_now <- preds_no_offset
 
@@ -103,6 +104,8 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, verb
                           offset = At$QbarW_initial
     )
 
+    pre_model_preds_offset <- predict(pre_model, newoffset = At$QbarW_initial)
+
     At$QbarAW_now <- predict(pre_model, newoffset = At_no_offset$QbarW_initial)
 
     pre_model_coefs <- stats::coef(pre_model, penalty.par.val = "lambda.min")
@@ -114,13 +117,13 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, verb
     rules$boot_num <- iter
     pre_boot_list[[iter]] <- rules
 
-    delta_h <- mean(abs(At$QbarW_initial - At$QbarW_now))
-    delta_g <- mean(abs(At$QbarAW_initial - At$QbarAW_now))
+    # delta_h <- mean(abs(At$QbarW_initial - At$QbarW_now))
+    # delta_g <- mean(abs(At$QbarAW_initial - At$QbarAW_now))
 
-    diff <- abs(delta_g - delta_h)
+    curr_diff <- abs(pre_model_preds_offset - preds_offset)
 
     if (verbose){
-      print(paste("iter: ", iter, "SL Change: ", delta_h, "ctree Change:", delta_g, "Diff: ", diff, "Rules:", dim(pre_coefs_no_zero)[1]))
+      print(paste("iter: ", iter, "Diff: ", mean(curr_diff), "Rules:", dim(pre_coefs_no_zero)[1]))
     }
 
     At$QbarW_initial <- At$QbarW_now
@@ -128,10 +131,12 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, verb
 
     if (iter == 1) {
       stop <- FALSE
-    } else if (diff < 0.01) {
+      prev_diff <- curr_diff
+    } else if (mean(curr_diff - prev_diff) < 0.001) {
       stop <- TRUE
     } else {
       stop <- FALSE
+      prev_diff <- curr_diff
     }
   }
 

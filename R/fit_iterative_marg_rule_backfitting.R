@@ -107,7 +107,7 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
       )
       # preds_offset <- sl_fit_backfit$predict()
       preds_no_offset <- sl_fit_backfit$predict(sl_fit_backfit_no_offset)
-
+      preds_offset <- sl_fit_backfit$predict(task)
 
       At[,"Qbar_ne_M_W_now"] <- preds_no_offset
 
@@ -118,28 +118,31 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
                                      prune = "AIC",
                                      minsize = n/4)
 
+      glmtree_model_preds_offset <- predict(ctree_fit, newdata = At)
       At[, "Qbar_M_W_now"] <- predict(ctree_fit, newdata = At_no_offset)
 
-      delta_h <- mean(abs(At$Qbar_ne_M_W_initial - At$Qbar_ne_M_W_now))
-      delta_g <- mean(abs(At$Qbar_M_W_initial - At$Qbar_M_W_now))
+      # delta_h <- mean(abs(At$Qbar_ne_M_W_initial - At$Qbar_ne_M_W_now))
+      # delta_g <- mean(abs(At$Qbar_M_W_initial - At$Qbar_M_W_now))
 
-      diff <- abs(delta_g - delta_h)
+      curr_diff <- abs(glmtree_model_preds_offset - preds_offset)
 
       Qbar_ne_M_W_initial <-  At$Qbar_ne_M_W_now
       At$Qbar_ne_M_W_initial <- Qbar_ne_M_W_initial
       At$Qbar_M_W_initial <- At$Qbar_M_W_now
 
       if (verbose){
-        print(paste("iter: ", iter, "SL: ", delta_h, "ctree:", delta_g, "Diff: ", diff, "Rule:",  list.rules.party(ctree_fit)))
+        print(paste("iter: ", iter, "Diff: ", mean(curr_diff), "Rule:",  list.rules.party(ctree_fit)))
       }
 
       if (iter == 1) {
         stop <- FALSE
-      }else if(diff <= 0.01) {
+        prev_diff <- curr_diff
+      }else if(mean(curr_diff - prev_diff) < 0.001) {
         stop <- TRUE
       }else{
         # prev_diff <- diff
         stop <- FALSE
+        prev_diff <- curr_diff
       }
     }
 
