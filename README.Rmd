@@ -15,8 +15,9 @@ knitr::opts_chunk$set(
 )
 ```
 
+# CVtreeMLE <img src="inst/figures/CVtreeMLE_stickerv3.png" height="139" align="right"/>
 
-# R/`CVtreeMLE`
+<a href="https://yulab-smu.github.io/treedata-book/"><img src="https://raw.githubusercontent.com/Bioconductor/BiocStickers/master/ggtree/ggtree.png" height="200" align="right" /></a>
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/blind-contours/CVtreeMLE/workflows/R-CMD-check/badge.svg)](https://github.com/blind-contours/CVtreeMLE/actions)
