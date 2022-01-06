@@ -51,9 +51,9 @@ Where $A_i$ is a vector of exposure values for individual $i$ and $W_i$ is a vec
   + *Predict* $Y$ using $h(A)$ with no offset to get new $Y^{**}$ 
   + *Predict* $Y$ using $h(A)$ with offset ($h(A,W)$)
   
-_Where_ convergence is defined as no change in the difference between $g(A,W)$ and $h(A,W)$ between iterations.  
+_Where_ convergence is defined as no change in the difference between $g(A,W)$ and $h(A,W)$ between iterations. In this way, we can say that the two models have converged to the same model.  
   
-
+This algorithm is applied to $A$ as a mixture to generate a decision tree that includes multiple different exposures in $A$ while adusting for $W$ non-parametrically. Likewise, the backfitting algorithm is applied to each individual component of $A$, $A_i$, while controlling for other mixture variables $A_{\ne i}$ and $W$. In this way, univariate thresholds are determined for each mixture variable individually. 
 
 
 To start, let's load the packages we'll need and set a seed for simulation:
