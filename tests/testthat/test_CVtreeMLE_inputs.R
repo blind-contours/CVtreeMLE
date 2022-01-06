@@ -2,7 +2,6 @@ library(CVtreeMLE)
 library(SuperLearner)
 library(testthat)
 library(sl3)
-library(testthat)
 
 # Set multicore-compatible seed.
 set.seed(1, "L'Ecuyer-CMRG")
