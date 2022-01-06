@@ -78,11 +78,44 @@ CVtreeMLE <- function(W,
                       parallel,
                       verbose) {
 
-  if (all(na.omit(data[Y]) %in% 0:1)) {
-    family <- "binomial"
-  }else{
-    family <- "gaussian"
+  ######################
+  # Argument checks.
+
+  # Confirm that data has at least two columns.
+  if (length(A) < 2L) {
+    stop("Vector of mixture variable names must have at least two variable characters")
   }
+
+  if (any(sapply(data[,A], is.factor))) {
+    print("Factor variable detected in exposures, converting to numeric")
+    data[,A] <- sapply(data[,A], as.numeric)
+  }
+
+  if (any(sapply(data[,W], is.factor))) {
+    print("Factor variable detected in the covariate sapce, converting to numeric to avoid issues in different factors between training and validation folds")
+    data[,W] <- sapply(data[,W], as.numeric)
+  }
+
+  # Ensure that Y is numeric; e.g. can't be a factor.
+  stopifnot(class(data[,Y]) %in% c("numeric", "integer"))
+
+  if (family == "binomial" &&
+      (min(data[,Y], na.rm = TRUE) < 0 || max(data[,Y], na.rm = TRUE) > 1)) {
+    stop("With binomial family Y must be bounded by [0, 1]. Specify family=\"gaussian\" otherwise.")
+  }
+
+  if (!family %in% c("binomial", "gaussian")) {
+    stop('Family must be either "binomial" or "gaussian".')
+  }
+
+  ######################
+  # Check NA values, impute with mean and create indicator variable included in W
+
+  impute_results <- impute_NA_vals(data)
+
+  data <- impute_results$data
+  W <- c(W, impute_results$`impute cols`)
+
 
   if (family == "binomial") {
     ## create the CV folds

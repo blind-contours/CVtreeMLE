@@ -1,7 +1,6 @@
 ---
 output:
-  rmarkdown::github_document:
-    pandoc_args: --webtex
+  rmarkdown::github_document
 bibliography: "inst/REFERENCES.bib"
 always_allow_html: true
 ---
@@ -16,7 +15,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# `R/CVtreeMLE` <img src="inst/figures/CVtreeMLE_sticker.png" height="300" align="right"/>
+# `CVtreeMLE` <img src="inst/figures/CVtreeMLE_sticker.png" height="300" align="right"/>
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/blind-contours/CVtreeMLE/workflows/R-CMD-check/badge.svg)](https://github.com/blind-contours/CVtreeMLE/actions)
@@ -48,7 +47,7 @@ controlling for covariates non-parametrically. For more information on data-
 adaptive parameters see [@Hubbard2016]. `CVtreeMLE` uses data-adaptive parameters 
 by implementing V-fold cross-validation (CV), that is, in 10-fold CV, the data is split 10 
 times (folds), where 90\% of the data is used to determine rules in a mixture, and the $g$ and $Q$
-estimators needed for the ATE. These rules and estimators created in training data are applied to the validation data in order to calculate the final ATE target parameter. In order to optimize the optimum bias-variance trade-off for our causal parameter of interest we use cross-validated targeted minimum loss based estimation (CV-TMLE). `CVtreeMLE` builds off of the  CV-TMLE general theorem of [cross-validated minimum loss based estimation](https://biostats.bepress.com/cgi/viewcontent.cgi?article=1276&context=ucbbiostat) [@Zheng2010] which allows the full utilization of loss based super learning to obtain the initial estimators needed for our target parameter without risk of overfitting. Thus, `CVtreeMLE` makes possible the non-parametric estimation of the causal effects of a mixed exposure that both results in interpretable results which are useful for public policy and is asymptotically efficient. 
+estimators needed for the ATE. These rules and estimators created in training data are applied to the validation data in order to calculate the final ATE target parameter. In order to optimize the optimum bias-variance trade-off for our causal parameter of interest we use cross-validated targeted minimum loss based estimation (CV-TMLE). `CVtreeMLE` builds off of the  CV-TMLE general theorem of cross-validated minimum loss based estimation @Zheng2010 which allows the full utilization of loss based super learning to obtain the initial estimators needed for our target parameter without risk of overfitting. Thus, `CVtreeMLE` makes possible the non-parametric estimation of the causal effects of a mixed exposure that both results in interpretable results which are useful for public policy and is asymptotically efficient. 
 
 `CVtreeMLE` integrates with the [`sl3`package](https://github.com/tlverse/sl3) [@coyle2021sl3]
 to allow for ensemble
@@ -56,7 +55,7 @@ machine learning to be leveraged in the estimation procedure. `sl3` is used in
 the iterative backfitting procedure because this step requires ensemble machine 
 learning with an offset for the decision tree predictions. In the $Q$ and $g$ mechanisms, 
 `CVtreeMLE` uses the legacy [`Super Learner`
-package](https://github.com/tlverse/SuperLearner) [@coyle2021sl3]. In the iterative
+package](https://github.com/tlverse/SuperLearner) [@coyle2020sl3]. In the iterative
 backfitting procedure, for decision tree fitting on the full mixture modeled 
 together, the [`pre` package](https://github.com/marjoleinF/pre)[@Fokkema2020a] is used to fit rule
 ensembles. In backfitting procedure to find thresholds in each mixture component
@@ -135,25 +134,11 @@ sigma <- matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3) # 
 w1_betas <- c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04) # subspace probability relationship with covariate W1
 w2_betas <- c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04) # subspace probability relationship with covariate W2
 mix_subspace_betas <- c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09) # probability of mixture subspace (for multinomial outcome generation)
-subspace_assoc_strength_betas <- c(0, 0, 0, 0, 0, 0, 6, 0) # index is the subspace to apply the outcome value to
+subspace_assoc_strength_betas <- c(0, 0, 0, 0, 0, 0, 6, 0) # mixture subspace impact on outcome Y, here the subspace where M1 is lower and M2 and M3 are higher based on values in splits
 marginal_impact_betas <- c(0, 0, 0) # marginal impact of mixture component on Y
 eps_sd <- 0.01 # random error
 binary <- FALSE # if outcome is binary
 ```
-
-Above, the `subspace_assoc_strength_betas` parameter is used to indicate the subspace we want to use and the expected outcome in that subspace. The indices correspond to an area in the cube:
-
-1.  All mixtures lower than specified thresholds
-2.  M1 is higher but M2 and M3 are lower
-3.  M2 is higher but M1 and M3 are lower
-4.  M1 and M2 are higher and M3 is lower
-5.  M3 is higher and M1 and M2 are lower
-6.  M1 and M3 are higher and M2 is lower
-7.  M2 and M3 are higher and M1 is lower
-8.  All mixtures are higher than thresholds
-
-In the current simulation, the threshold for $M_1$ is 0.99, $M_2$ is 2.0, and $M_3$ is 2.5. Therefore, if we were to specify, `subspace_assoc_strength_betas <- c(0, 3, 0, 0, 0, 0, 0, 0)`, we would simulate an outcome that is 3 where $M_1$ is greater than 1 and  $M_2$ and  $M_3$ are less than 2.0 and 2.5 respectively. Now we can simulate the scenario shown in the figure with: 
-`subspace_assoc_strength_betas <- c(0, 0, 0, 0, 0, 0, 6, 0)` with additional confounding by $W$ and random error. 
 
 ```{r simulate data, warning=FALSE}
 sim_data <- simulate_mixture_cube(
@@ -221,13 +206,13 @@ sim_results <- CVtreeMLE(data = sim_data,
                                    A = c(paste("M", seq(3), sep = "")),
                                    back_iter_SL = Q1_stack,
                                    SL.library = SL.library,
-                                   n_folds = 5,
+                                   n_folds = 4,
                                    family = "gaussian",
                                    H.AW_trunc_lvl = 10,
                                    parallel = TRUE,
                                    verbose = FALSE)
 
-proc.time() - ptm
+ptm - proc.time()
 
 ```
 
@@ -257,7 +242,7 @@ In the above table the first three rows correspond to model type 1., or marginal
 
 Lines five and six correspond to models 3. and 4. respectively. 
 
-As we can see, the model fit with the mixture rule as the _lowest RMSE_, as we would expect given our simulated outcome was generated based on this rule. We can also see that the _rule matches what we simulated_.
+As we can see, the model fit with the mixture rule as the lowest RMSE, as we would expect given our simulated outcome was generated based on this rule. We can also see that the rule matches what we simulated.
 
 ## Mixture and Marginal Results
 
@@ -269,7 +254,7 @@ head(mixture_results) %>%
   kbl(caption = "Mixture Results") %>%
   kable_classic(full_width = F, html_font = "Cambria")
 ```
-In this table, Mixture ATE is the counterfactual mean difference if everyone was exposed to this rule compared to if nobody was exposed to this rule. Mixture interaction rule is the final rule created that covers all individuals across the fold specific mixture rules. Coverage is what proportion of individuals are covered by this rule and is an indicator of rule stability. As we can see, `CVtreeMLE` identifies the correct rule in the simulated data and estimates the correct ATE with proper CI coverage.  
+In this table, Mixture ATE is the counterfactual mean difference if everyone was exposed to this rule compared to if nobody was exposed to this rule. Mixture interaction rule is the final rule created that covers all individuals across the fold specific mixture rules. Coverage is what proportion of individuals are covered by this rule and is an indicator of rule stability.  
 
 These are the rules found for each individual variable in the vector of exposures while controlling for other exposures and covariates. 
 
@@ -282,7 +267,7 @@ head(marginal_results) %>%
 
 Across the folds, the expected outcome given the cumulative sum of marginal exposures is also estimated. That is, answering a question such as "What is the exposure specific mean for each additional exposure level".
 
-```{r glm cumulative sum effects, fig.keep='all'}
+```{r plot cumulative sum effects, fig.keep='all'}
 summary(sim_results$`Additive MSM`)
 ```
 
@@ -307,25 +292,16 @@ In the plot above, we see the expected outcome given exposure to none of the rul
 
 Lastly, it could be the case that model 4. has the lowest RMSE and we want to investigate the respective marginal ATE, or combination of rule exposures given that model. 
 
-The `fit_post_counterfactuals` function takes in the `CVtreeMLE` results and uses the marginal combination data to calculate the ATE for new counterfactuals using the fits found across the CV procedure. Below, we run this to get ATE results if all individuals were exposed to the rules found for each variable in the simulation compared to if none were exposed when the marginal rules are modeled in a non-additive fashion. 
-
-```{r fit post counterfactuals, warning= FALSE}
-post_fit_counterfactuals <- fit_post_counterfactuals(modeling_results = sim_results, 
+```{r fit post counterfactuals}
+post_counterfactuals <- fit_post_counterfactuals(modeling_results = sim_results, 
                          target_mixtures = c("M1", "M2", "M3"), 
                          H.AW_trunc_lvl = 10, 
                          SL.library = SL.library,
                          p_adjust_n = 1)
 
-post_fit_counterfactuals %>%
-  kbl(caption = "Post Counterfactual Results") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
+post_counterfactuals
 ```
 
-As we can see, the ATE from this model does not match the truth in simulations and the RMSE is higher compared to the mixture rule fitting. However, if the RMSE for this model was lowest, one could then investigate the expected outcome under different combination of marginal exposures. 
-
-## Vignette
-
-For more details as to what's under the hood in `CVtreeMLE` please see the included vignette. There, additional applications are shown (on the NIEHS mixtures workshop data) and results are compared to existing mixture methods. 
 
 
 ---
