@@ -19,13 +19,10 @@ Imports:
     data.table,
     doParallel,
     dplyr,
-    fastDummies,
     foreach,
-    here,
     future,
     Hmisc,
     magrittr,
-    MASS,
     parallel,
     partykit,
     pre,
@@ -36,12 +33,18 @@ Imports:
     stringr,
     SuperLearner,
     tidyr,
-    utils
+    utils,
+    MASS,
+    here,
+    hexSticker
+Suggests:
+    fastDummies,
+    rmarkdown,
+    knitr,
+    testthat (>= 3.0.0)
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
-Suggests: 
-    rmarkdown,
-    knitr
 VignetteBuilder: knitr
+Config/testthat/edition: 3

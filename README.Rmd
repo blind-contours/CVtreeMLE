@@ -1,6 +1,7 @@
 ---
 output:
-  rmarkdown::github_document
+  rmarkdown::github_document:
+    pandoc_args: --webtex
 bibliography: "inst/REFERENCES.bib"
 always_allow_html: true
 ---
@@ -15,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# `CVtreeMLE` <img src="inst/figures/CVtreeMLE_sticker.png" height="300" align="right"/>
+# `R/CVtreeMLE` <img src="inst/figures/CVtreeMLE_sticker.png" height="300" align="right"/>
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/blind-contours/CVtreeMLE/workflows/R-CMD-check/badge.svg)](https://github.com/blind-contours/CVtreeMLE/actions)
@@ -47,7 +48,7 @@ controlling for covariates non-parametrically. For more information on data-
 adaptive parameters see [@Hubbard2016]. `CVtreeMLE` uses data-adaptive parameters 
 by implementing V-fold cross-validation (CV), that is, in 10-fold CV, the data is split 10 
 times (folds), where 90\% of the data is used to determine rules in a mixture, and the $g$ and $Q$
-estimators needed for the ATE. These rules and estimators created in training data are applied to the validation data in order to calculate the final ATE target parameter. In order to optimize the optimum bias-variance trade-off for our causal parameter of interest we use cross-validated targeted minimum loss based estimation (CV-TMLE). `CVtreeMLE` builds off of the  CV-TMLE general theorem of cross-validated minimum loss based estimation @Zheng2010 which allows the full utilization of loss based super learning to obtain the initial estimators needed for our target parameter without risk of overfitting. Thus, `CVtreeMLE` makes possible the non-parametric estimation of the causal effects of a mixed exposure that both results in interpretable results which are useful for public policy and is asymptotically efficient. 
+estimators needed for the ATE. These rules and estimators created in training data are applied to the validation data in order to calculate the final ATE target parameter. In order to optimize the optimum bias-variance trade-off for our causal parameter of interest we use cross-validated targeted minimum loss based estimation (CV-TMLE). `CVtreeMLE` builds off of the  CV-TMLE general theorem of [cross-validated minimum loss based estimation](https://biostats.bepress.com/cgi/viewcontent.cgi?article=1276&context=ucbbiostat) [@Zheng2010] which allows the full utilization of loss based super learning to obtain the initial estimators needed for our target parameter without risk of overfitting. Thus, `CVtreeMLE` makes possible the non-parametric estimation of the causal effects of a mixed exposure that both results in interpretable results which are useful for public policy and is asymptotically efficient. 
 
 `CVtreeMLE` integrates with the [`sl3`package](https://github.com/tlverse/sl3) [@coyle2021sl3]
 to allow for ensemble
@@ -55,7 +56,7 @@ machine learning to be leveraged in the estimation procedure. `sl3` is used in
 the iterative backfitting procedure because this step requires ensemble machine 
 learning with an offset for the decision tree predictions. In the $Q$ and $g$ mechanisms, 
 `CVtreeMLE` uses the legacy [`Super Learner`
-package](https://github.com/tlverse/SuperLearner) [@coyle2020sl3]. In the iterative
+package](https://github.com/tlverse/SuperLearner) [@coyle2021sl3]. In the iterative
 backfitting procedure, for decision tree fitting on the full mixture modeled 
 together, the [`pre` package](https://github.com/marjoleinF/pre)[@Fokkema2020a] is used to fit rule
 ensembles. In backfitting procedure to find thresholds in each mixture component
@@ -134,11 +135,25 @@ sigma <- matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3) # 
 w1_betas <- c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04) # subspace probability relationship with covariate W1
 w2_betas <- c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04) # subspace probability relationship with covariate W2
 mix_subspace_betas <- c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09) # probability of mixture subspace (for multinomial outcome generation)
-subspace_assoc_strength_betas <- c(0, 0, 0, 0, 0, 0, 6, 0) # mixture subspace impact on outcome Y, here the subspace where M1 is lower and M2 and M3 are higher based on values in splits
+subspace_assoc_strength_betas <- c(0, 0, 0, 0, 0, 0, 6, 0) # index is the subspace to apply the outcome value to
 marginal_impact_betas <- c(0, 0, 0) # marginal impact of mixture component on Y
 eps_sd <- 0.01 # random error
 binary <- FALSE # if outcome is binary
 ```
+
+Above, the `subspace_assoc_strength_betas` parameter is used to indicate the subspace we want to use and the expected outcome in that subspace. The indices correspond to an area in the cube:
+
+1.  All mixtures lower than specified thresholds
+2.  M1 is higher but M2 and M3 are lower
+3.  M2 is higher but M1 and M3 are lower
+4.  M1 and M2 are higher and M3 is lower
+5.  M3 is higher and M1 and M2 are lower
+6.  M1 and M3 are higher and M2 is lower
+7.  M2 and M3 are higher and M1 is lower
+8.  All mixtures are higher than thresholds
+
+In the current simulation, the threshold for $M_1$ is 0.99, $M_2$ is 2.0, and $M_3$ is 2.5. Therefore, if we were to specify, `subspace_assoc_strength_betas <- c(0, 3, 0, 0, 0, 0, 0, 0)`, we would simulate an outcome that is 3 where $M_1$ is greater than 1 and  $M_2$ and  $M_3$ are less than 2.0 and 2.5 respectively. Now we can simulate the scenario shown in the figure with: 
+`subspace_assoc_strength_betas <- c(0, 0, 0, 0, 0, 0, 6, 0)` with additional confounding by $W$ and random error. 
 
 ```{r simulate data, warning=FALSE}
 sim_data <- simulate_mixture_cube(

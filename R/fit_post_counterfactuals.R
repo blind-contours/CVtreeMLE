@@ -27,8 +27,7 @@ fit_post_counterfactuals <- function(modeling_results, target_mixtures, H.AW_tru
   marg_comb_sls <- unlist(marg_comb_sls,recursive=FALSE, use.names = FALSE)
   marg_comb_sls <- marg_comb_sls[!sapply(marg_comb_sls,is.null)]
 
-  marg_comb_fold_data <- marg_comb_fold_data %>%
-    group_by(Fold)
+  marg_comb_fold_data <- groupby_fold(marg_comb_fold_data)
 
   marg_comb_fold_data <- dplyr::group_split(marg_comb_fold_data)
 
@@ -37,7 +36,7 @@ fit_post_counterfactuals <- function(modeling_results, target_mixtures, H.AW_tru
   for (i in seq(marg_comb_sls)) {
     sl <- marg_comb_sls[[i]]
     combo_data <- marg_comb_fold_data[[i]]
-    combo_data <- combo_data %>% dplyr::select(-Fold)
+    combo_data <- combo_data[-1]
     n <- dim(combo_data)[1]
     folds <- i
 

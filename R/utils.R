@@ -35,6 +35,17 @@ filter_rules <- function(data, fold_k) {
 }
 
 ###################################################################
+#' @title Group by fold
+#' @param data Input data
+
+#' @importFrom rlang .data
+groupby_fold <- function(data) {
+  data <- data %>%
+    dplyr::group_by(.data$fold)
+  return(data)
+}
+
+###################################################################
 #' @title Get rules from partykit object in rule fitting
 #' @param x Partykit glmtree model object
 #' @param i null
