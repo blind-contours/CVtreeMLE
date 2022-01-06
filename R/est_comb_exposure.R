@@ -30,12 +30,12 @@ est_comb_exposure <- function(At, Av, Y, W, marg_rule_train, marg_rule_valid, SL
       marg_rule_train[, colSums(is.na(marg_rule_train)) < nrow(marg_rule_train)]
 
     At_marg_comb <-
-      cbind(marg_rule_df, subset(At_mc, select = W))
+      cbind(marg_rule_df, At_mc[W])
 
     At_marg_comb <- At_marg_comb[, colSums(is.na(At_marg_comb)) < nrow(At_marg_comb)]
 
     Av_marg_comb <-
-      cbind(marg_rule_valid, subset(Av_mc, select = W))
+      cbind(marg_rule_valid, Av_mc[W])
 
     Av_marg_comb <- Av_marg_comb[, colSums(is.na(Av_marg_comb)) < nrow(Av_marg_comb)]
 
@@ -48,6 +48,7 @@ est_comb_exposure <- function(At, Av, Y, W, marg_rule_train, marg_rule_valid, SL
     )
 
     QbarAW <- bound_precision(predict(QbarAWSL_m, newdata = Av_marg_comb)$pred)
+    QbarAW <- scale_to_original(scaled_vals = QbarAW, max_orig = max(At_mc[Y]), min_orig = min(At_mc[Y]))
 
     Av_marg_comb$QbarAW_combo <- QbarAW
     Av_marg_comb$y_scaled <- Av_mc$y_scaled

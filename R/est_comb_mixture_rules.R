@@ -34,10 +34,11 @@ est_comb_mixture_rules <- function(At, Av, W, Y, rules, no_rules, SL.library) {
 
     mix_interactions_rules_train <-
       do.call(cbind, mix_interaction_train)
+
     At_mix_comb <-
       cbind(
         mix_interactions_rules_train,
-        subset(At_c, select = W)
+        At_c[W]
       )
 
     mix_interactions_rules_valid <-
@@ -46,7 +47,7 @@ est_comb_mixture_rules <- function(At, Av, W, Y, rules, no_rules, SL.library) {
     Av_mix_comb <-
       cbind(
         mix_interactions_rules_valid,
-        subset(Av_c, select = W)
+        Av_c[W]
       )
 
     QbarAWSL_m <- SuperLearner(

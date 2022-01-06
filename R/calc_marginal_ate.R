@@ -35,14 +35,17 @@ calc_marginal_ate <- function(marginal_data, mix_comps, Y, n_folds){
     as.data.frame(matrix(
       data = NA,
       nrow = length(mix_comps),
-      ncol = 5
+      ncol = 7
     ))
+
   colnames(marginal_results) <-
     c("Marginal ATE",
       "Standard Error",
       "Lower CI",
       "Upper CI",
-      "P-value")
+      "P-value",
+      "P-value Adj",
+      "RMSE")
 
   rownames(marginal_results) <- mix_comps
 
@@ -82,12 +85,16 @@ calc_marginal_ate <- function(marginal_data, mix_comps, Y, n_folds){
 
         ATE_results <- calc_ATE_estimates(data = marg_mix, ATE_var = "marg.ATE", outcome = Y, p_adjust_n = length(no_null_indices))
 
+        sqrd_resids <- (marg_mix$QbarAW.star - marg_mix[Y])^2
+        RMSE <- sqrt(mean(sqrd_resids[,1]))
+
         marginal_results$`Marginal ATE`[i] <- ATE_results$ATE
         marginal_results$`Standard Error`[i] <- ATE_results$SE
         marginal_results$`Lower CI`[i] <- ATE_results$CI[1]
         marginal_results$`Upper CI`[i] <- ATE_results$CI[2]
         marginal_results$`P-value`[i] <- ATE_results$`p-value`
         marginal_results$`P-value Adj`[i] <- ATE_results$`adj p-value`
+        marginal_results$RMSE[i] <- RMSE
 
         updated_marginal_data[[i]] <- ATE_results$data
 
@@ -105,6 +112,7 @@ calc_marginal_ate <- function(marginal_data, mix_comps, Y, n_folds){
         marginal_results$`Upper CI`[i] <- NA
         marginal_results$`P-value`[i] <- NA
         marginal_results$`P-value Adj`[i] <- NA
+        marginal_results$RMSE[i] <- NA
 
         updated_marginal_data[[i]] <- NA
       }
@@ -123,10 +131,10 @@ calc_marginal_ate <- function(marginal_data, mix_comps, Y, n_folds){
       marginal_results$`Upper CI`[i] <- NA
       marginal_results$`P-value`[i] <- NA
       marginal_results$`P-value Adj`[i] <- NA
+      marginal_results$RMSE[i] <- NA
 
       updated_marginal_data[[i]] <- NA
     }
-
   }
   return(list(marginal_results = marginal_results, data = updated_marginal_data))
 }

@@ -15,8 +15,8 @@
 #'  avoid numerical instability issues.
 bound_precision <- function(vals) {
   # assertthat::assert_that(!(max(vals) > 1 | min(vals) < 0))
-  vals[vals == 0] <- .Machine$double.neg.eps
-  vals[vals == 1] <- 1 - .Machine$double.neg.eps
+  vals[vals <= 0] <- .Machine$double.neg.eps
+  vals[vals >= 1] <- 1 - .Machine$double.neg.eps
   return(vals)
 }
 

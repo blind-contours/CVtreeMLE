@@ -85,12 +85,12 @@ find_common_mixture_rules <- function(group_list,
     mixture_results <-
       cbind(mixture_results, unlist(mixture_rules))
 
-    colnames(mixture_results)[8] <- "Mixture Interaction Rules"
+    colnames(mixture_results)[9] <- "Mixture Interaction Rules"
 
     mixture_results <-
       cbind(mixture_results, unlist(fractions))
 
-    colnames(mixture_results)[9] <- "Fraction Covered"
+    colnames(mixture_results)[10] <- "Fraction Covered"
   } else {
     mixture_results <-
       cbind(mixture_results, NA)

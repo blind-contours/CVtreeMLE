@@ -124,7 +124,7 @@ fit_least_fav_submodel <- function(H.AW, data, QbarAW, Qbar1W, Qbar0W) {
   # assertthat::assert_that(!(max(vals) > 1 | min(vals) < 0))
   logitUpdate <-
     stats::glm(
-      y_scaled ~ -1 + H.AW + offset(qlogis(QbarAW)),
+      y_scaled ~ -1 + H.AW + offset(qlogis(bound_precision(QbarAW))),
       family = "quasibinomial",
       data = data
     )

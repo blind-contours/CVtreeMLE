@@ -94,8 +94,6 @@ CVtreeMLE <- function(W,
     data$folds <- create_cv_folds(n_folds, data$y_scaled)
   }
 
-  # lrp <<- utils::getFromNamespace(".list.rules.party", "partykit")
-
   if (parallel == TRUE) {
     num_cores <- parallel::detectCores()
     doParallel::registerDoParallel(num_cores)
@@ -114,14 +112,15 @@ CVtreeMLE <- function(W,
 
   fold_results_mix_combo_data <- fold_results_mix_Sls <- list()
 
+  ###################### Fit Iterative Backwards Rule Ensembles to the Mixture Components Across Fold Data ########################################
+
+
   fold_mixture_rules <- foreach::foreach(fold_k = unique(data$folds), .combine = "rbind", .multicombine = TRUE) %do% {
+
     ## get training and validation samples
 
     At <- data[data$folds != fold_k, ]
     Av <- data[data$folds == fold_k, ]
-
-
-    ###################### Fit Iterative Backwards Rule Ensembles to the Mixture Components ########################################
 
     rules <-
       fit_iterative_mix_rule_backfitting(At = At, A = A, W = W, Y = Y, Q1_stack = back_iter_SL, fold = fold_k, verbose)
@@ -129,14 +128,21 @@ CVtreeMLE <- function(W,
     rules
   }
 
+  # only keep rules with variables and directions that are found in all the folds
+
+  fold_mixture_rules <- fold_mixture_rules %>%
+    dplyr::group_by(test, direction) %>%
+    dplyr::filter(dplyr::n() >=  n_folds)
+
+  ###################### Fit Iterative Backwards Rule Ensembles to the Marginal Mixture Components Across Fold Data ########################################
+
+
   fold_marginal_rules <- foreach::foreach(fold_k = unique(data$folds), .combine = "rbind", .multicombine = TRUE) %do% {
     ## get training and validation samples
 
     At <- data[data$folds != fold_k, ]
     Av <- data[data$folds == fold_k, ]
 
-
-    ###################### Fit Iterative Backwards Rule Ensembles to the Mixture Components ########################################
 
     marg_decisions <- fit_iterative_marg_rule_backfitting(
       mix_comps = A,
@@ -312,11 +318,10 @@ CVtreeMLE <- function(W,
     input_mix_rules = mix_rules,
     input_mix_data = mix_data,
     outcome = Y,
-    n_folds
+    n_folds = n_folds
   )
 
   group_list <- mixture_results$group_list
-  mix_RMSE <- mixture_results$mix_RMSE
   mixture_results <- mixture_results$results
 
   ########################################################################################################
@@ -325,7 +330,6 @@ CVtreeMLE <- function(W,
 
   additive_results <- calc_additive_ate(additive_data, Y, n_folds)
 
-  additive_RMSE <- additive_results$RMSE
   additive_RMSE_star <- additive_results$RMSE_star
   additive_MSM <- additive_results$MSM
 
@@ -380,15 +384,16 @@ CVtreeMLE <- function(W,
   mix_combo_data <- formatted_results$mix_combo_data
   marg_combo_data <- formatted_results$marg_combo_data
 
+  RMSE_df <- format_RMSE_for_models(marginal_results, mixture_results, additive_RMSE_star, marg_combo_data)
+
   results_list <- list(
+    "Model RMSEs" = RMSE_df,
     "Marginal Results" = marginal_results,
     "Mixture Results" = mixture_results,
     "Additive Results" = additive_results,
-    "Mixture Rules" = mixture_rules,
-    "Additive Model RMSE no star" = additive_RMSE,
-    "Additive Model RMSE star" = additive_RMSE_star,
     "Additive MSM" = additive_MSM,
-    "Mixture Model RMSE" = mix_RMSE,
+    "Mixture Rules" = mixture_rules,
+    "Marginal Rules" = marginal_rules,
     "Fold Results Mix Comb Data" = mix_combo_data,
     "Fold Results Marg Comb Data" = marg_combo_data,
     "Fold Super Learners Mix Comb" = mix_Sls,

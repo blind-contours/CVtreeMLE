@@ -123,7 +123,21 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, verb
     curr_diff <- abs(pre_model_preds_offset - preds_offset)
 
     if (verbose){
-      print(paste("iter: ", iter, "Diff: ", mean(curr_diff), "Rules:", dim(pre_coefs_no_zero)[1]))
+      if (iter == 1) {
+        print(paste("Fold: ", fold, "|",
+                    "Process: ", "Mixture Decision Backfitting", "|",
+                    "Iteration: ", iter, "|",
+                    "Delta: ", "None", "|",
+                    "Diff: ", mean(curr_diff), "|",
+                    "Rules:", dim(pre_coefs_no_zero)[1]))
+      }else{
+        print(paste("Fold: ", fold, "|",
+                    "Process: ", "Mixture Decision Backfitting", "|",
+                    "Iteration: ", iter, "|",
+                    "Delta: ", mean(curr_diff - prev_diff), "|",
+                    "Diff: ", mean(curr_diff), "|",
+                    "Rules:", dim(pre_coefs_no_zero)[1]))
+      }
     }
 
     At$QbarW_initial <- At$QbarW_now
@@ -132,7 +146,7 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, verb
     if (iter == 1) {
       stop <- FALSE
       prev_diff <- curr_diff
-    } else if (mean(curr_diff - prev_diff) < 0.001) {
+    } else if (abs(mean(curr_diff - prev_diff)) <= 0.001) {
       stop <- TRUE
     } else {
       stop <- FALSE

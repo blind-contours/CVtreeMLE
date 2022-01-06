@@ -43,7 +43,7 @@ calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds)
       as.data.frame(matrix(
         data = NA,
         nrow = length(group_list),
-        ncol = 5
+        ncol = 8
       ))
 
     colnames(mixture_results) <-
@@ -51,7 +51,10 @@ calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds)
         "Standard Error",
         "Lower CI",
         "Upper CI",
-        "P-value")
+        "P-value",
+        "P-value Adj",
+        "Vars",
+        "RMSE")
 
     for (group in seq(group_list)) {
       intx_group <- group_list[[group]]
@@ -83,10 +86,9 @@ calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds)
 
       ATE_results <- calc_ATE_estimates(data = mix_data, ATE_var = "mix.ATE", outcome = outcome, p_adjust_n = length(group_list))
 
-      ## calculate RMSE
-      RMSE <-
-        sqrt((mix_data$QbarAW.star - mix_data[outcome]) ^ 2 / length(mix_data[outcome]))
-      RMSE <- mean(RMSE[, 1])
+      ## calculate RMSE for Y| A = rule i, W
+      sqrd_resids <- (mix_data$QbarAW.star - mix_data[outcome])^2
+      RMSE <- sqrt(mean(sqrd_resids[,1]))
 
       mixture_results$`Mixture ATE`[group] <- ATE_results$ATE
       mixture_results$`Standard Error`[group] <- ATE_results$SE
@@ -94,23 +96,11 @@ calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds)
       mixture_results$`Upper CI`[group] <-ATE_results$CI[2]
       mixture_results$`P-value`[group] <- round(ATE_results$`p-value`,6)
       mixture_results$`P-value Adj`[group] <- round(ATE_results$`adj p-value`, 6)
-      mixture_results$`vars`[group] <- vars
+      mixture_results$`Vars`[group] <- vars
+      mixture_results$`RMSE`[group] <- RMSE
 
     }
   }else{
-    mixture_results <-
-      as.data.frame(matrix(
-        data = NA,
-        nrow = 1,
-        ncol = 5
-      ))
-
-    colnames(mixture_results) <-
-      c("Mixture ATE",
-        "Standard Error",
-        "Lower CI",
-        "Upper CI",
-        "P-value")
 
     mixture_results$`Mixture ATE` <- NA
     mixture_results$`Standard Error` <- NA
@@ -118,11 +108,13 @@ calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds)
     mixture_results$`Upper CI` <- NA
     mixture_results$`P-value` <- NA
     mixture_results$`P-value Adj` <- NA
+    mixture_results$`Vars` <- NA
+    mixture_results$RMSE <- NA
 
     group_list <- NA
 
-    RMSE <- NA
 
   }
-  return(list(results = mixture_results, group_list = group_list, mix_RMSE = RMSE))
+  return(list(results = mixture_results,
+              group_list = group_list))
 }

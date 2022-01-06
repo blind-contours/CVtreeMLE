@@ -15,9 +15,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# CVtreeMLE <img src="inst/figures/CVtreeMLE_stickerv3.png" height="139" align="right"/>
-
-<a href="https://yulab-smu.github.io/treedata-book/"><img src="https://raw.githubusercontent.com/Bioconductor/BiocStickers/master/ggtree/ggtree.png" height="200" align="right" /></a>
+# `CVtreeMLE` <img src="inst/figures/CVtreeMLE_sticker.png" height="300" align="right"/>
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/blind-contours/CVtreeMLE/workflows/R-CMD-check/badge.svg)](https://github.com/blind-contours/CVtreeMLE/actions)
@@ -39,42 +37,29 @@ __Authors:__ [David McCoy](https://davidmccoy.org)
 ## What is `CVtreeMLE`?
 
 The `CVtreeMLE` (Cross-Validated Decision Trees with Targeted Maximum Likelihood
-Estmation) R package is designed to provide statistical software for the construction
-of efficient estimators of an average treatment effect (ATE) causal parameter 
-defined as the counterfactual mean of an outcome if all individuals were jointly 
-exposed to a combination of exposure levels in a mixed exposure compared to if all
-individuals were not exposed. Here, a joint exposure is data-adaptively defined 
+Estimation) R package is designed to provide statistical software for the construction
+of efficient estimators from data adaptive decision trees. The target parameter is the
+average treatment effect (ATE) causal parameter defined as the counterfactual mean 
+outcome if all individuals were jointly exposed to a combination of exposure levels in a mixed exposure compared to if all
+individuals were not exposed. Here, the levels of a joint exposure are data-adaptively identified 
 based on decision trees applied to a set of exposure variables while flexibly 
 controlling for covariates non-parametrically. For more information on data-
 adaptive parameters see [@Hubbard2016]. `CVtreeMLE` uses data-adaptive parameters 
-by implementing V-fold cross-validation
+by implementing V-fold cross-validation (CV), that is, in 10-fold CV, the data is split 10 
+times (folds), where 90\% of the data is used to determine rules in a mixture, and the $g$ and $Q$
+estimators needed for the ATE. These rules and estimators created in training data are applied to the validation data in order to calculate the final ATE target parameter. In order to optimize the optimum bias-variance trade-off for our causal parameter of interest we use cross-validated targeted minimum loss based estimation (CV-TMLE). `CVtreeMLE` builds off of the  CV-TMLE general theorem of cross-validated minimum loss based estimation @Zheng2010 which allows the full utilization of loss based super learning to obtain the initial estimators needed for our target parameter without risk of overfitting. Thus, `CVtreeMLE` makes possible the non-parametric estimation of the causal effects of a mixed exposure that both results in interpretable results which are useful for public policy and is asymptotically efficient. 
 
-
-
-`CVtreeMLE` integrates with the [`sl3`
-package](https://github.com/tlverse/sl3) [@coyle2020sl3] to allow for ensemble
+`CVtreeMLE` integrates with the [`sl3`package](https://github.com/tlverse/sl3) [@coyle2021sl3]
+to allow for ensemble
 machine learning to be leveraged in the estimation procedure. `sl3` is used in 
 the iterative backfitting procedure because this step requires ensemble machine 
-learning with an offset for the decision tree predictions. In the Q and g mechanisms, 
+learning with an offset for the decision tree predictions. In the $Q$ and $g$ mechanisms, 
 `CVtreeMLE` uses the legacy [`Super Learner`
 package](https://github.com/tlverse/SuperLearner) [@coyle2020sl3]. In the iterative
 backfitting procedure, for decision tree fitting on the full mixture modeled 
-together, the [`pre` package(PRE PACKAGE HERE)[citation] is used to fit rule
+together, the [`pre` package](https://github.com/marjoleinF/pre)[@Fokkema2020a] is used to fit rule
 ensembles. In backfitting procedure to find thresholds in each mixture component
-individually, the [`partykit` package](PARTYKIT PACKAGE HERE)[citation]. In both instances,
-trees can be estimated with an offset from ensemble machine learning predictions.
-
-For many practical applications (e.g., vaccine efficacy trials), observed data
-is often subject to a two-phase sampling mechanism (i.e., through the use of a
-two-stage design). In such cases, efficient estimators (of both varieties) must
-be augmented to construct unbiased estimates of the population-level causal
-parameter. @rose2011targeted2sd first introduced an augmentation procedure that
-relies on introducing inverse probability of censoring (IPC) weights directly to
-an appropriate loss function or to the efficient influence function estimating
-equation. `CVtreeMLE` extends this approach to compute IPC-weighted one-step and
-TML estimators of the counterfactual mean outcome under a shift stochastic
-treatment regime. The package is designed to implement the statistical
-methodology described in @hejazi2020efficient and extensions thereof.
+individually, the [`partykit` package](http://partykit.r-forge.r-project.org/partykit/)[partykit2015]. In both instances,trees can be estimated with an offset for ensemble machine learning predictions.
 
 ---
 
@@ -134,9 +119,10 @@ set.seed(429153)
 Use the `simulate_mixture_cube` function to generate simulated data that represents ground-truth. Here, we create three continuous mixture variables, $A$, that are correlated and baseline covariates, $W$, that are potential confounders. Our outcome will be generated such that individuals with a specific set of exposures have a different outcome compared to individuals who are not exposed to this combination of exposure levels. 
 
 
-![](inst/The_Cube.png)
+![](inst/figures/The_Cube.png)
 The above figure illustrates the data we will generate using this function. Here, individuals exposed to $M_1$ at values less than 1.0, $M_2$ at levels more than 2.0, and $M_3$ at levels at or greater than 2.5 have an outcome of 6, compared to individuals not exposed to this combination of thresholds who have an expected outcome of 0 - thus our ATE is 6. Two covariates $W$ confound this relationship. Let's simulate this scenario.
 
+## Simulate Data
 
 ```{r simulation inputs}
 n_obs <- 500 # number of observations we want to simulate
@@ -175,6 +161,8 @@ head(sim_data) %>%
   kbl(caption = "Simulated Data") %>%
   kable_classic(full_width = F, html_font = "Cambria")
 ```
+## Set up Estimators used in Super Learners 
+
 Here, we set up our Super Learner using `SL3` for the iterative backfitting procedure. These learners will fit $Y|W$ offset by $Y|A$ as we fit decision trees to the exposure variables both jointly and individially.
 
 ```{r setup first stack learners}
@@ -195,7 +183,8 @@ lrnr_xgboost100, lrnr_xgboost50, lrnr_xgboost20)
 Q1_stack <- make_learner(Stack, learners)
 ```
 
-This second stack of learners will be used in our Q and g mechanisms after we identify rules using the first stack.
+This second stack of learners will be used in our $Q$ and $g$ mechanisms after we identify rules using the first stack.
+
 ```{r setup second stack learners}
 
 SL.library<- c('SL.randomForest',
@@ -204,10 +193,12 @@ SL.library<- c('SL.randomForest',
                "SL.mean")
 ```
 
+## Run `CVtreeMLE`
+
 We will now pass the simulated data, learners, and variable names for each node in $O = W,A,Y$ to the `CVtreeMLE` function:
 
 ```{r run simulation}
-ptm <- proc.time
+ptm <- proc.time()
 
 sim_results <- CVtreeMLE(data = sim_data,
                                    W = c("W", "W2"),
@@ -215,36 +206,74 @@ sim_results <- CVtreeMLE(data = sim_data,
                                    A = c(paste("M", seq(3), sep = "")),
                                    back_iter_SL = Q1_stack,
                                    SL.library = SL.library,
-                                   n_folds = 4,
+                                   n_folds = 5,
                                    family = "gaussian",
                                    H.AW_trunc_lvl = 10,
                                    parallel = TRUE,
                                    verbose = FALSE)
 
-ptm - proc.time
+proc.time() - ptm
 
 ```
 
-Let's look at the marginal results first. These are the rules found for each individual variable in the vector of exposures while controlling for other exposures and covariates. 
+## Types of Models
+
+`CVtreeMLE` fits four types of models: 
+
+1. $Y|M_i, W$ or the expected $Y$ given $M_i$ and covariates $W$ where other mixture components $M_{\ne i}$ are controlled for - these are marginal rule models. That is, decision trees are fit to mixture component $M_i$ and Super Learner is fit to $Y|M_{\ne =i}, W$ in the iterative back-fitting procedure. In this way, we derive individual rules for each mixture compenent while controlling for other mixture components and W. 
+
+2. $Y|M, W$ or the expected Y given $M$ and covariates $W$ where all mixture components are modeled collectively in ensemble partitioning while controlling for $W$ - these are mixture rule models (multiple mixture variables included in a rule compared to 1. above). That is, decision trees are fit to the total mixture space and Super Learner is fit to $Y|W$ in the iterative back-fitting procedure. In this way, we derive rules for the total mixture while controlling for $W$. 
+
+3. The additive marginal model: this treats exposure as a cumulative sum of marginal rules found in the folds. That is, in each fold, the marginal fitting in model 1. is conducted, we simply sum up the rules found for each mixture component to derive an ordered factor variable that describes cumulative exposure. This is $Y| \sum_i^j A_i, W$ or the expected outcome given cumulative exposure while controlling for covariates.
+
+4. The non-additive marginal model: It could in fact be the case that there are interactions between the mixture, as represented as a vector of indicators, and covariates $W$ or within the mixture itself. To capture this, we model $Y|M,W$ where now, each mixture variable $M$ is represented as a binary indicator of the rule determined within the fold. 
+
+Of course, we want to only investigate statistical inference for our target parameter for models that have the best fit. As such, we want to review the RMSE for each of the models detailed above. 
+
+```{r model RMSE}
+RMSE_results <- sim_results$`Model RMSEs`
+head(RMSE_results) %>%
+  kbl(caption = "Model Fit Results") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+
+```
+
+In the above table the first three rows correspond to model type 1., or marginal rules with respective RMSE. The fourth row corresponds to model type 2. or the RMSE of a Super Learner fit with the exposure being a mixture rule found when fitting decision trees on all the mixture components simultaneously. 
+
+Lines five and six correspond to models 3. and 4. respectively. 
+
+As we can see, the model fit with the mixture rule as the _lowest RMSE_, as we would expect given our simulated outcome was generated based on this rule. We can also see that the _rule matches what we simulated_.
+
+## Mixture and Marginal Results
+
+Let's first look at the mixture results for the model that had the lowest RMSE:
+
+```{r mixture results}
+mixture_results <- sim_results$`Mixture Results`
+head(mixture_results) %>%
+  kbl(caption = "Mixture Results") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+In this table, Mixture ATE is the counterfactual mean difference if everyone was exposed to this rule compared to if nobody was exposed to this rule. Mixture interaction rule is the final rule created that covers all individuals across the fold specific mixture rules. Coverage is what proportion of individuals are covered by this rule and is an indicator of rule stability. As we can see, `CVtreeMLE` identifies the correct rule in the simulated data and estimates the correct ATE with proper CI coverage.  
+
+These are the rules found for each individual variable in the vector of exposures while controlling for other exposures and covariates. 
 
 ```{r marginal results}
-
 marginal_results <- sim_results$`Marginal Results`
 head(marginal_results) %>%
   kbl(caption = "Marginal Results") %>%
   kable_classic(full_width = F, html_font = "Cambria")
 ```
 
+Across the folds, the expected outcome given the cumulative sum of marginal exposures is also estimated. That is, answering a question such as "What is the exposure specific mean for each additional exposure level".
 
-```{r mixture results}
-
-mixture_results <- sim_results$`Mixture Results`
-head(mixture_results) %>%
-  kbl(caption = "Mixture Results") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
+```{r glm cumulative sum effects, fig.keep='all'}
+summary(sim_results$`Additive MSM`)
 ```
 
-Across the folds, the expected outcome given the cumulative sum of marginal exposures is also estimated. That is, answering a question such as "What is the exposure specific mean for each additional exposure level".
+As we can see, the expected ATE when modeled as a cumulative exposure does not match the simulations and has high RMSE, as we would expect given the simulated data. 
+
+However, if this model did have the lowest RMSE we could investigate further the cumulative impact of exposure to the marginal rules. 
 
 ```{r plot cumulative sum effects, fig.keep='all'}
 cumulative_sum_plot <- effect_plot(sim_results$`Additive MSM`, 
@@ -261,6 +290,27 @@ cumulative_sum_plot
 
 In the plot above, we see the expected outcome given exposure to none of the rules found for each individual variable, exposure to any 1 rule for $M_1$, $M_2$ or $M_3$, any two or all three. 
 
+Lastly, it could be the case that model 4. has the lowest RMSE and we want to investigate the respective marginal ATE, or combination of rule exposures given that model. 
+
+The `fit_post_counterfactuals` function takes in the `CVtreeMLE` results and uses the marginal combination data to calculate the ATE for new counterfactuals using the fits found across the CV procedure. Below, we run this to get ATE results if all individuals were exposed to the rules found for each variable in the simulation compared to if none were exposed when the marginal rules are modeled in a non-additive fashion. 
+
+```{r fit post counterfactuals, warning= FALSE}
+post_fit_counterfactuals <- fit_post_counterfactuals(modeling_results = sim_results, 
+                         target_mixtures = c("M1", "M2", "M3"), 
+                         H.AW_trunc_lvl = 10, 
+                         SL.library = SL.library,
+                         p_adjust_n = 1)
+
+post_fit_counterfactuals %>%
+  kbl(caption = "Post Counterfactual Results") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+As we can see, the ATE from this model does not match the truth in simulations and the RMSE is higher compared to the mixture rule fitting. However, if the RMSE for this model was lowest, one could then investigate the expected outcome under different combination of marginal exposures. 
+
+## Vignette
+
+For more details as to what's under the hood in `CVtreeMLE` please see the included vignette. There, additional applications are shown (on the NIEHS mixtures workshop data) and results are compared to existing mixture methods. 
 
 
 ---
@@ -287,74 +337,46 @@ prior to submitting a pull request.
 
 After using the `CVtreeMLE` R package, please cite the following:
 
-        @article{hejazi2020efficient,
-          author = {Hejazi, Nima S and {van der Laan}, Mark J and Janes, Holly
-            E and Gilbert, Peter B and Benkeser, David C},
-          title = {Efficient nonparametric inference on the effects of
-            stochastic interventions under two-phase sampling, with
-            applications to vaccine efficacy trials},
-          year = {2020},
-          doi = {10.1111/biom.13375},
-          url = {https://doi.org/10.1111/biom.13375},
-          journal = {Biometrics},
-          publisher = {Wiley Online Library}
-        }
+      
+      @article{mccoyd2022CVtreeMLE-joss,
+        author = {McCoy, David B; Hubbard, Alan; Van der Laan Mark},
+        title = {{CVtreeMLE}: Efficient Estimation of Mixed Exposures using Data Adaptive Decision Trees and Cross-Validated Targeted Maximum Likelihood Estimation in {R}}
+        year  = {2022},
+        doi = {TBD},
+        url = {TBD},
+        journal = {Journal of Open Source Software},
+        publisher = {The Open Journal}
+      }
 
-        @article{hejazi2020CVtreeMLE-joss,
-          author = {Hejazi, Nima S and Benkeser, David C},
-          title = {{CVtreeMLE}: Efficient estimation of the causal effects of
-            stochastic interventions in {R}},
-          year  = {2020},
-          doi = {10.21105/joss.02447},
-          url = {https://doi.org/10.21105/joss.02447},
-          journal = {Journal of Open Source Software},
-          publisher = {The Open Journal}
-        }
-
-        @software{hejazi2020CVtreeMLE-rpkg,
-          author = {Hejazi, Nima S and Benkeser, David C},
-          title = {{CVtreeMLE}: Efficient Estimation of the Causal Effects of
-            Stochastic Interventions},
-          year  = {2020},
-          doi = {10.5281/zenodo.4070042},
-          url = {https://CRAN.R-project.org/package=CVtreeMLE},
-          note = {R package version 0.3.4}
-        }
+      @software{mccoyd2022CVtreeMLE-rpkg,
+        author = {McCoy, David B; Hubbard, Alan; Van der Laan Mark},
+        title = {{CVtreeMLE}: Efficient Estimation of Mixed Exposures using Data Adaptive Decision Trees and Cross-Validated Targeted Maximum Likelihood Estimation in {R}},
+        year  = {2022},
+        doi = {TBD},
+        url = {https://CRAN.R-project.org/package=CVtreeMLE},
+        note = {R package version 0.3.4}
+      }
 
 ---
 
 ## Related
 
-* [R/`tmle3shift`](https://github.com/tlverse/tmle3shift) - An R package
-  providing an independent implementation of the same core routines for the TML
-  estimation procedure and statistical methodology as is made available here,
-  through reliance on a unified interface for Targeted Learning provided by the
-  [`tmle3`](https://github.com/tlverse/tmle3) engine of the [`tlverse`
-  ecosystem](https://github.com/tlverse).
+* [R/`sl3`](https://github.com/tlverse/sl3) - An R package
+  providing implementation for Super Learner ensemble machine learning algorithms.  
 
-* [R/`medshift`](https://github.com/blind-contours/medshift) - An R package providing
-  facilities to estimate the causal effect of stochastic treatment regimes in
-  the mediation setting, including classical (IPW) and augmented double robust
-  (one-step) estimators. This is an implementation of the methodology explored
-  by @diaz2020causal.
+* [R/`pre`](https://github.com/marjoleinF/pre) - An R package package for deriving prediction rule ensembles for binary, multinomial, (multivariate) continuous, count and survival responses. 
 
-* [R/`haldensify`](https://github.com/blind-contours/haldensify) - A minimal package
-  for estimating the conditional density treatment mechanism component of this
-  parameter based on using the [highly adaptive
-  lasso](https://github.com/tlverse/hal9001) [@coyle2020hal9001-rpkg;
-  @hejazi2020hal9001-joss] in combination with a pooled hazard regression. This
-  package implements a variant of the approach advocated by @diaz2011super.
+* [R/`partykit`](http://partykit.r-forge.r-project.org/partykit/) - A toolkit with infrastructure for representing, summarizing, and visualizing tree-structured regression and classification models. This unified infrastructure can be used for reading/coercing tree models from different sources ('rpart', 'RWeka', 'PMML') yielding objects that share functionality for print()/plot()/predict() methods.
+
+* [R/`SuperLearner`](https://github.com/ecpolley/SuperLearner) - Legacy R package
+  providing implementation for Super Learner ensemble machine learning algorithms.  
 
 ---
 
 ## Funding
 
 The development of this software was supported in part through grants from the
-National Library of Medicine (award number [T32
-LM012417](https://reporter.nih.gov/project-details/9248418))
-and the National Institute of Allergy and Infectious Diseases (award number
-[R01 AI074345](https://reporter.nih.gov/project-details/9926564)) of the
-National Institutess of Health.
+NIH-funded Biomedical Big Data Training Program at UC Berkeley where I was a biomedical big data fellow. 
 
 ---
 

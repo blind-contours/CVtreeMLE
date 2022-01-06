@@ -131,13 +131,27 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
       At$Qbar_M_W_initial <- At$Qbar_M_W_now
 
       if (verbose){
-        print(paste("iter: ", iter, "Diff: ", mean(curr_diff), "Rule:",  list.rules.party(ctree_fit)))
+        if (iter == 1) {
+          print(paste("Fold: ", fold, "|",
+                      "Process: ", target_m,  "Marginal Decision Backfitting", "|",
+                      "Iteration: ", iter, "|",
+                      "Delta: ", "None", "|",
+                      "Diff: ", mean(curr_diff), "|",
+                      "Rules:", list.rules.party(ctree_fit)))
+        }else{
+          print(paste("Fold: ", fold, "|",
+                      "Process: ", target_m, "Marginal Decision Backfitting", "|",
+                      "Iteration: ", iter, "|",
+                      "Delta: ", mean(curr_diff - prev_diff), "|",
+                      "Diff: ", mean(curr_diff), "|",
+                      "Rules:", list.rules.party(ctree_fit)))
+        }
       }
 
       if (iter == 1) {
         stop <- FALSE
         prev_diff <- curr_diff
-      }else if(mean(curr_diff - prev_diff) < 0.001) {
+      }else if(abs(mean(curr_diff - prev_diff)) <= 0.001) {
         stop <- TRUE
       }else{
         # prev_diff <- diff

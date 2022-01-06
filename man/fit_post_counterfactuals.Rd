@@ -9,7 +9,8 @@ fit_post_counterfactuals(
   modeling_results,
   target_mixtures,
   H.AW_trunc_lvl,
-  SL.library
+  SL.library,
+  p_adjust_n
 )
 }
 \arguments{
@@ -21,6 +22,8 @@ mixture component}
 \item{H.AW_trunc_lvl}{Truncation level of the clever covariate - reduces variance but increases bias of the ATE}
 
 \item{SL.library}{Library of algorithms used to fit the counterfactuals}
+
+\item{p_adjust_n}{p-value adjustment for multiple comparisons}
 }
 \value{
 Rules object. TODO: add more detail here.

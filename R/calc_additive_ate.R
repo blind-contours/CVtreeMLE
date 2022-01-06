@@ -24,7 +24,7 @@ calc_additive_ate <- function(additive_data, Y, n_folds){
 
     ## least optimal submodel
     logitUpdate <-
-      stats::glm(y_scaled ~ -1 + HAW_additive + offset(qlogis(QbarAW_additive)) ,
+      stats::glm(y_scaled ~ -1 + HAW_additive + offset(qlogis(bound_precision(QbarAW_additive))) ,
           family = 'quasibinomial',
           data = mix_additive_data)
 
@@ -38,25 +38,28 @@ calc_additive_ate <- function(additive_data, Y, n_folds){
     mix_additive_data$QbarAW_additive_star <- QbarAW_additive_star
 
     mix_additive_data$QbarAW_additive <- scale_to_original(mix_additive_data$QbarAW_additive, max(mix_additive_data[Y]), min(mix_additive_data[Y]))
-
-    ## Calculate Additive RMSE for non-updated predictions
-    additive.MSM.RMSE <-
-      sqrt((mix_additive_data$QbarAW_additive - mix_additive_data[Y]) ^
-             2 / length(mix_additive_data[Y])
-      )
-    additive.MSM.RMSE <- mean(additive.MSM.RMSE[, 1])
-
-
-    ## Calculate Additive RMSE for updated predictions
     mix_additive_data$QbarAW_additive_star <- scale_to_original(mix_additive_data$QbarAW_additive_star, max(mix_additive_data[Y]), min(mix_additive_data[Y]))
 
-    updated_additive.MSM.RMSE <-
-      sqrt((
-        mix_additive_data$QbarAW_additive_star - mix_additive_data[Y]
-      ) ^ 2 / length(mix_additive_data[Y])
-      )
-    updated_additive.MSM.RMSE <-
-      mean(updated_additive.MSM.RMSE[, 1])
+
+    ## Calculate Additive RMSE for non-updated predictions
+
+    sqrd_resids <- (mix_additive_data$QbarAW_additive_star - mix_additive_data[Y])^2
+    cum_sum_RMSE <- sqrt(mean(sqrd_resids[,1]))
+
+
+    # cum_sum_RMSE <-
+    #   sqrt((mix_additive_data$QbarAW_additive - mix_additive_data[Y]) ^
+    #          2 / length(mix_additive_data[Y])
+    #   )
+    # additive.MSM.RMSE <- sum(additive.MSM.RMSE[, 1])
+
+
+
+#
+#     updated_additive.MSM.RMSE <-
+#       sqrt((mix_additive_data$QbarAW_additive_star - mix_additive_data[Y])^2/ length(mix_additive_data[Y]))
+#     updated_additive.MSM.RMSE <-
+#       sum(updated_additive.MSM.RMSE[, 1])
 
 
     ################################ RUN MSM THROUGH THE CUMULATIVE SUM EXPECTATIONS ############################
@@ -73,8 +76,7 @@ calc_additive_ate <- function(additive_data, Y, n_folds){
   }
 
   return(list(data = mix_additive_data,
-              RMSE = additive.MSM.RMSE,
-              RMSE_star = updated_additive.MSM.RMSE,
+              RMSE_star = cum_sum_RMSE,
               MSM = MSM_results))
 
 }

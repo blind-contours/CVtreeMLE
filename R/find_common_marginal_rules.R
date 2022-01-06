@@ -196,10 +196,10 @@ find_common_marginal_rules <- function(fold_rules, data, mix_comps, marginal_res
     cbind(marginal_results, unlist(maxs))
 
 
-  colnames(marginal_results)[7] <- "Marginal Rules"
-  colnames(marginal_results)[8] <- "Fraction Overlap"
-  colnames(marginal_results)[9] <- "Min"
-  colnames(marginal_results)[10] <- "Max"
+  colnames(marginal_results)[8] <- "Marginal Rules"
+  colnames(marginal_results)[9] <- "Fraction Overlap"
+  colnames(marginal_results)[10] <- "Min"
+  colnames(marginal_results)[11] <- "Max"
 
   return(marginal_results)
 }
