@@ -53,7 +53,7 @@ Where $A_i$ is a vector of exposure values for individual $i$ and $W_i$ is a vec
   
 _Where_ convergence is defined as no change in the difference between $g(A,W)$ and $h(A,W)$ between iterations. In this way, we can say that the two models have converged to the same model.  
   
-This algorithm is applied to $A$ as a mixture to generate a decision tree that includes multiple different exposures in $A$ while adusting for $W$ non-parametrically. Likewise, the backfitting algorithm is applied to each individual component of $A$, $A_i$, while controlling for other mixture variables $A_{\ne i}$ and $W$. In this way, univariate thresholds are determined for each mixture variable individually. 
+This algorithm is applied to $A$ as a mixture to generate a decision tree that includes multiple different exposures in $A$ while adjusting for $W$ non-parametrically. Likewise, the backfitting algorithm is applied to each individual component of $A$, $A_i$, while controlling for other mixture variables $A_{\ne i}$ and $W$. In this way, univariate thresholds are determined for each mixture variable individually. This backfitting procedure allows us to estimate $Y = h(A) + g(W)$ such that we are able to fit our decision tree models $h(a)$ while adjusting for the covariate model $g(W)$.   
 
 
 To start, let's load the packages we'll need and set a seed for simulation:

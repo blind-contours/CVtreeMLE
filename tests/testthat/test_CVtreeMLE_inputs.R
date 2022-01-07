@@ -67,19 +67,8 @@ summary(data)
 
 #################################
 # set up learners
-lrnr_glm <- Lrnr_glm$new()
-lrnr_gam <- Lrnr_gam$new()
-lrnr_lasso <- Lrnr_glmnet$new(alpha = 1)
-lrnr_earth <- Lrnr_earth$new()
-lrnr_xgboost100 <- Lrnr_xgboost$new(nrounds = 100, early_stopping_rounds = 10)
-lrnr_xgboost50 <- Lrnr_xgboost$new(nrounds = 50, early_stopping_rounds = 5)
-lrnr_xgboost20 <- Lrnr_xgboost$new(nrounds = 20)
-# put all the learners together (this is just one way to do it)
-learners <- c(lrnr_glm,
-              lrnr_gam,
-              lrnr_xgboost100, lrnr_xgboost50, lrnr_xgboost20)
 
-Q1_stack <- make_learner(Stack, learners)
+Q1_stack <- "Just filler here for test"
 
 SL.library<- c('SL.randomForest',
                'SL.earth',
