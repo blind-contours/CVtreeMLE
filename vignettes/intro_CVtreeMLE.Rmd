@@ -55,6 +55,56 @@ _Where_ convergence is defined as no change in the difference between $g(A,W)$ a
   
 This algorithm is applied to $A$ as a mixture to generate a decision tree that includes multiple different exposures in $A$ while adjusting for $W$ non-parametrically. Likewise, the backfitting algorithm is applied to each individual component of $A$, $A_i$, while controlling for other mixture variables $A_{\ne i}$ and $W$. In this way, univariate thresholds are determined for each mixture variable individually. This backfitting procedure allows us to estimate $Y = h(A) + g(W)$ such that we are able to fit our decision tree models $h(a)$ while adjusting for the covariate model $g(W)$.   
 
+## Target Parameter
+
+Our target parameter of interest is the average treatment effect, or the counterfactual mean difference if all individuals were exposed to rules in a decision tree compared to if no individuals were exposed to that tree. Our target parameter can be written as a g-computation estimand: 
+
+$$\psi(P_{0})\,=\,\sum_{w}\,\left[\sum_{y}\,P(Y=y\mid A=1,W=w)-\,\sum_{y}\,P(Y = y\mid A=0,W=w)\right]P(W=w)$$  
+
+which allows us to obtain an unconfounded marginal estimation of the ATE under causal untestable assumptions. These assumptions are conditional mean independence, positivity and consistency or stable unit treatment value assignment. (SUTVA) [@robins1986], [@robins2000]. Therefore, in order for our statistical estimand to be equal to a our causal quantity of interest, these assumption must be met.
+
+Importantly, the ATE can be estimated **non-parametrically** using the g-formula which allows us to utlize machine learning. The correct model specification is crucial to obtain unbiased estimates of the true ATE [@rubin2011]. Alternatively, inverse probability of treatment weighting (IPTW) methods, introduced by Rosenbaum and Rubin [@rosenbaum1983], are also commonly used for estimation of the ATE. The propensity score is a balancing score that can be used to create statistically equivalent exposure groups to estimate the ATE via matching, weighting, or stratification [@rosenbaum1983]. However, very low or very high propensity scores can lead to very large weights, resulting in unstable ATE estimates with high variance and values outside the constraints of the statistical model [@lunceford2004].  
+
+Furthermore, when analyzing observational data with a large number of variables and potentially complex relationships among them, model misspecification during estimation is of particular concern. Hence, the correct model specification in parametric modelling is crucial to obtain unbiased estimates of the true ATE [@van2011]. 
+
+However, Mark van der Laan and Rubin [@van2006] introduced in 2006 a **double-robust** estimation procedure to **reduce bias** against misspecification. The targeted maximum likelihood estimation (**TMLE**) is a semiparametric, efficient substitution estimator [@van2011]. 
+
+`CVtreeMLE` data-adaptively identifies the **binary exposure** using decision trees within a training fold of the data and estimates the TMLE updated ATE in the validation fold of the data. 
+
+## TMLE
+
+**TMLE** allows for data-adaptive estimation while obtaining valid statistical inference based on the targeted minimum loss-based estimation and machine learning algorithms to minimise the risk of model misspecification [@van2011]. The main characteristics of **TMLE** are:      
+
+1. **TMLE** is a general algorithm for the construction of double-robust, semiparametric, efficient substitution estimators. **TMLE** allows for data-adaptive estimation while obtaining valid statistical inference. 
+
+2. **TMLE** implementation uses the g-computation estimand. Briefly, the **TMLE** algorithm uses information in the estimated exposure mechanism (P(A|W) denoted $g$ mechanism) to update the initial estimator of the conditional expectation of the outcome ($Q$ mechanism) given the treatment and the set of covariates W, E$_{0}$(Y|A,W). 
+
+3. The targeted estimates are then substituted into the parameter mapping $\Psi$. The updating step achieves a targeted bias reduction for the parameter of interest $\Psi(P_{0})$ (the true target parameter) and serves to solve the efficient score equation, namely the Influence Curve (IC). As a result, **TMLE** is a **double-robust** estimator. 
+
+4. **TMLE** it will be consistent for $\Psi(P_{0})$ if either the conditional expectation E$_{0}$(Y|A,W) or the exposure mechanism P$_{0}$(A|W) are estimated consistently.   
+
+5. **TMLE** will be efficient if the previous two functions are consistently estimated achieving the lowest asymptotic variance among a large class of estimators. These asymptotic properties typically translate into **lower bias and variance** in finite samples [@buh2016]. 
+
+6. The general formula to estimate the ATE using the TMLE method:  
+
+$$\psi TMLE,n = \Psi(Q_{n}^{*})= {\frac{1}{n}\sum_{i=1}^{n}\bar{Q}_{n}^{1}\left(1,\ W_{i}\right)-\bar{Q}_{n}^{1}\left(0,\ W_{i}\right)}.  (1)$$
+7. The efficient influcence curve (IC) based on the Functional Delta Method and Empirical Process Theory [@fisher2018] is applied for statistical inference using TMLE:  
+
+$$IC_{n}(O_{i})=\left(\frac{I\left(A_{i}=1\right)}{g_n\left(1\left|W_{i}\right)\right)}\ -\ \frac{I\left(A_{i}=0\right)}{g_n\left(0\left|W_{i}\right)\right)}\ \right)\left[Y_{i}-\bar{Q}_{n}^{1}\left(A_{i},W_{i}\right)\right]+\bar{Q}_{n}^{1}\left(1,\ W_{i}\right)-\bar{Q}_{n}^{1}\left(0,\ W_{i}\right) - \psi TMLE,n. (2)$$  
+where the variance of the ATE:  
+
+$$\sigma({\psi_{0}})=\sqrt{\frac{Var(IC_{n})}{n}}.  (3)$$
+# TMLE using the Super Learner 
+
+`CVtreeMLE` uses Super Learner from the legacy `Super Learner` package and `sl3` package. Super Learner uses V-fold cross-validation and ensembled learning (prediction using all the predictions of multiple stacked learning algorithms) techniques to improve model prediction performance [@breiman1996].  The primary goal using Super Learner is to obtain less biased estimates for $\bar Q_{n}^{0}(A,W)$ and $g_{0}(A,W)$. This is achieved obtaining the smallest expected loss function for Y and A. For instance, the negative logarithmic loss function for Y is computed as the minimizer of the expected squared error loss:   
+$$\bar Q_{0}\,=\, \text{arg min}_{\bar Q}E_{0}L(O, \bar Q),$$   
+where $L(O, \bar Q)$ is:
+$$ (Y \,-\, \bar Q(A, W))^{2}$$
+
+
+
+
+
 
 To start, let's load the packages we'll need and set a seed for simulation:
 
