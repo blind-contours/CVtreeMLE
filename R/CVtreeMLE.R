@@ -10,6 +10,8 @@
 #' @param n_folds Number of cross-validation folds.
 #' @param family Family ('binomial' or 'gaussian').
 #' @param H.AW_trunc_lvl Truncation level for the clever covariate.
+#' @param max_iter Max number of iterations of iterative backfitting algorithm
+#' @param minsize The minimum number of observations in a node.
 #' @param verbose If true, creates a sink file where detailed information and diagnostics of the run process are given.
 #' @param parallel Use parallel processing if a backend is registered; enabled by default.
 #'
@@ -76,6 +78,8 @@ CVtreeMLE <- function(W,
                       family,
                       H.AW_trunc_lvl,
                       parallel,
+                      max_iter,
+                      minsize,
                       verbose) {
 
   ######################
@@ -99,6 +103,10 @@ CVtreeMLE <- function(W,
   # Ensure that Y is numeric; e.g. can't be a factor.
   stopifnot(class(data[,Y]) %in% c("numeric", "integer"))
 
+  if(anyNA(data[,Y])){
+    stop("NA values cannot be in the outcome variable")
+  }
+
   if (family == "binomial" &&
       (min(data[,Y], na.rm = TRUE) < 0 || max(data[,Y], na.rm = TRUE) > 1)) {
     stop("With binomial family Y must be bounded by [0, 1]. Specify family=\"gaussian\" otherwise.")
@@ -108,14 +116,17 @@ CVtreeMLE <- function(W,
     stop('Family must be either "binomial" or "gaussian".')
   }
 
+  if(minsize <= 10){
+    warning("Dangerous grounds: Decision trees may find rules that create an exposure with very few observations, this will cause propensity score algorithms to fail in many instances")
+  }
+
   ######################
   # Check NA values, impute with mean and create indicator variable included in W
 
-  impute_results <- impute_NA_vals(data)
+  impute_results <- impute_NA_vals(data, W)
 
   data <- impute_results$data
-  W <- c(W, impute_results$`impute cols`)
-
+  W <- impute_results$W
 
   if (family == "binomial") {
     ## create the CV folds
@@ -156,7 +167,14 @@ CVtreeMLE <- function(W,
     Av <- data[data$folds == fold_k, ]
 
     rules <-
-      fit_iterative_mix_rule_backfitting(At = At, A = A, W = W, Y = Y, Q1_stack = back_iter_SL, fold = fold_k, verbose)
+      fit_iterative_mix_rule_backfitting(At = At,
+                                         A = A,
+                                         W = W,
+                                         Y = Y,
+                                         Q1_stack = back_iter_SL,
+                                         fold = fold_k,
+                                         max_iter,
+                                         verbose)
 
     rules
   }
@@ -183,6 +201,8 @@ CVtreeMLE <- function(W,
       W = W,
       Q1_stack = back_iter_SL,
       fold = fold_k,
+      max_iter,
+      minsize,
       verbose)
 
     marg_decisions

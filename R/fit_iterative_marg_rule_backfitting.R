@@ -8,6 +8,8 @@
 #' @param W A vector of characters indicating variables that are covariates#'
 #' @param Q1_stack Stack of algorithms made in SL 3 used in ensemble machine learning to fit Y|W
 #' @param fold Current fold in the cross-validation
+#' @param max_iter Max number of iterations of iterative backfitting algorithm
+#' @param minsize The minimum number of observations in a node.
 #' @param verbose Run in verbose setting
 #' @return Rules object. TODO: add more detail here.
 #' @import partykit
@@ -23,6 +25,8 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
                                                 W,
                                                 Q1_stack,
                                                 fold,
+                                                max_iter,
+                                                minsize,
                                                 verbose) {
 
 
@@ -71,7 +75,7 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
                          data = At,
                          alpha = 0.9,
                          prune = "AIC",
-                         minsize = n/4,
+                         minsize = minsize,
                          maxdepth = 4)
 
     Qbar_M_W_initial <- predict(ctree_fit, newdata = At)
@@ -116,7 +120,7 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
                                      offset = Qbar_ne_M_W_initial,
                                      alpha = 0.9,
                                      prune = "AIC",
-                                     minsize = n/4)
+                                     minsize = minsize)
 
       glmtree_model_preds_offset <- predict(ctree_fit, newdata = At)
       At[, "Qbar_M_W_now"] <- predict(ctree_fit, newdata = At_no_offset)
@@ -151,10 +155,11 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
       if (iter == 1) {
         stop <- FALSE
         prev_diff <- curr_diff
-      }else if(abs(mean(curr_diff - prev_diff)) <= 0.001) {
+      } else if (abs(mean(curr_diff - prev_diff)) <= 0.001) {
         stop <- TRUE
-      }else{
-        # prev_diff <- diff
+      } else if (iter >= max_iter){
+        stop <- TRUE
+      } else {
         stop <- FALSE
         prev_diff <- curr_diff
       }

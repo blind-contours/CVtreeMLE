@@ -8,16 +8,18 @@
 #' @param Y Variable name for the outcome
 #' @param Q1_stack Stack of algorithms made in SL 3 used in ensemble machine learning to fit Y|W
 #' @param fold Current fold in the cross-validation
+#' @param max_iter Max number of iterations of iterative backfitting algorithm
 #' @param verbose Run in verbose setting
 #' @import sl3
 #' @importFrom pre pre maxdepth_sampler
 #' @importFrom magrittr %>%
+#' @importFrom rlang .data
 #' @importFrom dplyr group_by filter top_n
 #' @return Rules object. TODO: add more detail here.
 
 #' @export
 
-fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, verbose) {
+fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, max_iter, verbose) {
   pre_boot_list <- list()
 
   task <- sl3::make_sl3_Task(
@@ -148,6 +150,8 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, verb
       prev_diff <- curr_diff
     } else if (abs(mean(curr_diff - prev_diff)) <= 0.001) {
       stop <- TRUE
+    } else if (iter >= max_iter){
+      stop <- TRUE
     } else {
       stop <- FALSE
       prev_diff <- curr_diff
@@ -157,10 +161,7 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, verb
   pre_boot_df <- do.call(rbind, pre_boot_list)
   pre_boot_df$direction <- ifelse(pre_boot_df$coefficient > 0, 1, 0)
 
-  rules <- pre_boot_df %>%
-    dplyr::group_by(test, direction) %>%
-    dplyr::filter(dplyr::n() >= iter/2)
-
+  rules <- pre_boot_df %>% dplyr::filter(.data$boot_num == iter)
   rules <- rules[!is.na(rules$test), ]
   rules <- rules[!rules$test == 0, ]
 

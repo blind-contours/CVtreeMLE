@@ -15,6 +15,8 @@ CVtreeMLE(
   family,
   H.AW_trunc_lvl,
   parallel,
+  max_iter,
+  minsize,
   verbose
 )
 }
@@ -38,6 +40,10 @@ CVtreeMLE(
 \item{H.AW_trunc_lvl}{Truncation level for the clever covariate.}
 
 \item{parallel}{Use parallel processing if a backend is registered; enabled by default.}
+
+\item{max_iter}{Max number of iterations of iterative backfitting algorithm}
+
+\item{minsize}{The minimum number of observations in a node.}
 
 \item{verbose}{If true, creates a sink file where detailed information and diagnostics of the run process are given.}
 }

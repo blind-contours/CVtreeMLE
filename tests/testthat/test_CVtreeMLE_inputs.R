@@ -80,17 +80,42 @@ SL.library<- c('SL.randomForest',
 W <- c("W_1", "W_2")
 A <- c("A")
 
-# This takes 1-2 minutes.
 expect_error(CVtreeMLE_results <- CVtreeMLE(data = data,
                                   W = W,
-                                  Y = "y",
+                                  Y = "Y",
                                   A = A,
                                   back_iter_SL = Q1_stack,
                                   SL.library = SL.library,
                                   n_folds = 2,
-                                  family = "binomial",
+                                  family = "gaussian",
                                   H.AW_trunc_lvl = 10,
+                                  max_iter = 10,
+                                  minsize = 20,
                                   parallel = TRUE,
                                   verbose = FALSE))
+
+W <- c("W_1", "W_2")
+A <- c("A_1", "A_2")
+
+NA_indices <- sample(1:length(data[,"Y"]), 10)
+
+data[NA_indices, "Y"] <- NA
+
+colnames(data)[3] <- "A_1"
+data$A_2 <- rbinom(dim(data)[1], 1, prob = 0.4)
+
+expect_error(CVtreeMLE_results <- CVtreeMLE(data = data,
+                                            W = W,
+                                            Y = "Y",
+                                            A = A,
+                                            back_iter_SL = Q1_stack,
+                                            SL.library = SL.library,
+                                            n_folds = 2,
+                                            family = "gaussian",
+                                            H.AW_trunc_lvl = 10,
+                                            max_iter = 10,
+                                            minsize = 20,
+                                            parallel = TRUE,
+                                            verbose = FALSE))
 
 

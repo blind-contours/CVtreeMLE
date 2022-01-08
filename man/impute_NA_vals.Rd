@@ -4,10 +4,12 @@
 \alias{impute_NA_vals}
 \title{Impute NA values and create indicator variables}
 \usage{
-impute_NA_vals(data)
+impute_NA_vals(data, W)
 }
 \arguments{
 \item{data}{Input data}
+
+\item{W}{Vector of covariates}
 }
 \description{
 Impute NA values and create indicator variables
