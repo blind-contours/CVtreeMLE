@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/blind-contours/CVtreeMLE/workflows/R-CMD-check/badge.svg)](https://github.com/blind-contours/CVtreeMLE/actions)
-[![Coverage Status](https://img.shields.io/codecov/c/github/blind-contours/CVtreeMLE/master.svg)](https://codecov.io/github/blind-contours/CVtreeMLE?branch=master)
+[![Coverage Status](https://codecov.io/gh/blind-contours/CVtreeMLE/branch/main/graph/badge.svg?token=HJP5PYQSG4)](https://codecov.io/github/blind-contours/CVtreeMLE?branch=master)
 [![CRAN](https://www.r-pkg.org/badges/version/CVtreeMLE)](https://www.r-pkg.org/pkg/CVtreeMLE)
 [![CRAN downloads](https://cranlogs.r-pkg.org/badges/CVtreeMLE)](https://CRAN.R-project.org/package=CVtreeMLE)
 [![CRAN total downloads](http://cranlogs.r-pkg.org/badges/grand-total/CVtreeMLE)](https://CRAN.R-project.org/package=CVtreeMLE)
@@ -51,15 +51,11 @@ estimators needed for the ATE. These rules and estimators created in training da
 
 `CVtreeMLE` integrates with the [`sl3`package](https://github.com/tlverse/sl3) [@coyle2021sl3]
 to allow for ensemble
-machine learning to be leveraged in the estimation procedure. `sl3` is used in 
-the iterative backfitting procedure because this step requires ensemble machine 
-learning with an offset for the decision tree predictions. In the $Q$ and $g$ mechanisms, 
-`CVtreeMLE` uses the legacy [`Super Learner`
-package](https://github.com/tlverse/SuperLearner) [@coyle2020sl3]. In the iterative
-backfitting procedure, for decision tree fitting on the full mixture modeled 
+machine learning to be leveraged in the estimation procedure. `sl3` is used to create ensemble machine learning estimators for the $Q$ and $g$ mechanisms for the average treatment effect (ATE) target parameter and is also used in the iterative backfitting procedure In the iterative
+backfitting procedure, for an enselbe of decision trees are fit on the full mixture modeled 
 together, the [`pre` package](https://github.com/marjoleinF/pre)[@Fokkema2020a] is used to fit rule
-ensembles. In backfitting procedure to find thresholds in each mixture component
-individually, the [`partykit` package](http://partykit.r-forge.r-project.org/partykit/)[partykit2015]. In both instances,trees can be estimated with an offset for ensemble machine learning predictions.
+ensembles. In backfitting procedure to find quantiles in each mixture component
+individually, an Super Learner of decision trees generated from the [`partykit` package](http://partykit.r-forge.r-project.org/partykit/)[partykit2015] is created. In each case, the goal is to find the best fitting decision tree from which we extract decision tree rules, we then calculate the ATE for these rules.
 
 ---
 
@@ -107,7 +103,8 @@ consider the following example:
 First load the package and other packages needed
 ```{r libraries, warning=FALSE}
 library(CVtreeMLE)
-library(sl3)
+library(devtools)
+load_all("~/sl3")
 library(kableExtra)
 library(ggplot2)
 library(jtools)
@@ -140,6 +137,20 @@ eps_sd <- 0.01 # random error
 binary <- FALSE # if outcome is binary
 ```
 
+Above, the `subspace_assoc_strength_betas` parameter is used to indicate
+the subspace we want to use and the expected outcome in that subspace.
+The indices correspond to an area in the cube:
+
+1.  All mixtures lower than specified thresholds
+2.  M1 is higher but M2 and M3 are lower
+3.  M2 is higher but M1 and M3 are lower
+4.  M1 and M2 are higher and M3 is lower
+5.  M3 is higher and M1 and M2 are lower
+6.  M1 and M3 are higher and M2 is lower
+7.  M2 and M3 are higher and M1 is lower
+8.  All mixtures are higher than thresholds
+
+
 ```{r simulate data, warning=FALSE}
 sim_data <- simulate_mixture_cube(
   n_obs = n_obs, 
@@ -163,7 +174,7 @@ head(sim_data) %>%
 ```
 ## Set up Estimators used in Super Learners 
 
-Here, we set up our Super Learner using `SL3` for the iterative backfitting procedure. These learners will fit $Y|W$ offset by $Y|A$ as we fit decision trees to the exposure variables both jointly and individially.
+Here, we set up our Super Learner using `SL3` for the iterative backfitting procedure and for our $Q$ and $g$ mechanisms. These learners will fit $Y|W$ offset by $Y|A$ as we fit decision trees to the exposure variables both jointly and individially. Once rules are established, this Super Learner will also estimate the the propensity of being exposed to the determined rule as well as estimating the outcome model.
 
 ```{r setup first stack learners}
 lrnr_glm <- Lrnr_glm$new()
@@ -172,25 +183,31 @@ lrnr_gam <- Lrnr_gam$new()
 lrnr_lasso <- Lrnr_glmnet$new(alpha = 1)
 lrnr_earth <- Lrnr_earth$new()
 lrnr_ranger <- Lrnr_ranger$new()
-lrnr_xgboost100 <- Lrnr_xgboost$new(nrounds = 100, early_stopping_rounds = 10)
-lrnr_xgboost50 <- Lrnr_xgboost$new(nrounds = 50, early_stopping_rounds = 5)
-lrnr_xgboost20 <- Lrnr_xgboost$new(nrounds = 20)
 # put all the learners together (this is just one way to do it)
-learners <- c(lrnr_glm, lrnr_bayesglm,
-lrnr_gam, lrnr_ranger,
-lrnr_xgboost100, lrnr_xgboost50, lrnr_xgboost20)
+learners <- c(lrnr_glm, lrnr_bayesglm, lrnr_gam, lrnr_ranger)
 
 Q1_stack <- make_learner(Stack, learners)
 ```
 
-This second stack of learners will be used in our $Q$ and $g$ mechanisms after we identify rules using the first stack.
+Here, we set up a Super Learner of decision trees. We use a new learner developed for this package in the `sl3` ecosystem, `Lrnr_glmtree`. 
 
-```{r setup second stack learners}
 
-SL.library<- c('SL.randomForest',
-               'SL.earth',
-               "SL.glm",
-               "SL.mean")
+```{r setup tree stack learners}
+lrnr_glmtree_001 <- Lrnr_glmtree$new(alpha = 0.5, maxdepth = 3)
+lrnr_glmtree_002 <- Lrnr_glmtree$new(alpha = 0.6,  maxdepth = 4)
+lrnr_glmtree_003 <- Lrnr_glmtree$new(alpha = 0.7, maxdepth = 2)
+lrnr_glmtree_004 <- Lrnr_glmtree$new(alpha = 0.8, maxdepth = 1)
+
+learners <- c( lrnr_glmtree_001, lrnr_glmtree_002, lrnr_glmtree_003, lrnr_glmtree_004)
+discrete_sl_metalrn <- Lrnr_cv_selector$new()
+
+tree_stack <- make_learner(Stack, learners)
+
+discrete_tree_sl <- Lrnr_sl$new(
+  learners = tree_stack,
+  metalearner = discrete_sl_metalrn
+)
+
 ```
 
 ## Run `CVtreeMLE`
@@ -201,48 +218,81 @@ We will now pass the simulated data, learners, and variable names for each node 
 ptm <- proc.time()
 
 sim_results <- CVtreeMLE(data = sim_data,
-                                   W = c("W", "W2"),
-                                   Y = "y",
-                                   A = c(paste("M", seq(3), sep = "")),
-                                   back_iter_SL = Q1_stack,
-                                   SL.library = SL.library,
-                                   n_folds = 4,
-                                   family = "gaussian",
-                                   H.AW_trunc_lvl = 10,
-                                   parallel = TRUE,
-                                   verbose = FALSE)
+                         W = c("W", "W2"),
+                         Y = "y",
+                         A = c(paste("M", seq(3), sep = "")),
+                         back_iter_SL = Q1_stack,
+                         tree_SL = discrete_tree_sl, 
+                         n_folds = 2,
+                         family = "gaussian",
+                         H.AW_trunc_lvl = 10,
+                         parallel = TRUE,
+                         num_cores = 8,
+                         max_iter = 5,
+                         verbose = TRUE)
 
-ptm - proc.time()
+proc.time() - ptm 
 
 ```
 
-## Types of Models
-
-`CVtreeMLE` fits four types of models: 
-
-1. $Y|M_i, W$ or the expected $Y$ given $M_i$ and covariates $W$ where other mixture components $M_{\ne i}$ are controlled for - these are marginal rule models. That is, decision trees are fit to mixture component $M_i$ and Super Learner is fit to $Y|M_{\ne =i}, W$ in the iterative back-fitting procedure. In this way, we derive individual rules for each mixture compenent while controlling for other mixture components and W. 
-
-2. $Y|M, W$ or the expected Y given $M$ and covariates $W$ where all mixture components are modeled collectively in ensemble partitioning while controlling for $W$ - these are mixture rule models (multiple mixture variables included in a rule compared to 1. above). That is, decision trees are fit to the total mixture space and Super Learner is fit to $Y|W$ in the iterative back-fitting procedure. In this way, we derive rules for the total mixture while controlling for $W$. 
-
-3. The additive marginal model: this treats exposure as a cumulative sum of marginal rules found in the folds. That is, in each fold, the marginal fitting in model 1. is conducted, we simply sum up the rules found for each mixture component to derive an ordered factor variable that describes cumulative exposure. This is $Y| \sum_i^j A_i, W$ or the expected outcome given cumulative exposure while controlling for covariates.
-
-4. The non-additive marginal model: It could in fact be the case that there are interactions between the mixture, as represented as a vector of indicators, and covariates $W$ or within the mixture itself. To capture this, we model $Y|M,W$ where now, each mixture variable $M$ is represented as a binary indicator of the rule determined within the fold. 
-
-Of course, we want to only investigate statistical inference for our target parameter for models that have the best fit. As such, we want to review the RMSE for each of the models detailed above. 
+Let's first look at the RMSE for the iterative back-fitting models. Because our rules are determined in these models, from which our target parameter is derived it's important that our models fit well.  Given our simulated data, we would expect the mixture model to have the lowest RMSE.
 
 ```{r model RMSE}
 RMSE_results <- sim_results$`Model RMSEs`
 head(RMSE_results) %>%
   kbl(caption = "Model Fit Results") %>%
   kable_classic(full_width = F, html_font = "Cambria")
-
 ```
 
-In the above table the first three rows correspond to model type 1., or marginal rules with respective RMSE. The fourth row corresponds to model type 2. or the RMSE of a Super Learner fit with the exposure being a mixture rule found when fitting decision trees on all the mixture components simultaneously. 
+Our mixture decision tree model has the lowest RMSE. 
 
-Lines five and six correspond to models 3. and 4. respectively. 
+We can look at the pooled TMLE results for this model: 
 
-As we can see, the model fit with the mixture rule as the lowest RMSE, as we would expect given our simulated outcome was generated based on this rule. We can also see that the rule matches what we simulated.
+```{r pooled mixture results}
+mixture_results <- sim_results$`Pooled TMLE Mixture Results`
+head(mixture_results) %>%
+  kbl(caption = "Mixture Results") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+*Note - results in explanations below may change slightly based on runs: 
+
+Above, the mixture ATE for this rule is 2.92 (2.73 - 3.10), which covers our true ATE used to generate the data which was 3. The mixture ATE is interpreted as: the average counterfactual mean outcome if all individuals were exposed to the rule shown in `Mixture Interaction Rules` compared to if all individuals were unexposed is 2.92. That is, those individuals who are exposed to this rule have an outcome that is 2.92 higher compared to those that are not exposed to this rule. The standard error, confidence intervals and p-values are derived from the influence curve of this estimator as described above. 
+
+
+```{r fold specific results}
+mixture_v_results <- sim_results$`V-Specific Mix Results`
+head(mixture_v_results) %>%
+  kbl(caption = "V-Fold Mixture Results") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+We can plot our v-fold mixture results findings using the `plot_mixture_results` function. This will return a list of plots with names corresponding to the interactions found.
+
+```{r plot sim mixture results}
+mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific Mix Results`)
+mixture_plots$M1M2M3
+```
+
+This plot shows the ATE specific for each fold and for the weighted-mean results over the fold with corresponding pooled variance. The rule is the pooled rule which includes all observations that were indicated by the fold specific rules. 
+
+```{r pooled marginal results}
+marginal_results <- sim_results$`Pooled TMLE Marginal Results`
+head(marginal_results) %>%
+  kbl(caption = "Mixture Results") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+This plot shows the data-adaptively identified quantile comparisons for each variable. Here `M1_2 - M1_1` shows the second quantile for variable $M1$ minus the first quantile for $M1$. As expected, this difference is positive and the other two are negative given how we simulated our data. 
+
+
+Similarly we can investigate and plot the v-fold specific estimates: 
+
+```{r plot sim marginal results}
+marginal_plots <- plot_marginal_results(v_marginal_results =  sim_results$`V-Specific Marg Results`, mix_comps = c(paste("M", seq(3), sep = "")))
+marginal_plots$M1
+```
+Same as the mixtures plot, the marginal plot shows the ATE for an individual variable in the mixture with corresponding ATE and variance estimates. The top rule is the pooled rule for the reference category, the rule(s) in the boxes are the pooled rules for each quantile that was found for the variable of interest. 
+
 
 ## Mixture and Marginal Results
 
@@ -267,40 +317,6 @@ head(marginal_results) %>%
 
 Across the folds, the expected outcome given the cumulative sum of marginal exposures is also estimated. That is, answering a question such as "What is the exposure specific mean for each additional exposure level".
 
-```{r plot cumulative sum effects, fig.keep='all'}
-summary(sim_results$`Additive MSM`)
-```
-
-As we can see, the expected ATE when modeled as a cumulative exposure does not match the simulations and has high RMSE, as we would expect given the simulated data. 
-
-However, if this model did have the lowest RMSE we could investigate further the cumulative impact of exposure to the marginal rules. 
-
-```{r plot cumulative sum effects, fig.keep='all'}
-cumulative_sum_plot <- effect_plot(sim_results$`Additive MSM`, 
-            pred = sum_marg_hits, 
-            interval = TRUE, 
-            y.label = "Expected Outcome",
-            x.label = "Cumulative Exposure",
-            cat.geom = "line",
-            colors = "black")
-
-cumulative_sum_plot
-
-```
-
-In the plot above, we see the expected outcome given exposure to none of the rules found for each individual variable, exposure to any 1 rule for $M_1$, $M_2$ or $M_3$, any two or all three. 
-
-Lastly, it could be the case that model 4. has the lowest RMSE and we want to investigate the respective marginal ATE, or combination of rule exposures given that model. 
-
-```{r fit post counterfactuals}
-post_counterfactuals <- fit_post_counterfactuals(modeling_results = sim_results, 
-                         target_mixtures = c("M1", "M2", "M3"), 
-                         H.AW_trunc_lvl = 10, 
-                         SL.library = SL.library,
-                         p_adjust_n = 1)
-
-post_counterfactuals
-```
 
 
 

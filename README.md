@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# `R/CVtreeMLE` <img src="inst/figures/CVtreeMLE_sticker.png" height="300" align="right"/>
+# `CVtreeMLE` <img src="inst/figures/CVtreeMLE_sticker.png" height="300" align="right"/>
 
 <!-- badges: start -->
 
@@ -45,40 +45,36 @@ data- adaptive parameters see (Hubbard, Kherad-Pajouh, and Van Der Laan
 2016). `CVtreeMLE` uses data-adaptive parameters by implementing V-fold
 cross-validation (CV), that is, in 10-fold CV, the data is split 10
 times (folds), where 90% of the data is used to determine rules in a
-mixture, and the ![g](https://latex.codecogs.com/png.latex?g "g") and
-![Q](https://latex.codecogs.com/png.latex?Q "Q") estimators needed for
-the ATE. These rules and estimators created in training data are applied
-to the validation data in order to calculate the final ATE target
-parameter. In order to optimize the optimum bias-variance trade-off for
-our causal parameter of interest we use cross-validated targeted minimum
-loss based estimation (CV-TMLE). `CVtreeMLE` builds off of the CV-TMLE
-general theorem of [cross-validated minimum loss based
-estimation](https://biostats.bepress.com/cgi/viewcontent.cgi?article=1276&context=ucbbiostat)
-(Zheng and Laan 2010) which allows the full utilization of loss based
-super learning to obtain the initial estimators needed for our target
-parameter without risk of overfitting. Thus, `CVtreeMLE` makes possible
-the non-parametric estimation of the causal effects of a mixed exposure
-that both results in interpretable results which are useful for public
-policy and is asymptotically efficient.
+mixture, and the *g* and *Q* estimators needed for the ATE. These rules
+and estimators created in training data are applied to the validation
+data in order to calculate the final ATE target parameter. In order to
+optimize the optimum bias-variance trade-off for our causal parameter of
+interest we use cross-validated targeted minimum loss based estimation
+(CV-TMLE). `CVtreeMLE` builds off of the CV-TMLE general theorem of
+cross-validated minimum loss based estimation Zheng and Laan (2010)
+which allows the full utilization of loss based super learning to obtain
+the initial estimators needed for our target parameter without risk of
+overfitting. Thus, `CVtreeMLE` makes possible the non-parametric
+estimation of the causal effects of a mixed exposure that both results
+in interpretable results which are useful for public policy and is
+asymptotically efficient.
 
 `CVtreeMLE` integrates with the
 [`sl3`package](https://github.com/tlverse/sl3) (Coyle et al. 2021) to
 allow for ensemble machine learning to be leveraged in the estimation
-procedure. `sl3` is used in the iterative backfitting procedure because
-this step requires ensemble machine learning with an offset for the
-decision tree predictions. In the
-![Q](https://latex.codecogs.com/png.latex?Q "Q") and
-![g](https://latex.codecogs.com/png.latex?g "g") mechanisms, `CVtreeMLE`
-uses the legacy [`Super Learner`
-package](https://github.com/tlverse/SuperLearner) (Coyle et al. 2021).
-In the iterative backfitting procedure, for decision tree fitting on the
-full mixture modeled together, the [`pre`
+procedure. `sl3` is used to create ensemble machine learning estimators
+for the *Q* and *g* mechanisms for the average treatment effect (ATE)
+target parameter and is also used in the iterative backfitting procedure
+In the iterative backfitting procedure, for an enselbe of decision trees
+are fit on the full mixture modeled together, the [`pre`
 package](https://github.com/marjoleinF/pre)(Fokkema 2020) is used to fit
-rule ensembles. In backfitting procedure to find thresholds in each
-mixture component individually, the [`partykit`
-package](http://partykit.r-forge.r-project.org/partykit/)\[partykit2015\].
-In both instances,trees can be estimated with an offset for ensemble
-machine learning predictions.
+rule ensembles. In backfitting procedure to find quantiles in each
+mixture component individually, an Super Learner of decision trees
+generated from the [`partykit`
+package](http://partykit.r-forge.r-project.org/partykit/)\[partykit2015\]
+is created. In each case, the goal is to find the best fitting decision
+tree from which we extract decision tree rules, we then calculate the
+ATE for these rules.
 
 ------------------------------------------------------------------------
 
@@ -128,7 +124,10 @@ First load the package and other packages needed
 
 ``` r
 library(CVtreeMLE)
-library(sl3)
+library(devtools)
+#> Loading required package: usethis
+load_all("~/sl3")
+#> ℹ Loading sl3
 library(kableExtra)
 library(ggplot2)
 library(jtools)
@@ -139,24 +138,19 @@ set.seed(429153)
 
 Use the `simulate_mixture_cube` function to generate simulated data that
 represents ground-truth. Here, we create three continuous mixture
-variables, ![A](https://latex.codecogs.com/png.latex?A "A"), that are
-correlated and baseline covariates,
-![W](https://latex.codecogs.com/png.latex?W "W"), that are potential
-confounders. Our outcome will be generated such that individuals with a
-specific set of exposures have a different outcome compared to
-individuals who are not exposed to this combination of exposure levels.
+variables, *A*, that are correlated and baseline covariates, *W*, that
+are potential confounders. Our outcome will be generated such that
+individuals with a specific set of exposures have a different outcome
+compared to individuals who are not exposed to this combination of
+exposure levels.
 
 ![](inst/figures/The_Cube.png) The above figure illustrates the data we
 will generate using this function. Here, individuals exposed to
-![M\_1](https://latex.codecogs.com/png.latex?M_1 "M_1") at values less
-than 1.0, ![M\_2](https://latex.codecogs.com/png.latex?M_2 "M_2") at
-levels more than 2.0, and
-![M\_3](https://latex.codecogs.com/png.latex?M_3 "M_3") at levels at or
-greater than 2.5 have an outcome of 6, compared to individuals not
-exposed to this combination of thresholds who have an expected outcome
-of 0 - thus our ATE is 6. Two covariates
-![W](https://latex.codecogs.com/png.latex?W "W") confound this
-relationship. Let’s simulate this scenario.
+*M*<sub>1</sub> at values less than 1.0, *M*<sub>2</sub> at levels more
+than 2.0, and *M*<sub>3</sub> at levels at or greater than 2.5 have an
+outcome of 6, compared to individuals not exposed to this combination of
+thresholds who have an expected outcome of 0 - thus our ATE is 6. Two
+covariates *W* confound this relationship. Let’s simulate this scenario.
 
 ## Simulate Data
 
@@ -170,7 +164,7 @@ sigma <- matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3) # 
 w1_betas <- c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04) # subspace probability relationship with covariate W1
 w2_betas <- c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04) # subspace probability relationship with covariate W2
 mix_subspace_betas <- c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09) # probability of mixture subspace (for multinomial outcome generation)
-subspace_assoc_strength_betas <- c(0, 0, 0, 0, 0, 0, 6, 0) # index is the subspace to apply the outcome value to
+subspace_assoc_strength_betas <- c(0, 0, 0, 0, 0, 0, 6, 0) # mixture subspace impact on outcome Y, here the subspace where M1 is lower and M2 and M3 are higher based on values in splits
 marginal_impact_betas <- c(0, 0, 0) # marginal impact of mixture component on Y
 eps_sd <- 0.01 # random error
 binary <- FALSE # if outcome is binary
@@ -188,22 +182,6 @@ The indices correspond to an area in the cube:
 6.  M1 and M3 are higher and M2 is lower
 7.  M2 and M3 are higher and M1 is lower
 8.  All mixtures are higher than thresholds
-
-In the current simulation, the threshold for
-![M\_1](https://latex.codecogs.com/png.latex?M_1 "M_1") is 0.99,
-![M\_2](https://latex.codecogs.com/png.latex?M_2 "M_2") is 2.0, and
-![M\_3](https://latex.codecogs.com/png.latex?M_3 "M_3") is 2.5.
-Therefore, if we were to specify,
-`subspace_assoc_strength_betas <- c(0, 3, 0, 0, 0, 0, 0, 0)`, we would
-simulate an outcome that is 3 where
-![M\_1](https://latex.codecogs.com/png.latex?M_1 "M_1") is greater than
-1 and ![M\_2](https://latex.codecogs.com/png.latex?M_2 "M_2") and
-![M\_3](https://latex.codecogs.com/png.latex?M_3 "M_3") are less than
-2.0 and 2.5 respectively. Now we can simulate the scenario shown in the
-figure with:
-`subspace_assoc_strength_betas <- c(0, 0, 0, 0, 0, 0, 6, 0)` with
-additional confounding by
-![W](https://latex.codecogs.com/png.latex?W "W") and random error.
 
 ``` r
 sim_data <- simulate_mixture_cube(
@@ -380,10 +358,12 @@ y
 ## Set up Estimators used in Super Learners
 
 Here, we set up our Super Learner using `SL3` for the iterative
-backfitting procedure. These learners will fit
-![Y\|W](https://latex.codecogs.com/png.latex?Y%7CW "Y|W") offset by
-![Y\|A](https://latex.codecogs.com/png.latex?Y%7CA "Y|A") as we fit
-decision trees to the exposure variables both jointly and individially.
+backfitting procedure and for our *Q* and *g* mechanisms. These learners
+will fit *Y*\|*W* offset by *Y*\|*A* as we fit decision trees to the
+exposure variables both jointly and individially. Once rules are
+established, this Super Learner will also estimate the the propensity of
+being exposed to the determined rule as well as estimating the outcome
+model.
 
 ``` r
 lrnr_glm <- Lrnr_glm$new()
@@ -392,111 +372,64 @@ lrnr_gam <- Lrnr_gam$new()
 lrnr_lasso <- Lrnr_glmnet$new(alpha = 1)
 lrnr_earth <- Lrnr_earth$new()
 lrnr_ranger <- Lrnr_ranger$new()
-lrnr_xgboost100 <- Lrnr_xgboost$new(nrounds = 100, early_stopping_rounds = 10)
-lrnr_xgboost50 <- Lrnr_xgboost$new(nrounds = 50, early_stopping_rounds = 5)
-lrnr_xgboost20 <- Lrnr_xgboost$new(nrounds = 20)
 # put all the learners together (this is just one way to do it)
-learners <- c(lrnr_glm, lrnr_bayesglm,
-lrnr_gam, lrnr_ranger,
-lrnr_xgboost100, lrnr_xgboost50, lrnr_xgboost20)
+learners <- c(lrnr_glm, lrnr_bayesglm, lrnr_gam, lrnr_ranger)
 
 Q1_stack <- make_learner(Stack, learners)
 ```
 
-This second stack of learners will be used in our
-![Q](https://latex.codecogs.com/png.latex?Q "Q") and
-![g](https://latex.codecogs.com/png.latex?g "g") mechanisms after we
-identify rules using the first stack.
+Here, we set up a Super Learner of decision trees. We use a new learner
+developed for this package in the `sl3` ecosystem, `Lrnr_glmtree`.
 
 ``` r
-SL.library<- c('SL.randomForest',
-               'SL.earth',
-               "SL.glm",
-               "SL.mean")
+lrnr_glmtree_001 <- Lrnr_glmtree$new(alpha = 0.5, maxdepth = 3)
+lrnr_glmtree_002 <- Lrnr_glmtree$new(alpha = 0.6,  maxdepth = 4)
+lrnr_glmtree_003 <- Lrnr_glmtree$new(alpha = 0.7, maxdepth = 2)
+lrnr_glmtree_004 <- Lrnr_glmtree$new(alpha = 0.8, maxdepth = 1)
+
+learners <- c( lrnr_glmtree_001, lrnr_glmtree_002, lrnr_glmtree_003, lrnr_glmtree_004)
+discrete_sl_metalrn <- Lrnr_cv_selector$new()
+
+tree_stack <- make_learner(Stack, learners)
+
+discrete_tree_sl <- Lrnr_sl$new(
+  learners = tree_stack,
+  metalearner = discrete_sl_metalrn
+)
 ```
 
 ## Run `CVtreeMLE`
 
 We will now pass the simulated data, learners, and variable names for
-each node in
-![O = W,A,Y](https://latex.codecogs.com/png.latex?O%20%3D%20W%2CA%2CY "O = W,A,Y")
-to the `CVtreeMLE` function:
+each node in *O* = *W*, *A*, *Y* to the `CVtreeMLE` function:
 
 ``` r
 ptm <- proc.time()
 
 sim_results <- CVtreeMLE(data = sim_data,
-                                   W = c("W", "W2"),
-                                   Y = "y",
-                                   A = c(paste("M", seq(3), sep = "")),
-                                   back_iter_SL = Q1_stack,
-                                   SL.library = SL.library,
-                                   n_folds = 5,
-                                   family = "gaussian",
-                                   H.AW_trunc_lvl = 10,
-                                   parallel = TRUE,
-                                   verbose = FALSE)
+                         W = c("W", "W2"),
+                         Y = "y",
+                         A = c(paste("M", seq(3), sep = "")),
+                         back_iter_SL = Q1_stack,
+                         tree_SL = discrete_tree_sl, 
+                         n_folds = 2,
+                         family = "gaussian",
+                         H.AW_trunc_lvl = 10,
+                         parallel = TRUE,
+                         num_cores = 8,
+                         max_iter = 5,
+                         verbose = TRUE)
 
-proc.time() - ptm
-#>     user   system  elapsed 
-#> 1157.040  106.988 3230.373
+proc.time() - ptm 
+#>    user  system elapsed 
+#> 414.331  17.377 238.249
 ```
 
-## Types of Models
-
-`CVtreeMLE` fits four types of models:
-
-1.  ![Y\|M\_i, W](https://latex.codecogs.com/png.latex?Y%7CM_i%2C%20W "Y|M_i, W")
-    or the expected ![Y](https://latex.codecogs.com/png.latex?Y "Y")
-    given ![M\_i](https://latex.codecogs.com/png.latex?M_i "M_i") and
-    covariates ![W](https://latex.codecogs.com/png.latex?W "W") where
-    other mixture components
-    ![M\_{\\ne i}](https://latex.codecogs.com/png.latex?M_%7B%5Cne%20i%7D "M_{\ne i}")
-    are controlled for - these are marginal rule models. That is,
-    decision trees are fit to mixture component
-    ![M\_i](https://latex.codecogs.com/png.latex?M_i "M_i") and Super
-    Learner is fit to
-    ![Y\|M\_{\\ne =i}, W](https://latex.codecogs.com/png.latex?Y%7CM_%7B%5Cne%20%3Di%7D%2C%20W "Y|M_{\ne =i}, W")
-    in the iterative back-fitting procedure. In this way, we derive
-    individual rules for each mixture compenent while controlling for
-    other mixture components and W.
-
-2.  ![Y\|M, W](https://latex.codecogs.com/png.latex?Y%7CM%2C%20W "Y|M, W")
-    or the expected Y given
-    ![M](https://latex.codecogs.com/png.latex?M "M") and covariates
-    ![W](https://latex.codecogs.com/png.latex?W "W") where all mixture
-    components are modeled collectively in ensemble partitioning while
-    controlling for ![W](https://latex.codecogs.com/png.latex?W "W") -
-    these are mixture rule models (multiple mixture variables included
-    in a rule compared to 1. above). That is, decision trees are fit to
-    the total mixture space and Super Learner is fit to
-    ![Y\|W](https://latex.codecogs.com/png.latex?Y%7CW "Y|W") in the
-    iterative back-fitting procedure. In this way, we derive rules for
-    the total mixture while controlling for
-    ![W](https://latex.codecogs.com/png.latex?W "W").
-
-3.  The additive marginal model: this treats exposure as a cumulative
-    sum of marginal rules found in the folds. That is, in each fold, the
-    marginal fitting in model 1. is conducted, we simply sum up the
-    rules found for each mixture component to derive an ordered factor
-    variable that describes cumulative exposure. This is
-    ![Y\| \\sum\_i^j A\_i, W](https://latex.codecogs.com/png.latex?Y%7C%20%5Csum_i%5Ej%20A_i%2C%20W "Y| \sum_i^j A_i, W")
-    or the expected outcome given cumulative exposure while controlling
-    for covariates.
-
-4.  The non-additive marginal model: It could in fact be the case that
-    there are interactions between the mixture, as represented as a
-    vector of indicators, and covariates
-    ![W](https://latex.codecogs.com/png.latex?W "W") or within the
-    mixture itself. To capture this, we model
-    ![Y\|M,W](https://latex.codecogs.com/png.latex?Y%7CM%2CW "Y|M,W")
-    where now, each mixture variable
-    ![M](https://latex.codecogs.com/png.latex?M "M") is represented as a
-    binary indicator of the rule determined within the fold.
-
-Of course, we want to only investigate statistical inference for our
-target parameter for models that have the best fit. As such, we want to
-review the RMSE for each of the models detailed above.
+Let’s first look at the RMSE for the iterative back-fitting models.
+Because our rules are determined in these models, from which our target
+parameter is derived it’s important that our models fit well. Given our
+simulated data, we would expect the mixture model to have the lowest
+RMSE.
 
 ``` r
 RMSE_results <- sim_results$`Model RMSEs`
@@ -512,7 +445,7 @@ Model Fit Results
 <thead>
 <tr>
 <th style="text-align:left;">
-Model
+Var(s)
 </th>
 <th style="text-align:right;">
 RMSE
@@ -522,75 +455,45 @@ RMSE
 <tbody>
 <tr>
 <td style="text-align:left;">
-M1 &gt; 0.00859 & M1 &lt; 0.93418
+M1
 </td>
 <td style="text-align:right;">
-1.9719464
+0.0654085
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-M2 &gt; 2.99006 & M2 &lt; 3.99468
+M2
 </td>
 <td style="text-align:right;">
-1.8367400
+0.0638730
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-M3 &gt; 2.53437 & M3 &lt; 4.98025
+M3
 </td>
 <td style="text-align:right;">
-1.8468551
+0.0633490
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-M1 &gt; 0.021 & M1 &lt; 0.934 & M2 &gt; 2.034 & M2 &lt; 3.994 & M3 &gt;
-2.534 & M3 &lt; 4.98
+M1M2M3
 </td>
 <td style="text-align:right;">
-0.3791705
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-additive marginal model
-</td>
-<td style="text-align:right;">
-0.9644628
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-non-additive marginal model
-</td>
-<td style="text-align:right;">
-1.2904166
+0.0409719
 </td>
 </tr>
 </tbody>
 </table>
 
-In the above table the first three rows correspond to model type 1., or
-marginal rules with respective RMSE. The fourth row corresponds to model
-type 2. or the RMSE of a Super Learner fit with the exposure being a
-mixture rule found when fitting decision trees on all the mixture
-components simultaneously.
+Our mixture decision tree model has the lowest RMSE.
 
-Lines five and six correspond to models 3. and 4. respectively.
-
-As we can see, the model fit with the mixture rule as the *lowest RMSE*,
-as we would expect given our simulated outcome was generated based on
-this rule. We can also see that the *rule matches what we simulated*.
-
-## Mixture and Marginal Results
-
-Let’s first look at the mixture results for the model that had the
-lowest RMSE:
+We can look at the pooled TMLE results for this model:
 
 ``` r
-mixture_results <- sim_results$`Mixture Results`
+mixture_results <- sim_results$`Pooled TMLE Mixture Results`
 head(mixture_results) %>%
   kbl(caption = "Mixture Results") %>%
   kable_classic(full_width = F, html_font = "Cambria")
@@ -637,16 +540,16 @@ Fraction Covered
 <tbody>
 <tr>
 <td style="text-align:right;">
-5.99961
+5.998892
 </td>
 <td style="text-align:right;">
-0.0196168
+0.0142107
 </td>
 <td style="text-align:right;">
-5.961162
+5.971039
 </td>
 <td style="text-align:right;">
-6.038058
+6.026744
 </td>
 <td style="text-align:right;">
 0
@@ -658,41 +561,214 @@ Fraction Covered
 M1M2M3
 </td>
 <td style="text-align:right;">
-0.3791705
+0.2681823
 </td>
 <td style="text-align:left;">
-M1 &gt; 0.021 & M1 &lt; 0.934 & M2 &gt; 2.034 & M2 &lt; 3.994 & M3 &gt;
-2.534 & M3 &lt; 4.98
+M1 &gt; 0.021 & M1 &lt; 0.953 & M2 &gt; 2.011 & M2 &lt; 3.994 & M3 &gt;
+2.512 & M3 &lt; 4.98
 </td>
 <td style="text-align:right;">
-0.9666667
+0.9833333
 </td>
 </tr>
 </tbody>
 </table>
 
-In this table, Mixture ATE is the counterfactual mean difference if
-everyone was exposed to this rule compared to if nobody was exposed to
-this rule. Mixture interaction rule is the final rule created that
-covers all individuals across the fold specific mixture rules. Coverage
-is what proportion of individuals are covered by this rule and is an
-indicator of rule stability. As we can see, `CVtreeMLE` identifies the
-correct rule in the simulated data and estimates the correct ATE with
-proper CI coverage.
+\*Note - results in explanations below may change slightly based on
+runs:
 
-These are the rules found for each individual variable in the vector of
-exposures while controlling for other exposures and covariates.
+Above, the mixture ATE for this rule is 2.92 (2.73 - 3.10), which covers
+our true ATE used to generate the data which was 3. The mixture ATE is
+interpreted as: the average counterfactual mean outcome if all
+individuals were exposed to the rule shown in
+`Mixture Interaction Rules` compared to if all individuals were
+unexposed is 2.92. That is, those individuals who are exposed to this
+rule have an outcome that is 2.92 higher compared to those that are not
+exposed to this rule. The standard error, confidence intervals and
+p-values are derived from the influence curve of this estimator as
+described above.
 
 ``` r
-marginal_results <- sim_results$`Marginal Results`
+mixture_v_results <- sim_results$`V-Specific Mix Results`
+head(mixture_v_results) %>%
+  kbl(caption = "V-Fold Mixture Results") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+<table class="kable_wrapper lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+V-Fold Mixture Results
+</caption>
+<tbody>
+<tr>
+<td>
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:left;">
+Mixture ATE
+</th>
+<th style="text-align:left;">
+Standard Error
+</th>
+<th style="text-align:left;">
+Lower CI
+</th>
+<th style="text-align:left;">
+Upper CI
+</th>
+<th style="text-align:left;">
+P-value
+</th>
+<th style="text-align:left;">
+P-value Adj
+</th>
+<th style="text-align:left;">
+RMSE
+</th>
+<th style="text-align:left;">
+Mixture Interaction Rules
+</th>
+<th style="text-align:left;">
+Variables
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+5.76002934560639
+</td>
+<td style="text-align:left;">
+0.0743849818229526
+</td>
+<td style="text-align:left;">
+5.61423746024273
+</td>
+<td style="text-align:left;">
+5.90582123097004
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+0.151148247583847
+</td>
+<td style="text-align:left;">
+M2 &gt; 1.96611335121485 & M1 &lt;= 0.952865145261606 & M3 &gt;
+2.48419675826922
+</td>
+<td style="text-align:left;">
+M1M2M3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+2
+</td>
+<td style="text-align:left;">
+5.8622877267532
+</td>
+<td style="text-align:left;">
+0.0282004749837316
+</td>
+<td style="text-align:left;">
+5.80701581143816
+</td>
+<td style="text-align:left;">
+5.91755964206823
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+0.408007740468045
+</td>
+<td style="text-align:left;">
+M1 &lt;= 0.934177674302425 & M2 &gt; 2.00708027766665 & M3 &gt;
+2.47762214185431
+</td>
+<td style="text-align:left;">
+M1M2M3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Pooled
+</td>
+<td style="text-align:left;">
+5.8494372758852
+</td>
+<td style="text-align:left;">
+0.0795511930149954
+</td>
+<td style="text-align:left;">
+5.6935
+</td>
+<td style="text-align:left;">
+6.0054
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+0.375729111995058
+</td>
+<td style="text-align:left;">
+M1 &gt; 0.021 & M1 &lt; 0.953 & M2 &gt; 2.011 & M2 &lt; 3.994 & M3 &gt;
+2.512 & M3 &lt; 4.98
+</td>
+<td style="text-align:left;">
+M1M2M3
+</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</tbody>
+</table>
+
+We can plot our v-fold mixture results findings using the
+`plot_mixture_results` function. This will return a list of plots with
+names corresponding to the interactions found.
+
+``` r
+mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific Mix Results`)
+mixture_plots$M1M2M3
+```
+
+![](README-plot%20sim%20mixture%20results-1.png)<!-- -->
+
+This plot shows the ATE specific for each fold and for the weighted-mean
+results over the fold with corresponding pooled variance. The rule is
+the pooled rule which includes all observations that were indicated by
+the fold specific rules.
+
+``` r
+marginal_results <- sim_results$`Pooled TMLE Marginal Results`
 head(marginal_results) %>%
-  kbl(caption = "Marginal Results") %>%
+  kbl(caption = "Mixture Results") %>%
   kable_classic(full_width = F, html_font = "Cambria")
 ```
 
 <table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
 <caption>
-Marginal Results
+Mixture Results
 </caption>
 <thead>
 <tr>
@@ -719,134 +795,154 @@ P-value Adj
 <th style="text-align:right;">
 RMSE
 </th>
-<th style="text-align:left;">
-Marginal Rules
-</th>
-<th style="text-align:right;">
-Fraction Overlap
-</th>
-<th style="text-align:right;">
-Min
-</th>
-<th style="text-align:right;">
-Max
-</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align:left;">
-M1
+M1\_2-M1\_1
 </td>
 <td style="text-align:right;">
-1.331342
+-1.673242
 </td>
 <td style="text-align:right;">
-0.2460008
+0.1995122
 </td>
 <td style="text-align:right;">
-0.8491892
+-2.0642784
 </td>
 <td style="text-align:right;">
-1.813495
+-1.282205
 </td>
 <td style="text-align:right;">
-1e-07
+0
 </td>
 <td style="text-align:right;">
-2e-07
+0
 </td>
 <td style="text-align:right;">
-1.971946
-</td>
-<td style="text-align:left;">
-M1 &gt; 0.00859 & M1 &lt; 0.93418
-</td>
-<td style="text-align:right;">
-0.5918919
-</td>
-<td style="text-align:right;">
-0.0011497
-</td>
-<td style="text-align:right;">
-2.988107
+1.702335
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-M2
+M2\_2-M2\_1
 </td>
 <td style="text-align:right;">
-1.336206
+1.500137
 </td>
 <td style="text-align:right;">
-0.1797070
+0.1672006
 </td>
 <td style="text-align:right;">
-0.9839865
+1.1724299
 </td>
 <td style="text-align:right;">
-1.688425
+1.827844
 </td>
 <td style="text-align:right;">
-0e+00
+0
 </td>
 <td style="text-align:right;">
-0e+00
+0
 </td>
 <td style="text-align:right;">
-1.836740
-</td>
-<td style="text-align:left;">
-M2 &gt; 2.99006 & M2 &lt; 3.99468
-</td>
-<td style="text-align:right;">
-0.4858300
-</td>
-<td style="text-align:right;">
-0.0002522
-</td>
-<td style="text-align:right;">
-3.994680
+1.667953
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-M3
+M3\_2-M3\_1
 </td>
 <td style="text-align:right;">
-1.491790
+1.159470
 </td>
 <td style="text-align:right;">
-0.1734742
+0.1558593
 </td>
 <td style="text-align:right;">
-1.1517872
+0.8539916
 </td>
 <td style="text-align:right;">
-1.831793
+1.464949
 </td>
 <td style="text-align:right;">
-0e+00
+0
 </td>
 <td style="text-align:right;">
-0e+00
+0
 </td>
 <td style="text-align:right;">
-1.846855
+1.566421
 </td>
-<td style="text-align:left;">
-M3 &gt; 2.53437 & M3 &lt; 4.98025
-</td>
-<td style="text-align:right;">
-0.9748954
-</td>
-<td style="text-align:right;">
-0.0028738
-</td>
-<td style="text-align:right;">
-4.980251
-</td>
+</tr>
+</tbody>
+</table>
+
+This plot shows the data-adaptively identified quantile comparisons for
+each variable. Here `M1_2 - M1_1` shows the second quantile for variable
+*M*1 minus the first quantile for *M*1. As expected, this difference is
+positive and the other two are negative given how we simulated our data.
+
+Similarly we can investigate and plot the v-fold specific estimates:
+
+``` r
+marginal_plots <- plot_marginal_results(v_marginal_results =  sim_results$`V-Specific Marg Results`, mix_comps = c(paste("M", seq(3), sep = "")))
+marginal_plots$M1
+```
+
+![](README-plot%20sim%20marginal%20results-1.png)<!-- --> Same as the
+mixtures plot, the marginal plot shows the ATE for an individual
+variable in the mixture with corresponding ATE and variance estimates.
+The top rule is the pooled rule for the reference category, the rule(s)
+in the boxes are the pooled rules for each quantile that was found for
+the variable of interest.
+
+## Mixture and Marginal Results
+
+Let’s first look at the mixture results for the model that had the
+lowest RMSE:
+
+``` r
+mixture_results <- sim_results$`Mixture Results`
+head(mixture_results) %>%
+  kbl(caption = "Mixture Results") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+<table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Mixture Results
+</caption>
+<tbody>
+<tr>
+</tr>
+</tbody>
+</table>
+
+In this table, Mixture ATE is the counterfactual mean difference if
+everyone was exposed to this rule compared to if nobody was exposed to
+this rule. Mixture interaction rule is the final rule created that
+covers all individuals across the fold specific mixture rules. Coverage
+is what proportion of individuals are covered by this rule and is an
+indicator of rule stability.
+
+These are the rules found for each individual variable in the vector of
+exposures while controlling for other exposures and covariates.
+
+``` r
+marginal_results <- sim_results$`Marginal Results`
+head(marginal_results) %>%
+  kbl(caption = "Marginal Results") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+<table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Marginal Results
+</caption>
+<tbody>
+<tr>
 </tr>
 </tbody>
 </table>
@@ -855,165 +951,6 @@ Across the folds, the expected outcome given the cumulative sum of
 marginal exposures is also estimated. That is, answering a question such
 as “What is the exposure specific mean for each additional exposure
 level.”
-
-``` r
-summary(sim_results$`Additive MSM`)
-#> 
-#> Call:
-#> stats::glm(formula = QbarAW_additive_star ~ sum_marg_hits, data = mix_additive_data)
-#> 
-#> Deviance Residuals: 
-#>      Min        1Q    Median        3Q       Max  
-#> -2.33558  -0.48721   0.04473   0.45386   2.56758  
-#> 
-#> Coefficients:
-#>                Estimate Std. Error t value Pr(>|t|)    
-#> (Intercept)    -0.07818    0.09966  -0.785 0.433110    
-#> sum_marg_hits1  0.13036    0.11493   1.134 0.257223    
-#> sum_marg_hits2  0.39839    0.11523   3.457 0.000592 ***
-#> sum_marg_hits3  5.29362    0.14331  36.939  < 2e-16 ***
-#> ---
-#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-#> 
-#> (Dispersion parameter for gaussian family taken to be 0.6257061)
-#> 
-#>     Null deviance: 1657.57  on 499  degrees of freedom
-#> Residual deviance:  310.35  on 496  degrees of freedom
-#> AIC: 1190.5
-#> 
-#> Number of Fisher Scoring iterations: 2
-```
-
-As we can see, the expected ATE when modeled as a cumulative exposure
-does not match the simulations and has high RMSE, as we would expect
-given the simulated data.
-
-However, if this model did have the lowest RMSE we could investigate
-further the cumulative impact of exposure to the marginal rules.
-
-``` r
-cumulative_sum_plot <- effect_plot(sim_results$`Additive MSM`, 
-            pred = sum_marg_hits, 
-            interval = TRUE, 
-            y.label = "Expected Outcome",
-            x.label = "Cumulative Exposure",
-            cat.geom = "line",
-            colors = "black")
-
-cumulative_sum_plot
-```
-
-![](README-plot%20cumulative%20sum%20effects-1.png)<!-- -->
-
-In the plot above, we see the expected outcome given exposure to none of
-the rules found for each individual variable, exposure to any 1 rule for
-![M\_1](https://latex.codecogs.com/png.latex?M_1 "M_1"),
-![M\_2](https://latex.codecogs.com/png.latex?M_2 "M_2") or
-![M\_3](https://latex.codecogs.com/png.latex?M_3 "M_3"), any two or all
-three.
-
-Lastly, it could be the case that model 4. has the lowest RMSE and we
-want to investigate the respective marginal ATE, or combination of rule
-exposures given that model.
-
-The `fit_post_counterfactuals` function takes in the `CVtreeMLE` results
-and uses the marginal combination data to calculate the ATE for new
-counterfactuals using the fits found across the CV procedure. Below, we
-run this to get ATE results if all individuals were exposed to the rules
-found for each variable in the simulation compared to if none were
-exposed when the marginal rules are modeled in a non-additive fashion.
-
-``` r
-post_fit_counterfactuals <- fit_post_counterfactuals(modeling_results = sim_results, 
-                         target_mixtures = c("M1", "M2", "M3"), 
-                         H.AW_trunc_lvl = 10, 
-                         SL.library = SL.library,
-                         p_adjust_n = 1)
-#> [1] "Fitting SL to marginal rule for mixture"
-#> Loading required package: nnls
-#> [1] "Fitting SL to marginal rule for mixture"
-#> [1] "Fitting SL to marginal rule for mixture"
-#> [1] "Fitting SL to marginal rule for mixture"
-#> [1] "Fitting SL to marginal rule for mixture"
-
-post_fit_counterfactuals %>%
-  kbl(caption = "Post Counterfactual Results") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
-```
-
-<table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
-<caption>
-Post Counterfactual Results
-</caption>
-<thead>
-<tr>
-<th style="text-align:left;">
-</th>
-<th style="text-align:right;">
-Mixture ATE
-</th>
-<th style="text-align:right;">
-Standard Error
-</th>
-<th style="text-align:right;">
-Lower CI
-</th>
-<th style="text-align:right;">
-Upper CI
-</th>
-<th style="text-align:right;">
-P-value
-</th>
-<th style="text-align:right;">
-P-value adj
-</th>
-<th style="text-align:right;">
-RMSE
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-Mixture
-</td>
-<td style="text-align:right;">
-3.619747
-</td>
-<td style="text-align:right;">
-0.1614003
-</td>
-<td style="text-align:right;">
-3.303408
-</td>
-<td style="text-align:right;">
-3.936086
-</td>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-1.087848
-</td>
-</tr>
-</tbody>
-</table>
-
-As we can see, the ATE from this model does not match the truth in
-simulations and the RMSE is higher compared to the mixture rule fitting.
-However, if the RMSE for this model was lowest, one could then
-investigate the expected outcome under different combination of marginal
-exposures.
-
-## Vignette
-
-For more details as to what’s under the hood in `CVtreeMLE` please see
-the included vignette. There, additional applications are shown (on the
-NIEHS mixtures workshop data) and results are compared to existing
-mixture methods.
 
 ------------------------------------------------------------------------
 
