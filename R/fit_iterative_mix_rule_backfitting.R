@@ -20,6 +20,9 @@
 #' @export
 
 fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, max_iter, verbose) {
+
+  future::plan(future::sequential, gc = TRUE)
+
   pre_boot_list <- list()
 
   task <- sl3::make_sl3_Task(
@@ -54,7 +57,9 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, max_
                            removeduplicates = TRUE,
                            maxdepth = pre::maxdepth_sampler(),
                            sampfrac = min(1, (11 * sqrt(dim(At)[1]) + 1) / dim(At)[1]),
-                           nfolds = 10
+                           nfolds = 10,
+                           par.final = FALSE,
+                           par.init = FALSE
   )
 
   QbarAW_initial <- predict(pre_model_t0)
@@ -103,7 +108,9 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, max_
                           maxdepth = pre::maxdepth_sampler(),
                           sampfrac = min(1, (11 * sqrt(dim(At)[1]) + 1) / dim(At)[1]),
                           nfolds = 10,
-                          offset = At$QbarW_initial
+                          offset = At$QbarW_initial,
+                          par.final = FALSE,
+                          par.init = FALSE
     )
 
     pre_model_preds_offset <- predict(pre_model, newoffset = At$QbarW_initial)
@@ -166,10 +173,15 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, max_
   rules <- rules[!rules$test == 0, ]
 
   rules <- rules %>%
-    dplyr::group_by(test, direction) %>%
+    dplyr::group_by(test) %>%
     dplyr::top_n(1, abs(coefficient))
 
   rules$fold <- fold
+
+  backfit_resids <- (At$y_scaled - pre_model_preds_offset)^2
+  backfit_RMSE <- sqrt(mean(backfit_resids))
+
+  rules$RMSE <- backfit_RMSE
 
   if (dim(rules)[1] == 0) {
     rules <- data.frame(matrix(nrow = 1, ncol = 7))
@@ -181,6 +193,7 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, max_
     rules$boot_num <- 0
     rules$direction <- -1
     rules$fold <- fold
+    rules$RMSE <- NA
   }
 
   return(rules)

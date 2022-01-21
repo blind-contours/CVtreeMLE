@@ -1,4 +1,4 @@
-est_comb_mixture_rules <- function(At, Av, W, Y, rules, no_rules, SL.library) {
+est_comb_mixture_rules <- function(At, Av, W, Y, rules, no_mix_rules, Q1_stack) {
 
   At_c <- At
   Av_c <- Av
@@ -8,7 +8,7 @@ est_comb_mixture_rules <- function(At, Av, W, Y, rules, no_rules, SL.library) {
 
   rules <- as.data.frame(rules)
 
-  if (dim(rules)[1] > 0 & no_rules == FALSE) {
+  if (no_mix_rules == FALSE) {
     for (i in seq(dim(rules)[1])) {
       target_interaction_result <- rules[i, ]$description
 
@@ -38,7 +38,7 @@ est_comb_mixture_rules <- function(At, Av, W, Y, rules, no_rules, SL.library) {
     At_mix_comb <-
       cbind(
         mix_interactions_rules_train,
-        At_c[W]
+        At_c[W, Y]
       )
 
     mix_interactions_rules_valid <-
@@ -47,16 +47,24 @@ est_comb_mixture_rules <- function(At, Av, W, Y, rules, no_rules, SL.library) {
     Av_mix_comb <-
       cbind(
         mix_interactions_rules_valid,
-        Av_c[W]
+        Av_c[W, Y]
       )
 
-    QbarAWSL_m <- SuperLearner(
-      Y = At_c$y_scaled,
-      X = At_mix_comb,
-      SL.library = SL.library,
-      family = "gaussian",
-      verbose = FALSE
+    task_At <- sl3::make_sl3_Task(
+      data = At_marg_comb,
+      covariates = c(colnames(marg_rule_train), W),
+      outcome = "y_scaled",
+      outcome_type = family
     )
+
+    task_Av <- sl3::make_sl3_Task(
+      data = Av_marg_comb,
+      covariates = c(colnames(marg_rule_train), W),
+      outcome = "y_scaled",
+      outcome_type = family
+    )
+
+
 
     QbarAW <- bound_precision(predict(QbarAWSL_m, newdata = Av_mix_comb)$pred)
 

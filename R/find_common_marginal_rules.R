@@ -22,7 +22,6 @@
 #' @export
 #'
 find_common_marginal_rules <- function(fold_rules, data, mix_comps, marginal_results, n_folds) {
-
   fold_rules <- unlist(fold_rules, recursive = FALSE)
   fold_rules <- fold_rules[!sapply(fold_rules, is.null)]
 
@@ -33,173 +32,110 @@ find_common_marginal_rules <- function(fold_rules, data, mix_comps, marginal_res
   mins <- list()
   maxs <- list()
 
-  for (i in seq(mix_comps)) {
-    var <- mix_comps[i]
+  for (i in seq(nrow(fold_rules[[1]]))) {
+    var <- fold_rules[[1]]$target_m[i]
+    var_quant <- fold_rules[[1]]$var_quant_group[i]
     mixture_data <- subset(data, select = mix_comps)
 
     rules <- list()
     for (rule in seq(length(fold_rules))) {
       temp <- fold_rules[[rule]]
-      temp <- temp %>% filter(.data$target_m == var)
+      temp <- temp %>% filter(.data$var_quant_group == var_quant)
       rules[[rule]] <- temp
     }
+
     rules <- do.call(rbind, rules)
 
-    # rules <- do.call(rbind, lapply(fold_rules, subset, target_m == var))
-    directions <- rules$directions
     rules <- rules$rules
 
-    if (any(rules == "No Rules Found") == FALSE) {
-      combined_rule <- list()
-      for (j in seq(rules)) {
-        direction <- directions[[j]]
-        rule <- rules[j]
-        # rule <- gsub("-", " -", rule)
+    combined_rule <- rules
 
-        if (direction == "negative") {
-          rule_list <- c()
-          neg_rules_flipped <- c()
-          neg_rule <- mixture_data %>%
-            transmute("pos_rule" := ifelse(eval(parse(text = rule)), 1, 0))
-          pos_rule <- 1 - neg_rule
-          target_neg_var_df <-
-            cbind(subset(mixture_data, select = var), pos_rule)
+    total_rules[[i]] <- combined_rule
 
-          var_min_1 <-
-            target_neg_var_df %>%
-            dplyr::group_by(pos_rule) %>%
-            dplyr::summarise(min = min(!!(as.name(var))))
-          var_min_1 <- subset(var_min_1, pos_rule == 1, select = min)
+    # combined_rule <- paste(unlist(combined_rule), collapse = " & ")
+    fold_rules_eval <- list()
 
-          var_min_0 <-
-            target_neg_var_df %>%
-            dplyr::group_by(pos_rule) %>%
-            dplyr::summarise(min = min(!!(as.name(var))))
-          var_min_0 <- subset(var_min_0, pos_rule == 0, select = min)
+    for (k in seq(combined_rule)) {
+      fold_rule <- combined_rule[[k]]
 
-          var_max_1 <-
-            target_neg_var_df %>%
-            dplyr::group_by(pos_rule) %>%
-            dplyr::summarise(max = max(!!(as.name(var))))
-          var_max_1 <- subset(var_max_1, pos_rule == 1, select = max)
+      fold_rule <- mixture_data %>%
+        transmute("fold_rule" := ifelse(eval(parse(text = fold_rule)), 1, 0))
 
-          var_max_0 <-
-            target_neg_var_df %>%
-            dplyr::group_by(pos_rule) %>%
-            dplyr::summarise(max = max(!!(as.name(var))))
-          var_max_0 <- subset(var_max_0, pos_rule == 0, select = max)
+      fold_rules_eval[[k]] <- fold_rule
+    }
 
-          rule <-
-            paste(
-              var,
-              ">",
-              round(var_min_1, 5),
-              "&",
-              var,
-              "<",
-              round(var_max_1, 5)
-            )
-        }
+    fold_rules_df <- do.call(cbind, fold_rules_eval)
+    colnames(fold_rules_df) <- paste("fold_", seq(combined_rule))
 
-        combined_rule <- append(combined_rule, rule)
-      }
+    fold_rules_df$sum <- rowSums(fold_rules_df)
 
-      total_rules[[i]] <- combined_rule
+    fold_rules_df$all_folds <- as.numeric(fold_rules_df$sum == length(combined_rule))
+    fold_rules_df <- cbind(fold_rules_df, mixture_data)
 
-      # combined_rule <- paste(unlist(combined_rule), collapse = " & ")
-      fold_rules_eval <- list()
+    if (dim(table(fold_rules_df$all_folds)) == 2) {
+      count <- sum(as.numeric(fold_rules_df$sum == length(combined_rule)))
+      total_count <- sum(as.numeric(fold_rules_df$sum > 0))
+      fraction <- round(count / total_count, 3)
 
-      for (k in seq(combined_rule)) {
-        fold_rule <- combined_rule[[k]]
+      var_min_1 <-
+        fold_rules_df %>%
+        dplyr::group_by(all_folds) %>%
+        summarise(min = min(!!(as.name(var))))
+      var_min_1 <- subset(var_min_1, all_folds == 1, select = min)
 
-        fold_rule <- mixture_data %>%
-          transmute("fold_rule" := ifelse(eval(parse(text = fold_rule)), 1, 0))
+      var_min_0 <-
+        fold_rules_df %>%
+        group_by(all_folds) %>%
+        summarise(min = min(!!(as.name(var))))
+      var_min_0 <- subset(var_min_0, all_folds == 0, select = min)
 
-        fold_rules_eval[[k]] <- fold_rule
-      }
+      var_max_1 <-
+        fold_rules_df %>%
+        group_by(all_folds) %>%
+        summarise(max = max(!!(as.name(var))))
+      var_max_1 <- subset(var_max_1, all_folds == 1, select = max)
 
-      fold_rules_df <- do.call(cbind, fold_rules_eval)
-      colnames(fold_rules_df) <- paste("fold_", seq(n_folds))
+      var_max_0 <-
+        fold_rules_df %>%
+        group_by(all_folds) %>%
+        summarise(max = max(!!(as.name(var))))
+      var_max_0 <- subset(var_max_0, all_folds == 0, select = max)
 
-      fold_rules_df$sum <- rowSums(fold_rules_df)
+      rule <-
+        paste(
+          var,
+          ">",
+          round(var_min_1, 5),
+          "&",
+          var,
+          "<",
+          round(var_max_1, 5)
+        )
 
-      fold_rules_df$all_folds <- as.numeric(fold_rules_df$sum == n_folds)
-      fold_rules_df <- cbind(fold_rules_df, mixture_data)
-
-      if (dim(table(fold_rules_df$all_folds)) == 2) {
-        count <- sum(as.numeric(fold_rules_df$sum == n_folds))
-        total_count <- sum(as.numeric(fold_rules_df$sum > 0))
-        fraction <- count / total_count
-
-        var_min_1 <-
-          fold_rules_df %>%
-          dplyr::group_by(all_folds) %>%
-          summarise(min = min(!!(as.name(var))))
-        var_min_1 <- subset(var_min_1, all_folds == 1, select = min)
-
-        var_min_0 <-
-          fold_rules_df %>%
-          group_by(all_folds) %>%
-          summarise(min = min(!!(as.name(var))))
-        var_min_0 <- subset(var_min_0, all_folds == 0, select = min)
-
-        var_max_1 <-
-          fold_rules_df %>%
-          group_by(all_folds) %>%
-          summarise(max = max(!!(as.name(var))))
-        var_max_1 <- subset(var_max_1, all_folds == 1, select = max)
-
-        var_max_0 <-
-          fold_rules_df %>%
-          group_by(all_folds) %>%
-          summarise(max = max(!!(as.name(var))))
-        var_max_0 <- subset(var_max_0, all_folds == 0, select = max)
-
-        rule <-
-          paste(
-            var,
-            ">",
-            round(var_min_1, 5),
-            "&",
-            var,
-            "<",
-            round(var_max_1, 5)
-          )
-
-        marg_rules[i] <- rule
-        fractions[i] <- fraction
-        mins[i] <- min(mixture_data[var])
-        maxs[i] <- max(mixture_data[var])
-      } else {
-        marg_rules[i] <- "No Overlapping"
-        fractions[i] <- NA
-        total_rules[i] <- NA
-        mins[i] <- min(mixture_data[var])
-        maxs[i] <- max(mixture_data[var])
-      }
+      marg_rules[i] <- rule
+      fractions[i] <- fraction
+      mins[i] <- round(min(mixture_data[var]), 3)
+      maxs[i] <- round(max(mixture_data[var]), 3)
     } else {
-      marg_rules[i] <- NA
+      marg_rules[i] <- "No Overlapping"
       fractions[i] <- NA
       total_rules[i] <- NA
-      mins[i] <- min(mixture_data[var])
-      maxs[i] <- max(mixture_data[var])
+      mins[i] <- round(min(mixture_data[var]), 3)
+      maxs[i] <- round(max(mixture_data[var]), 3)
     }
   }
 
-  marginal_results <-
-    cbind(marginal_results, unlist(marg_rules))
-  marginal_results <-
-    cbind(marginal_results, unlist(fractions))
-  marginal_results <-
-    cbind(marginal_results, unlist(mins))
-  marginal_results <-
-    cbind(marginal_results, unlist(maxs))
+  total_marginal_results <- as.data.frame(cbind(unlist(marg_rules), unlist(fractions), unlist(mins), unlist(maxs)))
+  # marginal_results <-
+  #   cbind(marginal_results, unlist(fractions))
+  # marginal_results <-
+  #   cbind(marginal_results, unlist(mins))
+  # marginal_results <-
+  #   cbind(marginal_results, unlist(maxs))
 
 
-  colnames(marginal_results)[8] <- "Marginal Rules"
-  colnames(marginal_results)[9] <- "Fraction Overlap"
-  colnames(marginal_results)[10] <- "Min"
-  colnames(marginal_results)[11] <- "Max"
+  colnames(total_marginal_results) <- c("Marginal Rules", "Fraction Overlap", "Min", "Max")
 
-  return(marginal_results)
+
+  return(total_marginal_results)
 }

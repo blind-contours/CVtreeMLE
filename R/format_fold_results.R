@@ -29,12 +29,16 @@ format_fold_results <- function(marginal_rules,
   ############################################################################################################
   mix_combo_data <- unlist(mix_combo_data, recursive = FALSE, use.names = FALSE)
   mix_combo_data <- mix_combo_data[!sapply(mix_combo_data, is.null)]
-  mix_combo_data  <- data.table::rbindlist(mix_combo_data, idcol = "fold")
+
+  if (all(is.na(mix_combo_data)) == FALSE) {
+    mix_combo_data  <- data.table::rbindlist(mix_combo_data, idcol = "fold", fill = TRUE)
+  }
+
 
 
   marg_combo_data <- unlist(marg_combo_data, recursive = FALSE, use.names = FALSE)
   marg_combo_data <- marg_combo_data[!sapply(marg_combo_data, is.null)]
-  marg_combo_data  <- data.table::rbindlist(marg_combo_data, idcol = "fold")
+  marg_combo_data  <- data.table::rbindlist(marg_combo_data, idcol = "fold", fill = TRUE)
 
   return(list(
     "marginal_rules" = marginal_rules,

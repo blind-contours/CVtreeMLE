@@ -5,26 +5,26 @@
 #' @param W A vector of characters indicating which variables in the data to use as covariates.
 #' @param A A vector of characters indicating which variables in the data to use as exposures.
 #' @param Y A character indicating which variable in the data to use as the outcome.
-#' @param back_iter_SL Stack of estimators used in the SL during the iterative backfitting for `Y|W`, this should be an SL3 object
-#' @param SL.library Library of algorithms used by Super Learner for estimating both the propensity of exposure and the outcome.
+#' @param tree_SL Stack of estimators used in the SL during the iterative backfitting for `Y|W`, this should be an SL3 object
+#' @param back_iter_SL Super learner used for the backfitting algorithm and for the Q and g mechanisms
 #' @param n_folds Number of cross-validation folds.
 #' @param family Family ('binomial' or 'gaussian').
 #' @param H.AW_trunc_lvl Truncation level for the clever covariate.
 #' @param max_iter Max number of iterations of iterative backfitting algorithm
-#' @param minsize The minimum number of observations in a node.
 #' @param verbose If true, creates a sink file where detailed information and diagnostics of the run process are given.
 #' @param parallel Use parallel processing if a backend is registered; enabled by default.
-#'
+#' @param num_cores If using parallel, the number of cores to parallelize over
+
 #' @return Results object. TODO: add more detail here.
 #'
 #' @importFrom foreach %dopar% %do%
 #' @importFrom magrittr %>%
 #' @importFrom stats as.formula glm p.adjust plogis predict qlogis qnorm qunif rnorm runif
-#' @importFrom SuperLearner All
+#' @import sl3
 #' @importFrom rlang :=
 #' @importFrom dplyr filter
 #' @importFrom data.table rbindlist
-#'
+
 #' @section Authors:
 #' David McCoy, University of California, Berkeley
 #'
@@ -73,13 +73,13 @@ CVtreeMLE <- function(W,
                       Y,
                       data,
                       back_iter_SL,
-                      SL.library,
+                      tree_SL,
                       n_folds,
                       family,
                       H.AW_trunc_lvl,
                       parallel,
+                      num_cores,
                       max_iter,
-                      minsize,
                       verbose) {
 
   ######################
@@ -116,10 +116,6 @@ CVtreeMLE <- function(W,
     stop('Family must be either "binomial" or "gaussian".')
   }
 
-  if(minsize <= 10){
-    warning("Dangerous grounds: Decision trees may find rules that create an exposure with very few observations, this will cause propensity score algorithms to fail in many instances")
-  }
-
   ######################
   # Check NA values, impute with mean and create indicator variable included in W
 
@@ -139,7 +135,7 @@ CVtreeMLE <- function(W,
   }
 
   if (parallel == TRUE) {
-    num_cores <- parallel::detectCores()
+    # num_cores <- parallel::detectCores()
     doParallel::registerDoParallel(num_cores)
     future::plan(future::multisession)
   }
@@ -158,9 +154,7 @@ CVtreeMLE <- function(W,
 
   ###################### Fit Iterative Backwards Rule Ensembles to the Mixture Components Across Fold Data ########################################
 
-
-  fold_mixture_rules <- foreach::foreach(fold_k = unique(data$folds), .combine = "rbind", .multicombine = TRUE) %do% {
-
+  fold_mixture_rules <- foreach::foreach(fold_k = unique(data$folds), .combine = "rbind", .multicombine = TRUE) %dopar% {
     ## get training and validation samples
 
     At <- data[data$folds != fold_k, ]
@@ -179,16 +173,25 @@ CVtreeMLE <- function(W,
     rules
   }
 
-  # only keep rules with variables and directions that are found in all the folds
+  # remove the rows where no rules were found
+  fold_mixture_rules <- fold_mixture_rules[fold_mixture_rules$description != "No Rules Found",]
 
-  fold_mixture_rules <- fold_mixture_rules %>%
-    dplyr::group_by(test, direction) %>%
-    dplyr::filter(dplyr::n() >=  n_folds)
+  # filter based on variables included in the tree and direction, keep only those that are consistent across all folds
+
+  fold_mixture_rules <- filter_mixture_rules(fold_mixture_rules, n_folds)
+
+  mixture_RMSE <- calc_mixture_rule_RMSEs(fold_mixture_rules)
+
+  if (dim(fold_mixture_rules)[1] == 0) {
+    no_mixture_rules <- TRUE
+  }else{
+    no_mixture_rules <- FALSE
+  }
+
 
   ###################### Fit Iterative Backwards Rule Ensembles to the Marginal Mixture Components Across Fold Data ########################################
 
-
-  fold_marginal_rules <- foreach::foreach(fold_k = unique(data$folds), .combine = "rbind", .multicombine = TRUE) %do% {
+  fold_marginal_rules <- foreach::foreach(fold_k = unique(data$folds), .combine = "rbind", .multicombine = TRUE) %dopar% {
     ## get training and validation samples
 
     At <- data[data$folds != fold_k, ]
@@ -200,16 +203,30 @@ CVtreeMLE <- function(W,
       At = At,
       W = W,
       Q1_stack = back_iter_SL,
+      tree_SL = tree_SL,
       fold = fold_k,
       max_iter,
-      minsize,
       verbose)
+
 
     marg_decisions
   }
 
-  fold_marginal_rules <- as.data.frame(fold_marginal_rules)
-  fold_marginal_rules$fold <- as.numeric(fold_marginal_rules$fold)
+  fold_marginal_rules <- filter_marginal_rules(fold_marginal_rules, n_folds)
+
+  marginal_RMSE <- calc_marginal_rule_RMSEs(data = fold_marginal_rules)
+
+  backfit_model_RMSEs <- rbind(marginal_RMSE, mixture_RMSE)
+
+  if (dim(fold_marginal_rules)[1] == 0) {
+    no_marginal_rules <- TRUE
+  }else{
+    no_marginal_rules <- FALSE
+  }
+
+  if(no_marginal_rules == TRUE & no_mixture_rules == TRUE){
+    return("No Mixture or Marginal Rules Found")
+  }
 
   results <- foreach::foreach(fold_k = unique(data$folds), .combine = "c", .multicombine = TRUE) %dopar% {
 
@@ -219,14 +236,16 @@ CVtreeMLE <- function(W,
     rules <- filter_rules(fold_mixture_rules, fold_k = fold_k)
     marg_decisions <- filter_rules(fold_marginal_rules, fold_k = fold_k)
 
-    if (dim(rules)[1] == 1) {
-      if (rules$description == "No Rules Found") {
-        no_rules <- TRUE
-      }else{
-        no_rules <- FALSE
-      }
+    if (dim(rules)[1] == 0) {
+        no_mix_rules <- TRUE
+    } else {
+      no_mix_rules <- FALSE
+    }
+
+    if (dim(marg_decisions)[1] == 0) {
+      no_marg_rules <- TRUE
     }else{
-      no_rules <- FALSE
+      no_marg_rules <- FALSE
     }
 
     fold_results_mix_rules[[fold_k]] <- rules
@@ -234,16 +253,14 @@ CVtreeMLE <- function(W,
 
     ################## BEGIN FITTING DECISION TREES TO EACH MARGINAL COMPONENT OF THE MIXTURE ###############
 
-
-
     ######################### NUISANCE PARAMETER FITTING ON TRAINING ####################################
 
     mix_nuisance_params <- est_mix_nuisance_params(
       At,
       Av,
       W,
-      no_rules,
-      SL.library,
+      no_mix_rules,
+      Q1_stack = back_iter_SL,
       family,
       rules,
       H.AW_trunc_lvl
@@ -258,21 +275,19 @@ CVtreeMLE <- function(W,
     marg_nuisance_params <- est_marg_nuisance_params(At,
                                                      Av,
                                                      W,
-                                                     SL.library,
+                                                     Q1_stack = back_iter_SL,
                                                      family,
                                                      A,
+                                                     no_marg_rules,
                                                      marg_decisions,
                                                      H.AW_trunc_lvl
     )
 
-    marg_decisions <- marg_nuisance_params$marg_decisions
 
+    fold_results_marginal_data[[fold_k]] <- marg_nuisance_params
     fold_results_marg_rules[[fold_k]] <- marg_decisions
 
-
-    fold_results_marginal_data[[fold_k]] <- marg_nuisance_params$data
-
-    marginal_data <- marg_nuisance_params$data
+    marginal_data <- marg_nuisance_params
 
     ################## CALCULATE THE EXPECTED OUTCOME FOR EACH ADDED MARGINAL MIXTURE RULE EXPOSURE ################
 
@@ -283,11 +298,14 @@ CVtreeMLE <- function(W,
       evaluate_marginal_rules(
         data = At_c,
         marg_decisions = marg_decisions,
+        no_marg_rules,
         mix_comps = A)
+
     Av_c <-
       evaluate_marginal_rules(
         data = Av_c,
         marg_decisions = marg_decisions,
+        no_marg_rules,
         mix_comps = A
       )
 
@@ -297,23 +315,28 @@ CVtreeMLE <- function(W,
     At_c <- At_c$data
     Av_c <- Av_c$data
 
-    cum_sum_results <- est_cum_sum_exposure(At_c, Av_c, W, SL.library, H.AW_trunc_lvl)
+    # cum_sum_results <- est_cum_sum_exposure(At_c,
+    #                                         Av_c,
+    #                                         W,
+    #                                         SL.library,
+    #                                         no_marg_rules,
+    #                                         H.AW_trunc_lvl)
 
-    fold_results_marginal_additive_data[[fold_k]] <- cum_sum_results
+    # fold_results_marginal_additive_data[[fold_k]] <- cum_sum_results
 
     ################## CALCULATE THE EXPECTED OUTCOME FOR EACH COMBINATION OF MARGINAL MIXTURE RULE EXPOSURE ################
 
-    comb_results <- est_comb_exposure(At, Av, Y, W, marg_rule_train, marg_rule_valid, SL.library)
+    comb_results <- est_comb_exposure(At, Av, Y, W, marg_rule_train, marg_rule_valid, no_marg_rules, Q1_stack = back_iter_SL, family = family)
 
     fold_results_marginal_combo_data[[fold_k]] <- comb_results$data
     fold_results_marginal_Sls[[fold_k]] <- comb_results$learner
 
     ################## CALCULATE THE EXPECTED OUTCOME FOR EACH COMBINATION OF THE MIXTURE INTERACTION RULES  ################
 
-    mixed_comb_results <- est_comb_mixture_rules(At, Av, W, Y, rules, no_rules, SL.library)
+    # mixed_comb_results <- est_comb_mixture_rules(At, Av, W, Y, rules, no_mix_rules, Q1_stack)
 
-    fold_results_mix_combo_data[[fold_k]] <- mixed_comb_results$data
-    fold_results_mix_Sls[[fold_k]] <- mixed_comb_results$learner
+    # fold_results_mix_combo_data[[fold_k]] <- mixed_comb_results$data
+    # fold_results_mix_Sls[[fold_k]] <- mixed_comb_results$learner
 
     results_list <- list(
       fold_results_mix_rules,
@@ -322,11 +345,11 @@ CVtreeMLE <- function(W,
       fold_results_marg_rules,
       fold_results_marg_directions,
       fold_results_marginal_data,
-      fold_results_marginal_additive_data,
+      # fold_results_marginal_additive_data,
       fold_results_marginal_combo_data,
-      fold_results_marginal_Sls,
-      fold_results_mix_combo_data,
-      fold_results_mix_Sls
+      fold_results_marginal_Sls
+      # fold_results_mix_combo_data,
+      # fold_results_mix_Sls
     )
 
     names(results_list) <- c(
@@ -336,11 +359,11 @@ CVtreeMLE <- function(W,
       paste("marg rules", fold_k),
       paste("marg directions", fold_k),
       paste("marg data", fold_k),
-      paste("additive data", fold_k),
+      # paste("additive data", fold_k),
       paste("marg combo data", fold_k),
-      paste("marginal SLs", fold_k),
-      paste("mix combo data", fold_k),
-      paste("mix SLs", fold_k)
+      paste("marginal SLs", fold_k)
+      # paste("mix combo data", fold_k),
+      # paste("mix SLs", fold_k)
     )
 
     results_list
@@ -356,7 +379,7 @@ CVtreeMLE <- function(W,
   mix_rules <- results[grepl("mix rules", names(results))]
   mix_directions <- results[grepl("mix directions", names(results))]
 
-  additive_data <- results[grepl("additive data", names(results))]
+  # additive_data <- results[grepl("additive data", names(results))]
   marg_combo_data <- results[grepl("marg combo data", names(results))]
 
   mix_combo_data <- results[grepl("mix combo data", names(results))]
@@ -371,36 +394,63 @@ CVtreeMLE <- function(W,
     input_mix_rules = mix_rules,
     input_mix_data = mix_data,
     outcome = Y,
-    n_folds = n_folds
+    n_folds = n_folds,
+    no_mixture_rules
   )
 
   group_list <- mixture_results$group_list
+  mixture_data_list <- mixture_results$mixture_data_list
   mixture_results <- mixture_results$results
+
+  v_fold_mixture_results <- calc_v_fold_mixtures_ate(
+    input_mix_rules = mix_rules,
+    input_mix_data = mix_data,
+    outcome = Y,
+    n_folds = n_folds,
+    no_mixture_rules
+  )
+
+  v_fold_mixture_results <- v_fold_mixture_results$results
+
+  if (no_mixture_rules == FALSE) {
+    v_fold_mixture_results_w_pooled <- compute_meta_mix_results(v_fold_mixture_results, mix_comps = A, n_folds = n_folds, data = data)
+  }else{
+    v_fold_mixture_results_w_pooled <- NA
+  }
+
+
+
 
   ########################################################################################################
   ###################### POOLED TMLE ATE FOR ADDITIVE MARGINAL FOUND ACROSS FOLDS ########################
   ########################################################################################################
 
-  additive_results <- calc_additive_ate(additive_data, Y, n_folds)
+  # additive_results <- calc_additive_ate(additive_data, Y, n_folds)
 
-  additive_RMSE_star <- additive_results$RMSE_star
-  additive_MSM <- additive_results$MSM
+  # additive_RMSE_star <- additive_results$RMSE_star
+  # additive_MSM <- additive_results$MSM
 
   ########################################################################################################
   ###################### POOLED TMLE ATE FOR MARGINAL RULES FOUND ACROSS FOLDS ###########################
   ########################################################################################################
 
-  marginal_results <- calc_marginal_ate(marginal_data, mix_comps = A, Y, n_folds)
+  marginal_results <- calc_marginal_ate(marginal_data, mix_comps = A, marginal_rules, Y, n_folds)
 
   updated_marginal_data <- marginal_results$data
   marginal_results <- marginal_results$marginal_results
+
+  v_fold_marginal_results <- calc_v_fold_marginal_ate(marginal_data, mix_comps = A, marginal_rules, Y, n_folds)
+  v_fold_marginal_results <- v_fold_marginal_results$marginal_results
+
+  v_fold_marginal_results_w_pooled <- compute_meta_marg_results(v_fold_marginal_results = v_fold_marginal_results, mix_comps = A, data = data, n_folds = n_folds)
+
 
 
   #################################################
   ######### Additive Results Config. ##############
   #################################################
 
-  additive_results <- create_add_marg_ATE_table(updated_marginal_data, A, Y, n, n_folds)
+  # additive_results <- create_add_marg_ATE_table(updated_marginal_data, A, Y, n, n_folds)
 
 
   ########################################################
@@ -411,11 +461,12 @@ CVtreeMLE <- function(W,
     data = data,
     mix_comps = A,
     mixture_results = mixture_results,
-    n_folds = n_folds
+    n_folds = n_folds,
+    no_mixture_rules
   )
 
 
-  marginal_results <- find_common_marginal_rules(
+  total_marginal_rules <- find_common_marginal_rules(
     fold_rules = marginal_rules,
     data = data,
     mix_comps = A,
@@ -437,20 +488,25 @@ CVtreeMLE <- function(W,
   mix_combo_data <- formatted_results$mix_combo_data
   marg_combo_data <- formatted_results$marg_combo_data
 
-  RMSE_df <- format_RMSE_for_models(marginal_results, mixture_results, additive_RMSE_star, marg_combo_data)
+  RMSE_df <- backfit_model_RMSEs #format_RMSE_for_models(marginal_results, mixture_results, additive_RMSE_star, marg_combo_data)
+
+  # RMSE_df <- RMSE_df[complete.cases(RMSE_df), ]
 
   results_list <- list(
     "Model RMSEs" = RMSE_df,
-    "Marginal Results" = marginal_results,
-    "Mixture Results" = mixture_results,
-    "Additive Results" = additive_results,
-    "Additive MSM" = additive_MSM,
+    "Pooled TMLE Marginal Results" = marginal_results,
+    "V-Specific Marg Results" = v_fold_marginal_results_w_pooled,
+    "Pooled TMLE Mixture Results" = mixture_results,
+    "V-Specific Mix Results" = v_fold_mixture_results_w_pooled,
+    # "Additive MSM" = additive_MSM,
     "Mixture Rules" = mixture_rules,
     "Marginal Rules" = marginal_rules,
     "Fold Results Mix Comb Data" = mix_combo_data,
     "Fold Results Marg Comb Data" = marg_combo_data,
     "Fold Super Learners Mix Comb" = mix_Sls,
-    "Fold Super Learners Marg Comb" = marg_Sls
+    "Fold Super Learners Marg Comb" = marg_Sls,
+    "Mixture Data List" = mixture_data_list,
+    "Marginal Data List" = updated_marginal_data
   )
 
 

@@ -5,14 +5,14 @@
 #' @param At Training data
 #' @param Av Validation data
 #' @param W Vector of characters denoting covariates
-#' @param no_rules TRUE/FALSE indicator for if no mixture rules were found
+#' @param no_mix_rules TRUE/FALSE indicator for if no mixture rules were found
 #'
-#' @param SL.library Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)
+#' @param Q1_stack Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)
 #' @param family Binomial or gaussian
 #' @param rules Dataframe of rules found during the PRE fitting process
 #' @param H.AW_trunc_lvl Truncation level of the clever covariate (induces more bias to reduce variance)
 #'
-#' @import SuperLearner
+#' @import sl3
 #' @importFrom pre pre
 #' @importFrom magrittr %>%
 #' @importFrom dplyr group_by filter top_n
@@ -21,11 +21,14 @@
 #'
 #' @export
 
-est_mix_nuisance_params <- function(At, Av, W, no_rules, SL.library, family, rules, H.AW_trunc_lvl) {
+est_mix_nuisance_params <- function(At, Av, W, no_mix_rules, Q1_stack, family, rules, H.AW_trunc_lvl) {
+
+  future::plan(future::sequential, gc = TRUE)
+
   At_mix <- At
   Av_mix <- Av
 
-  if (no_rules != TRUE) {
+  if (no_mix_rules != TRUE) {
     At_rules_eval <-
       evaluate_mixture_rules(data = At_mix, rules = rules)
     Av_rules_eval <-
@@ -38,60 +41,79 @@ est_mix_nuisance_params <- function(At, Av, W, no_rules, SL.library, family, rul
       interaction_rule <- At_rules_eval[, interaction]
 
       if (dim(table(interaction_rule)) == 2) {
+
         At_mix$A_mix <- interaction_rule
         Av_mix$A_mix <- Av_rules_eval[, interaction]
 
-        ## select covariates
-        X_Amix_T <- subset(At_mix,
-          select = c(W)
+        task_At <- sl3::make_sl3_Task(
+          data = At_mix,
+          covariates = W,
+          outcome = "A_mix",
+          outcome_type = "binomial"
         )
 
-        X_Amix_V <- subset(Av_mix,
-          select = c(W)
+        task_Av <- sl3::make_sl3_Task(
+          data = Av_mix,
+          covariates = W,
+          outcome = "A_mix",
+          outcome_type = "binomial"
         )
 
-        gHatSL <- SuperLearner(
-          Y = At_mix$A_mix,
-          X = X_Amix_T,
-          SL.library = SL.library,
-          family = "binomial",
-          verbose = FALSE
+        discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new()
+
+        discrete_sl <- sl3::Lrnr_sl$new(
+          learners = Q1_stack,
+          metalearner = discrete_sl_metalrn,
         )
 
-        gHat1W <- predict(gHatSL, newdata = X_Amix_V)$pred
+        sl_fit <- discrete_sl$train(task_At)
+
+        gHat1W <- sl_fit$predict(task_Av)
 
         H.AW <- calc_clever_covariate(gHat1W = gHat1W, data = Av_mix, exposure = "A_mix", H.AW_trunc_lvl = 10)
 
         ## add treatment mechanism results to validation dataframe
 
-        X_train_mix <- At_mix[c("A_mix", W)]
 
-        X_valid_mix <- Av_mix[c("A_mix", W)]
-
-        ## QbarAW
-        QbarAWSL_m <- SuperLearner(
-          Y = At_mix$y_scaled,
-          X = X_train_mix,
-          SL.library = SL.library,
-          family = family,
-          verbose = FALSE
+        task_At <- sl3::make_sl3_Task(
+          data = At_mix,
+          covariates = c(W, "A_mix"),
+          outcome = "y_scaled",
+          outcome_type = family
         )
 
-        X_m1 <- X_m0 <- X_train_mix
+        X_m1 <- X_m0 <- Av_mix
         X_m1$A_mix <- 1 # under exposure
         X_m0$A_mix <- 0 # under control
 
-        QbarAW <- bound_precision(predict(QbarAWSL_m, newdata = X_train_mix)$pred)
-        Qbar1W <- bound_precision(predict(QbarAWSL_m, newdata = X_m1)$pred)
-        Qbar0W <- bound_precision(predict(QbarAWSL_m, newdata = X_m0)$pred)
+        task_Av <- sl3::make_sl3_Task(
+          data = Av_mix,
+          covariates = c(W, "A_mix"),
+          outcome = "y_scaled",
+          outcome_type = family
+        )
 
-        X_m1 <- X_m0 <- X_valid_mix
-        X_m1$A_mix <- 1 # under exposure
-        X_m0$A_mix <- 0 # under control
+        task_Av_1 <- sl3::make_sl3_Task(
+          data = X_m1,
+          covariates = c(W, "A_mix"),
+          outcome = "y_scaled",
+          outcome_type = family
+        )
 
-        QbarAW <- bound_precision(predict(QbarAWSL_m, newdata = X_valid_mix)$pred)
-        Qbar1W <- bound_precision(predict(QbarAWSL_m, newdata = X_m1)$pred)
-        Qbar0W <- bound_precision(predict(QbarAWSL_m, newdata = X_m0)$pred)
+        task_Av_0 <- sl3::make_sl3_Task(
+          data = X_m0,
+          covariates = c(W, "A_mix"),
+          outcome = "y_scaled",
+          outcome_type = family
+        )
+
+        sl_fit <- discrete_sl$train(task_At)
+
+        sl_fit$predict(task_Av)
+
+        QbarAW <- bound_precision(sl_fit$predict(task_Av))
+        Qbar1W <- bound_precision(sl_fit$predict(task_Av_1))
+        Qbar0W <- bound_precision(sl_fit$predict(task_Av_0))
 
         ## add Qbar to the AV dataset
         Av_mix$QbarAW <- QbarAW
@@ -123,7 +145,6 @@ est_mix_nuisance_params <- function(At, Av, W, no_rules, SL.library, family, rul
     mix_interaction_data[[1]] <- Av_mix
 
   }
-
 
   return(list(data = mix_interaction_data))
 }

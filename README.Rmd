@@ -11,7 +11,7 @@ always_allow_html: true
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.path = "README-"
+  fig.path = "man/figures/README-"
 )
 ```
 
@@ -273,6 +273,8 @@ mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific 
 mixture_plots$M1M2M3
 ```
 
+![](inst/figures/README-plot sim mixture results-1.png)
+
 This plot shows the ATE specific for each fold and for the weighted-mean results over the fold with corresponding pooled variance. The rule is the pooled rule which includes all observations that were indicated by the fold specific rules. 
 
 ```{r pooled marginal results}
@@ -291,6 +293,9 @@ Similarly we can investigate and plot the v-fold specific estimates:
 marginal_plots <- plot_marginal_results(v_marginal_results =  sim_results$`V-Specific Marg Results`, mix_comps = c(paste("M", seq(3), sep = "")))
 marginal_plots$M1
 ```
+
+![](inst/figures/README-plot sim marginal results-1.png)
+
 Same as the mixtures plot, the marginal plot shows the ATE for an individual variable in the mixture with corresponding ATE and variance estimates. The top rule is the pooled rule for the reference category, the rule(s) in the boxes are the pooled rules for each quantile that was found for the variable of interest. 
 
 
@@ -316,8 +321,6 @@ head(marginal_results) %>%
 ```
 
 Across the folds, the expected outcome given the cumulative sum of marginal exposures is also estimated. That is, answering a question such as "What is the exposure specific mean for each additional exposure level".
-
-
 
 
 ---

@@ -4,7 +4,7 @@
 \alias{calc_ATE_estimates}
 \title{Calculate the ATE and variance estimates}
 \usage{
-calc_ATE_estimates(data, ATE_var, outcome, p_adjust_n)
+calc_ATE_estimates(data, ATE_var, outcome, p_adjust_n, v_fold = FALSE)
 }
 \arguments{
 \item{data}{Dataframe that includes treatement/exposure}
@@ -14,6 +14,8 @@ calc_ATE_estimates(data, ATE_var, outcome, p_adjust_n)
 \item{outcome}{Variable name in \code{data} for the raw outcome}
 
 \item{p_adjust_n}{Number repeated measures to adjust p-value}
+
+\item{v_fold}{TRUE/FALSE whether to calculate v-fold specific ATE estimates}
 }
 \value{
 A \code{numeric} vector of the same length as \code{vals}, where

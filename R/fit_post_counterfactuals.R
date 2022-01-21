@@ -82,13 +82,6 @@ fit_post_counterfactuals <- function(modeling_results, target_mixtures, H.AW_tru
 
     print("Fitting SL to marginal rule for mixture")
 
-    gHatSL <- SuperLearner(
-      Y = combo_data$comb_rule,
-      X = X_Amix_V,
-      SL.library = SL.library,
-      family = "binomial",
-      verbose = FALSE
-    )
 
     gHat1W <- gHatSL$SL.predict
     gHat0W <- 1 - gHat1W

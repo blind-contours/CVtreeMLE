@@ -9,9 +9,9 @@ fit_iterative_marg_rule_backfitting(
   At,
   W,
   Q1_stack,
+  tree_SL,
   fold,
   max_iter,
-  minsize,
   verbose
 )
 }
@@ -24,11 +24,11 @@ fit_iterative_marg_rule_backfitting(
 
 \item{Q1_stack}{Stack of algorithms made in SL 3 used in ensemble machine learning to fit Y|W}
 
+\item{tree_SL}{Stack of algorithms made in SL for the decision tree estimation}
+
 \item{fold}{Current fold in the cross-validation}
 
 \item{max_iter}{Max number of iterations of iterative backfitting algorithm}
-
-\item{minsize}{The minimum number of observations in a node.}
 
 \item{verbose}{Run in verbose setting}
 }

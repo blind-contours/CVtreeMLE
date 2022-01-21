@@ -6,19 +6,24 @@
 #' @param ATE_var Variable that the ATE is assigned to in `data`
 #' @param outcome Variable name in `data` for the raw outcome
 #' @param p_adjust_n Number repeated measures to adjust p-value
+#' @param v_fold TRUE/FALSE whether to calculate v-fold specific ATE estimates
 #'
 #' @return A \code{numeric} vector of the same length as \code{vals}, where
 #'  the returned values are bounded to machine precision. This is intended to
 #'  avoid numerical instability issues.
-calc_ATE_estimates <- function(data, ATE_var, outcome, p_adjust_n) {
+calc_ATE_estimates <- function(data, ATE_var, outcome, p_adjust_n, v_fold = FALSE) {
   # assertthat::assert_that(!(max(vals) > 1 | min(vals) < 0))
   data[ATE_var] <- data$Qbar1W.star - data$Qbar0W.star
 
   Thetas <-
     tapply(data[[ATE_var]], data$folds, mean, na.rm = TRUE)
 
-  for (i in seq(Thetas)) {
-    data[data$folds == i, "Thetas"] <- Thetas[i][[1]]
+  if (v_fold == TRUE) {
+    data[, "Thetas"] <- Thetas
+  }else{
+    for (i in seq(Thetas)) {
+      data[data$folds == i, "Thetas"] <- Thetas[i][[1]]
+    }
   }
 
   ICs = base::by(data, data$folds, function(data) {
@@ -26,8 +31,12 @@ calc_ATE_estimates <- function(data, ATE_var, outcome, p_adjust_n) {
     result
   })
 
+  if (v_fold == TRUE) {
+    data[, "IC"] <- ICs
+  }else{
   for (i in seq(ICs)) {
     data[data$folds == i, "IC"] <- ICs[i]
+  }
   }
 
   n <- dim(data)[1]

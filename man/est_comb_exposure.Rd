@@ -4,7 +4,17 @@
 \alias{est_comb_exposure}
 \title{Estimate the expected outcome for the combination of marginal thresholds identified in the fold.}
 \usage{
-est_comb_exposure(At, Av, Y, W, marg_rule_train, marg_rule_valid, SL.library)
+est_comb_exposure(
+  At,
+  Av,
+  Y = "y_scaled",
+  W,
+  marg_rule_train,
+  marg_rule_valid,
+  no_marg_rules,
+  Q1_stack,
+  family
+)
 }
 \arguments{
 \item{At}{Training data}
@@ -19,7 +29,11 @@ est_comb_exposure(At, Av, Y, W, marg_rule_train, marg_rule_valid, SL.library)
 
 \item{marg_rule_valid}{Dataframe of binary vectors for marginal rules identified in the validation fold}
 
-\item{SL.library}{Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)}
+\item{no_marg_rules}{TRUE/FALSE if no marginal rules were found across all folds}
+
+\item{Q1_stack}{Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)}
+
+\item{family}{Outcome type family}
 }
 \value{
 Rules object. TODO: add more detail here.

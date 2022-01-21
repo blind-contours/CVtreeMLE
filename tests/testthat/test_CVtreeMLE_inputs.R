@@ -1,5 +1,4 @@
 library(CVtreeMLE)
-library(SuperLearner)
 library(testthat)
 library(sl3)
 
@@ -70,10 +69,6 @@ summary(data)
 
 Q1_stack <- "Just filler here for test"
 
-SL.library<- c('SL.randomForest',
-               'SL.earth',
-               "SL.glm",
-               "SL.mean")
 
 # we will arbitrarily investigate cell qualities as a mixture and the other variables as covariates
 
@@ -85,7 +80,6 @@ expect_error(CVtreeMLE_results <- CVtreeMLE(data = data,
                                   Y = "Y",
                                   A = A,
                                   back_iter_SL = Q1_stack,
-                                  SL.library = SL.library,
                                   n_folds = 2,
                                   family = "gaussian",
                                   H.AW_trunc_lvl = 10,
@@ -109,7 +103,6 @@ expect_error(CVtreeMLE_results <- CVtreeMLE(data = data,
                                             Y = "Y",
                                             A = A,
                                             back_iter_SL = Q1_stack,
-                                            SL.library = SL.library,
                                             n_folds = 2,
                                             family = "gaussian",
                                             H.AW_trunc_lvl = 10,

@@ -422,7 +422,7 @@ sim_results <- CVtreeMLE(data = sim_data,
 
 proc.time() - ptm 
 #>    user  system elapsed 
-#> 414.331  17.377 238.249
+#> 429.766  18.381 247.188
 ```
 
 Let’s first look at the RMSE for the iterative back-fitting models.
@@ -458,7 +458,7 @@ RMSE
 M1
 </td>
 <td style="text-align:right;">
-0.0654085
+0.0657276
 </td>
 </tr>
 <tr>
@@ -466,7 +466,7 @@ M1
 M2
 </td>
 <td style="text-align:right;">
-0.0638730
+0.0641220
 </td>
 </tr>
 <tr>
@@ -474,7 +474,7 @@ M2
 M3
 </td>
 <td style="text-align:right;">
-0.0633490
+0.0645956
 </td>
 </tr>
 <tr>
@@ -482,7 +482,7 @@ M3
 M1M2M3
 </td>
 <td style="text-align:right;">
-0.0409719
+0.0281782
 </td>
 </tr>
 </tbody>
@@ -540,16 +540,16 @@ Fraction Covered
 <tbody>
 <tr>
 <td style="text-align:right;">
-5.998892
+5.998896
 </td>
 <td style="text-align:right;">
-0.0142107
+0.0192526
 </td>
 <td style="text-align:right;">
-5.971039
+5.961162
 </td>
 <td style="text-align:right;">
-6.026744
+6.036631
 </td>
 <td style="text-align:right;">
 0
@@ -561,14 +561,14 @@ Fraction Covered
 M1M2M3
 </td>
 <td style="text-align:right;">
-0.2681823
+0.3791928
 </td>
 <td style="text-align:left;">
 M1 &gt; 0.021 & M1 &lt; 0.953 & M2 &gt; 2.011 & M2 &lt; 3.994 & M3 &gt;
 2.512 & M3 &lt; 4.98
 </td>
 <td style="text-align:right;">
-0.9833333
+0.9666667
 </td>
 </tr>
 </tbody>
@@ -642,29 +642,29 @@ Variables
 1
 </td>
 <td style="text-align:left;">
-5.76002934560639
+5.76013477069119
 </td>
 <td style="text-align:left;">
-0.0743849818229526
+0.0830456626070604
 </td>
 <td style="text-align:left;">
-5.61423746024273
+5.59736826290909
 </td>
 <td style="text-align:left;">
-5.90582123097004
-</td>
-<td style="text-align:left;">
-0
+5.92290127847329
 </td>
 <td style="text-align:left;">
 0
 </td>
 <td style="text-align:left;">
-0.151148247583847
+0
 </td>
 <td style="text-align:left;">
-M2 &gt; 1.96611335121485 & M1 &lt;= 0.952865145261606 & M3 &gt;
-2.48419675826922
+0.411540293917583
+</td>
+<td style="text-align:left;">
+M2 &gt; 1.96611335121485 & M3 &gt; 2.53274239624712 & M1 &lt;=
+0.952865145261606
 </td>
 <td style="text-align:left;">
 M1M2M3
@@ -675,25 +675,25 @@ M1M2M3
 2
 </td>
 <td style="text-align:left;">
-5.8622877267532
+5.86228796516831
 </td>
 <td style="text-align:left;">
-0.0282004749837316
+0.0282004751347488
 </td>
 <td style="text-align:left;">
-5.80701581143816
+5.80701604955729
 </td>
 <td style="text-align:left;">
-5.91755964206823
-</td>
-<td style="text-align:left;">
-0
+5.91755988077934
 </td>
 <td style="text-align:left;">
 0
 </td>
 <td style="text-align:left;">
-0.408007740468045
+0
+</td>
+<td style="text-align:left;">
+0.408007741232259
 </td>
 <td style="text-align:left;">
 M1 &lt;= 0.934177674302425 & M2 &gt; 2.00708027766665 & M3 &gt;
@@ -708,25 +708,25 @@ M1M2M3
 Pooled
 </td>
 <td style="text-align:left;">
-5.8494372758852
+5.85172625950137
 </td>
 <td style="text-align:left;">
-0.0795511930149954
+0.0877031862344311
 </td>
 <td style="text-align:left;">
-5.6935
+5.6798
 </td>
 <td style="text-align:left;">
-6.0054
-</td>
-<td style="text-align:left;">
-0
+6.0236
 </td>
 <td style="text-align:left;">
 0
 </td>
 <td style="text-align:left;">
-0.375729111995058
+0
+</td>
+<td style="text-align:left;">
+0.408372974859131
 </td>
 <td style="text-align:left;">
 M1 &gt; 0.021 & M1 &lt; 0.953 & M2 &gt; 2.011 & M2 &lt; 3.994 & M3 &gt;
@@ -752,7 +752,9 @@ mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific 
 mixture_plots$M1M2M3
 ```
 
-![](README-plot%20sim%20mixture%20results-1.png)<!-- -->
+![](man/figures/README-plot%20sim%20mixture%20results-1.png)<!-- -->
+
+![](inst/figures/README-plot%20sim%20mixture%20results-1.png)
 
 This plot shows the ATE specific for each fold and for the weighted-mean
 results over the fold with corresponding pooled variance. The rule is
@@ -829,25 +831,25 @@ M1\_2-M1\_1
 M2\_2-M2\_1
 </td>
 <td style="text-align:right;">
-1.500137
+1.482908
 </td>
 <td style="text-align:right;">
-0.1672006
+0.1671032
 </td>
 <td style="text-align:right;">
-1.1724299
+1.1553918
 </td>
 <td style="text-align:right;">
-1.827844
-</td>
-<td style="text-align:right;">
-0
+1.810424
 </td>
 <td style="text-align:right;">
 0
 </td>
 <td style="text-align:right;">
-1.667953
+0
+</td>
+<td style="text-align:right;">
+1.669074
 </td>
 </tr>
 <tr>
@@ -891,12 +893,15 @@ marginal_plots <- plot_marginal_results(v_marginal_results =  sim_results$`V-Spe
 marginal_plots$M1
 ```
 
-![](README-plot%20sim%20marginal%20results-1.png)<!-- --> Same as the
-mixtures plot, the marginal plot shows the ATE for an individual
-variable in the mixture with corresponding ATE and variance estimates.
-The top rule is the pooled rule for the reference category, the rule(s)
-in the boxes are the pooled rules for each quantile that was found for
-the variable of interest.
+![](man/figures/README-plot%20sim%20marginal%20results-1.png)<!-- -->
+
+![](inst/figures/README-plot%20sim%20marginal%20results-1.png)
+
+Same as the mixtures plot, the marginal plot shows the ATE for an
+individual variable in the mixture with corresponding ATE and variance
+estimates. The top rule is the pooled rule for the reference category,
+the rule(s) in the boxes are the pooled rules for each quantile that was
+found for the variable of interest.
 
 ## Mixture and Marginal Results
 

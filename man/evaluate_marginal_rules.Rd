@@ -4,12 +4,14 @@
 \alias{evaluate_marginal_rules}
 \title{Evaluate mixture rules found during the rpart decision tree process}
 \usage{
-evaluate_marginal_rules(data, marg_decisions, mix_comps)
+evaluate_marginal_rules(data, marg_decisions, no_marg_rules, mix_comps)
 }
 \arguments{
 \item{data}{Input data}
 
 \item{marg_decisions}{List of rules determined for each mixture component}
+
+\item{no_marg_rules}{TRUE/FALSE if no marginal rules were found across the efolds}
 
 \item{mix_comps}{Vector of characters denoting mixture components}
 }

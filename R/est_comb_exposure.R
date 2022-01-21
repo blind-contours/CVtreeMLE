@@ -10,9 +10,10 @@
 #' @param W Vector of characters denoting covariates
 #' @param marg_rule_train Dataframe of binary vectors for marginal rules identified in the training fold
 #' @param marg_rule_valid Dataframe of binary vectors for marginal rules identified in the validation fold
-#' @param SL.library Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)
-#'
-#' @import SuperLearner
+#' @param Q1_stack Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)
+#' @param family Outcome type family
+#' @param no_marg_rules TRUE/FALSE if no marginal rules were found across all folds
+#' @import sl3
 #' @importFrom magrittr %>%
 #' @importFrom rlang :=
 #' @importFrom dplyr group_by filter top_n
@@ -20,34 +21,50 @@
 #'
 #' @export
 
-est_comb_exposure <- function(At, Av, Y, W, marg_rule_train, marg_rule_valid, SL.library) {
+est_comb_exposure <- function(At, Av, Y = "y_scaled", W, marg_rule_train, marg_rule_valid, no_marg_rules, Q1_stack, family) {
+  future::plan(future::sequential, gc = TRUE)
 
-  if (all(is.na(marg_rule_train)) == FALSE) {
+  if (no_marg_rules == FALSE) {
     At_mc <- At
     Av_mc <- Av
 
-    marg_rule_df <-
-      marg_rule_train[, colSums(is.na(marg_rule_train)) < nrow(marg_rule_train)]
+    # marg_rule_df <-
+    #   marg_rule_train[, colSums(is.na(marg_rule_train)) < nrow(marg_rule_train)]
 
     At_marg_comb <-
-      cbind(marg_rule_df, At_mc[W])
+      cbind(marg_rule_train, At_mc[W], At_mc["y_scaled"] )
 
-    At_marg_comb <- At_marg_comb[, colSums(is.na(At_marg_comb)) < nrow(At_marg_comb)]
+    # At_marg_comb <- At_marg_comb[, colSums(is.na(At_marg_comb)) < nrow(At_marg_comb)]
 
     Av_marg_comb <-
-      cbind(marg_rule_valid, Av_mc[W])
+      cbind(marg_rule_valid, Av_mc[W], Av_mc["y_scaled"])
 
-    Av_marg_comb <- Av_marg_comb[, colSums(is.na(Av_marg_comb)) < nrow(Av_marg_comb)]
+    # Av_marg_comb <- Av_marg_comb[, colSums(is.na(Av_marg_comb)) < nrow(Av_marg_comb)]
 
-    QbarAWSL_m <- SuperLearner(
-      Y = At_mc$y_scaled,
-      X = At_marg_comb,
-      SL.library = SL.library,
-      family = "gaussian",
-      verbose = FALSE
+    task_At <- sl3::make_sl3_Task(
+      data = At_marg_comb,
+      covariates = c(colnames(marg_rule_train), W),
+      outcome = "y_scaled",
+      outcome_type = family
     )
 
-    QbarAW <- bound_precision(predict(QbarAWSL_m, newdata = Av_marg_comb)$pred)
+    task_Av <- sl3::make_sl3_Task(
+      data = Av_marg_comb,
+      covariates = c(colnames(marg_rule_valid), W),
+      outcome = "y_scaled",
+      outcome_type = family
+    )
+
+    discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new()
+
+    discrete_sl <- sl3::Lrnr_sl$new(
+      learners = Q1_stack,
+      metalearner = discrete_sl_metalrn,
+    )
+
+    sl_fit <- discrete_sl$train(task_At)
+
+    QbarAW <- bound_precision(sl_fit$predict(task_Av))
     QbarAW <- scale_to_original(scaled_vals = QbarAW, max_orig = max(At_mc[Y]), min_orig = min(At_mc[Y]))
 
     Av_marg_comb$QbarAW_combo <- QbarAW
@@ -59,5 +76,5 @@ est_comb_exposure <- function(At, Av, Y, W, marg_rule_train, marg_rule_valid, SL
 
   }
 
-  return(list("data" = Av_marg_comb, "learner" = QbarAWSL_m))
+  return(list("data" = Av_marg_comb, "learner" = sl_fit))
 }

@@ -7,9 +7,9 @@
 #' @param At Training data
 #' @param W A vector of characters indicating variables that are covariates#'
 #' @param Q1_stack Stack of algorithms made in SL 3 used in ensemble machine learning to fit Y|W
+#' @param tree_SL Stack of algorithms made in SL for the decision tree estimation
 #' @param fold Current fold in the cross-validation
 #' @param max_iter Max number of iterations of iterative backfitting algorithm
-#' @param minsize The minimum number of observations in a node.
 #' @param verbose Run in verbose setting
 #' @return Rules object. TODO: add more detail here.
 #' @import partykit
@@ -24,11 +24,12 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
                                                 At,
                                                 W,
                                                 Q1_stack,
+                                                tree_SL,
                                                 fold,
                                                 max_iter,
-                                                minsize,
                                                 verbose) {
 
+  future::plan(future::sequential, gc = TRUE)
 
   n <- dim(At)[1]
   marg_decisions <- list()
@@ -68,17 +69,25 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
 
     At[,"Qbar_ne_M_W_initial"] <- Qbar_ne_M_W_initial
 
-    formula <-
-      as.formula(paste("y_scaled", "~", target_m))
+    task <- sl3::make_sl3_Task(
+      data = At,
+      covariates = target_m,
+      outcome = "y_scaled",
+      outcome_type = "continuous"
+    )
 
-    ctree_fit <- partykit::glmtree(formula,
-                         data = At,
-                         alpha = 0.9,
-                         prune = "AIC",
-                         minsize = minsize,
-                         maxdepth = 4)
+    # formula <-
+      # as.formula(paste("y_scaled", "~", target_m))
 
-    Qbar_M_W_initial <- predict(ctree_fit, newdata = At)
+    ctree_fit <- tree_SL$train(task)
+    # ctree_fit <- partykit::glmtree(formula,
+    #                      data = At,
+    #                      alpha = alpha,
+    #                      prune = "AIC",
+    #                      minsize = minsize,
+    #                      maxdepth = max_depth)
+
+    Qbar_M_W_initial <- ctree_fit$predict()
 
     At[,"Qbar_M_W_initial"] <- Qbar_M_W_initial
 
@@ -92,7 +101,7 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
     while (stop == FALSE) {
       iter <- iter + 1
 
-      task <- sl3::make_sl3_Task(
+      task_offset <- sl3::sl3_Task$new(
         data = At,
         covariates = covars_m,
         outcome = "y_scaled",
@@ -100,30 +109,44 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
         offset = "Qbar_M_W_initial"
       )
 
-      sl_fit_backfit <- discrete_sl$train(task)
-
-      sl_fit_backfit_no_offset <- sl3::sl3_Task$new(
+      task_no_offset <- sl3::sl3_Task$new(
         data = At_no_offset,
         covariates = covars_m,
         outcome = "y_scaled",
         outcome_type = "continuous",
         offset = "Qbar_M_W_initial"
       )
+
+      sl_fit_backfit_offset <- discrete_sl$train(task_offset)
+      sl_fit_backfit_no_offset <- discrete_sl$train(task_no_offset)
+
+
       # preds_offset <- sl_fit_backfit$predict()
-      preds_no_offset <- sl_fit_backfit$predict(sl_fit_backfit_no_offset)
-      preds_offset <- sl_fit_backfit$predict(task)
+      preds_offset <- sl_fit_backfit_offset$predict()
+      preds_no_offset <- sl_fit_backfit_no_offset$predict()
 
       At[,"Qbar_ne_M_W_now"] <- preds_no_offset
 
-      ctree_fit <- partykit::glmtree(formula,
-                                     data = At,
-                                     offset = Qbar_ne_M_W_initial,
-                                     alpha = 0.9,
-                                     prune = "AIC",
-                                     minsize = minsize)
+      task <- sl3::make_sl3_Task(
+        data = At,
+        covariates = target_m,
+        outcome = "y_scaled",
+        outcome_type = "continuous",
+        offset = "Qbar_ne_M_W_initial"
+      )
 
-      glmtree_model_preds_offset <- predict(ctree_fit, newdata = At)
-      At[, "Qbar_M_W_now"] <- predict(ctree_fit, newdata = At_no_offset)
+      task_no_offset <- sl3::make_sl3_Task(
+        data = At_no_offset,
+        covariates = target_m,
+        outcome = "y_scaled",
+        outcome_type = "continuous",
+        offset = "Qbar_ne_M_W_initial"
+      )
+
+      ctree_fit <- tree_SL$train(task)
+
+      glmtree_model_preds_offset <- ctree_fit$predict(task)
+      At[, "Qbar_M_W_now"] <- ctree_fit$predict(task_no_offset)
 
       # delta_h <- mean(abs(At$Qbar_ne_M_W_initial - At$Qbar_ne_M_W_now))
       # delta_g <- mean(abs(At$Qbar_M_W_initial - At$Qbar_M_W_now))
@@ -134,6 +157,8 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
       At$Qbar_ne_M_W_initial <- Qbar_ne_M_W_initial
       At$Qbar_M_W_initial <- At$Qbar_M_W_now
 
+      selected_learner <- ctree_fit$learner_fits[[which(ctree_fit$coefficients == 1)]]
+
       if (verbose){
         if (iter == 1) {
           print(paste("Fold: ", fold, "|",
@@ -141,14 +166,14 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
                       "Iteration: ", iter, "|",
                       "Delta: ", "None", "|",
                       "Diff: ", mean(curr_diff), "|",
-                      "Rules:", list.rules.party(ctree_fit)))
+                      "Rules:", list.rules.party(selected_learner$fit_object)))
         }else{
           print(paste("Fold: ", fold, "|",
                       "Process: ", target_m, "Marginal Decision Backfitting", "|",
                       "Iteration: ", iter, "|",
                       "Delta: ", mean(curr_diff - prev_diff), "|",
                       "Diff: ", mean(curr_diff), "|",
-                      "Rules:", list.rules.party(ctree_fit)))
+                      "Rules:", list.rules.party(selected_learner$fit_object)))
         }
       }
 
@@ -165,13 +190,22 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
       }
     }
 
-    rules <- list.rules.party(ctree_fit)
-    rules <- rules[length(rules)]
+    rules <- list.rules.party(selected_learner$fit_object)
+    quantile <- seq(length(rules))
 
-    if (rules == "") {
-      rules <- "No Rules Found"
+
+    if (length(rules) == 1) {
+      if(rules == "") {
+        rules <- "No Rules Found"
+      }
     }
-    rules <- cbind(rules, fold, target_m)
+    rules <- as.data.frame(cbind(rules, fold, target_m, quantile))
+
+    backfit_resids <- (At$y_scaled - glmtree_model_preds_offset)^2
+    backfit_RMSE <- sqrt(mean(backfit_resids))
+
+    rules$RMSE <- backfit_RMSE
+
 
     marg_decisions[[i]] <- rules
 

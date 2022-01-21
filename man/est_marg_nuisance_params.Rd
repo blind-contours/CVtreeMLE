@@ -10,9 +10,10 @@ est_marg_nuisance_params(
   At,
   Av,
   W,
-  SL.library,
+  Q1_stack,
   family,
   A,
+  no_marg_rules,
   marg_decisions,
   H.AW_trunc_lvl
 )
@@ -24,11 +25,13 @@ est_marg_nuisance_params(
 
 \item{W}{Vector of characters denoting covariates}
 
-\item{SL.library}{Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)}
+\item{Q1_stack}{Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)}
 
 \item{family}{Binomial or gaussian}
 
 \item{A}{Vector of characters that denote the mixture components}
+
+\item{no_marg_rules}{TRUE/FALSE if no marginal rules were found across the folds}
 
 \item{marg_decisions}{List of rules found within the fold for each mixture component}
 

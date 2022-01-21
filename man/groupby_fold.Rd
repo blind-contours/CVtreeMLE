@@ -5,10 +5,14 @@
 \title{Group by fold}
 \usage{
 groupby_fold(data)
+
+groupby_fold(data)
 }
 \arguments{
 \item{data}{Input data}
 }
 \description{
+Group by fold
+
 Group by fold
 }

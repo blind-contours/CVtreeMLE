@@ -46,6 +46,89 @@ groupby_fold <- function(data) {
 }
 
 ###################################################################
+#' @title Filter mixture rules across the folds for only those that have the same variables and directions across all folds
+#' @param data Input data
+#' @param n_folds Number of folds in the CV
+
+#' @importFrom rlang .data
+filter_mixture_rules <- function(data, n_folds) {
+  data <- data %>%
+    dplyr::group_by(.data$test, .data$direction) %>%
+    dplyr::filter(dplyr::n() >=  n_folds)
+  return(data)
+}
+
+###################################################################
+#' @title Calculate the mean RMSE in each interaction group
+#' @param data Input data
+#' @importFrom rlang .data
+calc_mixture_rule_RMSEs <- function(data) {
+  data <- data %>%
+    dplyr::group_by(.data$test) %>%
+    dplyr::summarize(RMSE = mean(.data$RMSE, na.rm = TRUE))
+  colnames(data) <- c("Var(s)", "RMSE")
+
+  return(data)
+}
+###################################################################
+#' @title Filter marginal rules across the folds for only those that have the same variables
+#' @param data Input data
+#' @param n_folds Number of folds in the CV
+
+#' @importFrom rlang .data
+filter_marginal_rules <- function(data, n_folds) {
+  data <- as.data.frame(data)
+  data$fold <- as.numeric(data$fold)
+
+  data <- data[data$rules != "No Rules Found",]
+
+  data <- data %>%
+    dplyr::group_by(.data$target_m, .data$quantile) %>%
+    dplyr::filter(dplyr::n() >=  n_folds)
+
+  data$var_quant_group <- paste(data$target_m, data$quantile, sep = "_")
+  return(data)
+}
+
+###################################################################
+#' @title Calculate the mean RMSE in each marginal group
+#' @param data Input data
+#' @importFrom rlang .data
+calc_marginal_rule_RMSEs <- function(data) {
+  data <- data %>%
+    dplyr::group_by(.data$target_m) %>%
+    dplyr::summarize(RMSE = mean(.data$RMSE, na.rm = TRUE))
+
+  colnames(data) <- c("Var(s)", "RMSE")
+
+  return(data)
+}
+
+###################################################################
+#' @title Group by fold
+#' @param data Input data
+
+#' @importFrom rlang .data
+groupby_fold <- function(data) {
+  data <- data %>%
+    dplyr::group_by(.data$fold)
+  return(data)
+}
+
+###################################################################
+#' @title Group split by marginal variable
+#' @param data Input data
+
+#' @importFrom rlang .data
+marginal_group_split <- function(data) {
+  data <- data %>% dplyr::group_by(.data$target_m)
+  data <- dplyr::group_split(data)
+  return(data)
+}
+
+
+
+###################################################################
 #' @title Get rules from partykit object in rule fitting
 #' @param x Partykit glmtree model object
 #' @param i null

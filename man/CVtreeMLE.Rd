@@ -10,13 +10,13 @@ CVtreeMLE(
   Y,
   data,
   back_iter_SL,
-  SL.library,
+  tree_SL,
   n_folds,
   family,
   H.AW_trunc_lvl,
   parallel,
+  num_cores,
   max_iter,
-  minsize,
   verbose
 )
 }
@@ -29,9 +29,9 @@ CVtreeMLE(
 
 \item{data}{Data frame of (W,A,Y) variables of interest.}
 
-\item{back_iter_SL}{Stack of estimators used in the SL during the iterative backfitting for \code{Y|W}, this should be an SL3 object}
+\item{back_iter_SL}{Super learner used for the backfitting algorithm and for the Q and g mechanisms}
 
-\item{SL.library}{Library of algorithms used by Super Learner for estimating both the propensity of exposure and the outcome.}
+\item{tree_SL}{Stack of estimators used in the SL during the iterative backfitting for \code{Y|W}, this should be an SL3 object}
 
 \item{n_folds}{Number of cross-validation folds.}
 
@@ -41,9 +41,9 @@ CVtreeMLE(
 
 \item{parallel}{Use parallel processing if a backend is registered; enabled by default.}
 
-\item{max_iter}{Max number of iterations of iterative backfitting algorithm}
+\item{num_cores}{If using parallel, the number of cores to parallelize over}
 
-\item{minsize}{The minimum number of observations in a node.}
+\item{max_iter}{Max number of iterations of iterative backfitting algorithm}
 
 \item{verbose}{If true, creates a sink file where detailed information and diagnostics of the run process are given.}
 }

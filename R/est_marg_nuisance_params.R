@@ -5,13 +5,14 @@
 #' @param At Training data
 #' @param Av Validation data
 #' @param W Vector of characters denoting covariates
-#' @param SL.library Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)
+#' @param Q1_stack Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)
 #' @param family Binomial or gaussian
 #' @param A Vector of characters that denote the mixture components
 #' @param marg_decisions List of rules found within the fold for each mixture component
 #' @param H.AW_trunc_lvl Truncation level of the clever covariate (induces more bias to reduce variance)
+#' @param no_marg_rules TRUE/FALSE if no marginal rules were found across the folds
 #'
-#' @import SuperLearner
+#' @import sl3
 #' @importFrom magrittr %>%
 #' @importFrom rlang :=
 
@@ -24,159 +25,171 @@
 est_marg_nuisance_params <- function(At,
                                      Av,
                                      W,
-                                     SL.library,
+                                     Q1_stack,
                                      family,
                                      A,
+                                     no_marg_rules,
                                      marg_decisions,
                                      H.AW_trunc_lvl) {
+
+  future::plan(future::sequential, gc = TRUE)
+
   marginal_data <- list()
-  marg_decisions$directions <- NA
 
-  for (i in seq(A)) {
-    At_c <- At
-    Av_c <- Av
+  marg_decisions_groups <- marg_decisions %>% dplyr::group_by(target_m)
+  marg_decisions_groups <- dplyr::group_split(marg_decisions_groups)
 
-    target_m_rule <- marg_decisions[marg_decisions$target_m == A[i],]$rules
+  if (no_marg_rules == FALSE) {
+    for (i in seq(marg_decisions_groups)) {
+      At_c <- At
+      Av_c <- Av
 
-    if (target_m_rule != "No Rules Found") {
-      rule_name <- paste(A[i], "marg_rule", sep = "_")
+      variable_decisions <-marg_decisions_groups[[i]]
 
-      At_c <- At_c %>%
-        dplyr::mutate(!!(rule_name) := ifelse(eval(parse(text = target_m_rule)), 1, 0))
+      quant_one_row <- variable_decisions[variable_decisions$quantile == 1,]
+      quant_one_rule <- quant_one_row$rules
 
-      Av_c <- Av_c %>%
-        dplyr::mutate(!!(rule_name) := ifelse(eval(parse(text = target_m_rule)), 1, 0))
+      # base_rule_name <- paste(quant_one_row$target_m, "ref_rule", sep = "_")
 
-      ## covars
-      X_Amarg_T <- At_c[W]
+      At_c_ref_data <- At_c %>%
+        dplyr::mutate("A" := ifelse(eval(parse(text = quant_one_rule)), 1, 0))
 
-      X_Amarg_V <- Av_c[W]
+      Av_c_ref_data <- Av_c %>%
+        dplyr::mutate("A" := ifelse(eval(parse(text = quant_one_rule)), 1, 0))
 
-      gHatSL <- SuperLearner(
-        Y = At_c[[rule_name]],
-        X = X_Amarg_T,
-        SL.library = SL.library,
-        family = "binomial",
-        verbose = FALSE
-      )
+      At_c_ref_data <- At_c_ref_data[At_c_ref_data[, "A"] == 1,]
+      Av_c_ref_data <- Av_c_ref_data[Av_c_ref_data[,"A"] == 1,]
 
-      gHat1W <- bound_precision(predict(gHatSL, X_Amarg_V)$pred)
+      At_c_ref_data[, "A"] <- 0
+      Av_c_ref_data[, "A"] <- 0
 
-      H.AW <- calc_clever_covariate(gHat1W = gHat1W, data = Av_c, exposure = rule_name, H.AW_trunc_lvl = 10, type = "reg")
+      quant_comparisons <- variable_decisions[variable_decisions$quantile > 1,]
 
-      ## add treatment mechanism results to Av_c dataframe
-      Av_c$gHat1W <- gHat1W
-      Av_c$H.AW <- H.AW
+      in_group_marg_data <- list()
 
-      X_train_mix <- At_c[c(rule_name, W)]
-      X_valid_mix <- Av_c[c(rule_name, W)]
+      for (j in seq(nrow(quant_comparisons))) {
 
-      ## QbarAW
-      QbarAWSL_m <- SuperLearner(
-        Y = At_c$y_scaled,
-        X = X_train_mix,
-        SL.library = SL.library,
-        family = family,
-        verbose = FALSE
-      )
+        target_m_row <- quant_comparisons[j,] # marg_decisions[marg_decisions$target_m == A[i],]$rules
 
-      X_m1 <- X_m0 <- X_valid_mix
-      X_m1[[rule_name]] <- 1 # under exposure
-      X_m0[[rule_name]] <- 0 # under control
+        # comp_rule_name <- paste(target_m_row$var_quant_group, "rule", sep = "_")
 
-      QbarAW <- bound_precision(predict(QbarAWSL_m, newdata = X_valid_mix)$pred)
-      Qbar1W <- bound_precision(predict(QbarAWSL_m, newdata = X_m1)$pred)
-      Qbar0W <- bound_precision(predict(QbarAWSL_m, newdata = X_m0)$pred)
+        At_c_comp_data <- At_c %>%
+          dplyr::mutate("A" := ifelse(eval(parse(text = target_m_row$rules)), 1, 0))
 
-      flux_results <- fit_least_fav_submodel(H.AW, data = Av, QbarAW, Qbar1W, Qbar0W)
+        Av_c_comp_data <- Av_c %>%
+          dplyr::mutate("A" := ifelse(eval(parse(text = target_m_row$rules)), 1, 0))
 
-      QbarAW.star <- flux_results$QbarAW.star
-      Qbar1W.star <- flux_results$Qbar1W.star
-      Qbar0W.star <- flux_results$Qbar0W.star
+        At_c_comp_data <- At_c_comp_data[At_c_comp_data[,"A"] == 1,]
+        Av_c_comp_data <- At_c_comp_data[At_c_comp_data[,"A"] == 1,]
 
-      if (mean(Qbar1W.star - Qbar0W.star, na.rm = TRUE) > 0) {
-        marg_decisions$directions[i] <- "positive"
+        At_data <- rbind(At_c_ref_data, At_c_comp_data)
+        Av_data <- rbind(Av_c_ref_data, Av_c_comp_data)
 
-        X_m1 <- X_m0 <- X_valid_mix
-        X_m1[[rule_name]] <- 1 # under exposure
-        X_m0[[rule_name]] <- 0 # under control
-
-        QbarAW <- bound_precision(predict(QbarAWSL_m, newdata = X_valid_mix)$pred)
-        Qbar1W <- bound_precision(predict(QbarAWSL_m, newdata = X_m1)$pred)
-        Qbar0W <- bound_precision(predict(QbarAWSL_m, newdata = X_m0)$pred)
-
-        Av_c$QbarAW <- QbarAW
-        Av_c$Qbar1W <- Qbar1W
-        Av_c$Qbar0W <- Qbar0W
-
-        marginal_data[[i]] <- Av_c
-      } else {
-        marg_decisions$directions[i] <- "negative"
-
-        At_c[, rule_name] <- 1 - At_c[, rule_name]
-
-        ## covars
-        X_Amarg_T <- At_c[W]
-        X_Amarg_V <- Av_c[W]
-
-        gHatSL <- SuperLearner(
-          Y = At_c[[rule_name]],
-          X = X_Amarg_T,
-          SL.library = SL.library,
-          family = "binomial",
-          verbose = FALSE
+        task_At <- sl3::make_sl3_Task(
+          data = At_data,
+          covariates = W,
+          outcome = "A",
+          outcome_type = "binomial"
         )
 
-        gHat1W <- predict(gHatSL, newdata = X_Amarg_V)$pred
+        task_Av <- sl3::make_sl3_Task(
+          data = Av_data,
+          covariates = W,
+          outcome = "A",
+          outcome_type = "binomial"
+        )
 
-        H.AW <- calc_clever_covariate(gHat1W, data = Av_c, exposure = rule_name, H.AW_trunc_lvl = 10, type = "reg")
+        discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new()
+
+        discrete_sl <- sl3::Lrnr_sl$new(
+          learners = Q1_stack,
+          metalearner = discrete_sl_metalrn,
+        )
+
+        sl_fit <- discrete_sl$train(task_At)
+
+
+        gHat1W <- bound_precision(sl_fit$predict(task_Av))
+
+        H.AW <- calc_clever_covariate(gHat1W = gHat1W, data = Av_data, exposure = "A", H.AW_trunc_lvl = 10, type = "reg")
 
         ## add treatment mechanism results to Av_c dataframe
-        Av_c$gHat1W <- gHat1W
-        Av_c$H.AW <- H.AW
+        Av_data$gHat1W <- gHat1W
+        Av_data$H.AW <- H.AW
 
-        X_train_mix <-At_c[c(rule_name, W)]
-        X_valid_mix <-Av_c[c(rule_name, W)]
-
-        print(paste("Fitting SL of Y given W and rule for mixture", i))
-
-        ## QbarAW
-        QbarAWSL_m <- SuperLearner(
-          Y = At_c$y_scaled,
-          X = X_train_mix,
-          SL.library = SL.library,
-          family = family,
-          verbose = FALSE
+        task_At <- sl3::make_sl3_Task(
+          data = At_data,
+          covariates = c(W, "A"),
+          outcome = "y_scaled",
+          outcome_type = family,
+          folds = 2
         )
 
-        X_m1 <- X_m0 <- X_valid_mix
-        X_m1[[rule_name]] <- 1 # under exposure
-        X_m0[[rule_name]] <- 0 # under control
+        X_m1 <- X_m0 <- Av_data
+        X_m1$A <- 1 # under exposure
+        X_m0$A <- 0 # under control
 
-        QbarAW <- bound_precision(predict(QbarAWSL_m, newdata = X_valid_mix)$pred)
-        Qbar1W <- bound_precision(predict(QbarAWSL_m, newdata = X_m1)$pred)
-        Qbar0W <- bound_precision(predict(QbarAWSL_m, newdata = X_m0)$pred)
+        task_Av <- sl3::make_sl3_Task(
+          data = Av_data,
+          covariates = c(W, "A"),
+          outcome = "y_scaled",
+          outcome_type = family
+        )
 
-        Av_c$QbarAW <- QbarAW
-        Av_c$Qbar1W <- Qbar1W
-        Av_c$Qbar0W <- Qbar0W
+        task_Av_1 <- sl3::make_sl3_Task(
+          data = X_m1,
+          covariates = c(W, "A"),
+          outcome = "y_scaled",
+          outcome_type = family
+        )
 
-        marginal_data[[i]] <- Av_c
+        task_Av_0 <- sl3::make_sl3_Task(
+          data = X_m0,
+          covariates = c(W, "A"),
+          outcome = "y_scaled",
+          outcome_type = family
+        )
+
+        sl_fit <- discrete_sl$train(task_At)
+
+
+        QbarAW <- bound_precision(sl_fit$predict(task_Av))
+        Qbar1W <- bound_precision(sl_fit$predict(task_Av_1))
+        Qbar0W <- bound_precision(sl_fit$predict(task_Av_0))
+
+        flux_results <- fit_least_fav_submodel(H.AW, data = Av_data, QbarAW, Qbar1W, Qbar0W)
+
+        QbarAW.star <- flux_results$QbarAW.star
+        Qbar1W.star <- flux_results$Qbar1W.star
+        Qbar0W.star <- flux_results$Qbar0W.star
+
+        Av_data$QbarAW <- QbarAW
+        Av_data$Qbar1W <- Qbar1W
+        Av_data$Qbar0W <- Qbar0W
+
+        in_group_marg_data[[j]] <- Av_data
       }
-    } else {
+      marginal_data[[i]] <- in_group_marg_data
+    }
+
+    marginal_data <- unlist(marginal_data,recursive=FALSE, use.names = FALSE)
+
+    }
+  else {
+      Av_data$gHat1W <- NA
+      Av_data$H.AW <- NA
+      Av_data$QbarAW <- NA
+      Av_data$Qbar1W <- NA
+      Av_data$Qbar0W <- NA
+      marginal_data[[1]] <- Av_data
       print(
         paste(
           "No ATEs calculated in the validation for",
-          A[i],
+          marg_decisions$target_m[i],
           "due to no rule found in training set for marginal impact"
         )
       )
-      marg_decisions$directions[i] <- NA
     }
-  }
 
-  return(list(
-    "data" = marginal_data,
-    "marg_decisions" = marg_decisions
-  ))
-}
+    return(marginal_data)
+  }

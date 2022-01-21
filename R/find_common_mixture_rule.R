@@ -2,13 +2,16 @@ find_common_mixture_rules <- function(group_list,
                                       data = data,
                                       mix_comps = mix_comps,
                                       mixture_results,
-                                      n_folds) {
-  if (anyNA(group_list) == FALSE) {
+                                      n_folds,
+                                      no_mixture_rules) {
+  if (no_mixture_rules == FALSE) {
     ## Get final mixture rule across folds
     all_mixt_vals_contained_vector <- list()
     all_mixt_vals_contained_summary <- list()
 
-    mixture_rules <- list()
+    mixture_all_rules <- list()
+    mixture_any_rules <- list()
+
     fractions <- list()
     mixture_data <- subset(data, select = mix_comps)
 
@@ -23,6 +26,34 @@ find_common_mixture_rules <- function(group_list,
       group <- as.data.frame(group)
 
       vars <- mix_comps[mix_comps %in% strsplit(group$description[1], split = " ")[[1]]]
+
+      ## pooled rule - any meet
+
+      intxn_rule <- paste("(",paste(group$description, collapse = ")|("), ")")
+
+      intxn_data <- data %>%
+        mutate("intxn_rule" := ifelse(eval(parse(text = intxn_rule)), 1, 0))
+
+      new_rule <- list()
+
+      for (var in vars) {
+        var_min <-
+          intxn_data %>%
+          group_by(intxn_rule) %>%
+          summarise(min = min(!!(as.name(var))))
+        var_min <- subset(var_min, intxn_rule == 1, select = min)
+        var_max <-
+          intxn_data %>%
+          group_by(intxn_rule) %>%
+          summarise(max = max(!!(as.name(var))))
+        var_max <- subset(var_max, intxn_rule == 1, select = max)
+
+        augmented_rule <- paste(var, ">", round(var_min, 3), "&", var, "<", round(var_max, 3))
+
+        new_rule <- append(new_rule, augmented_rule)
+      }
+
+      interaction_rule <- paste(unlist(new_rule), collapse = " & ")
 
       rule_list <- group$description
 
@@ -72,35 +103,21 @@ find_common_mixture_rules <- function(group_list,
 
         rule <- paste(unlist(new_rule), collapse = " & ")
 
-        mixture_rules[i] <- rule
+        mixture_any_rules[i] <- interaction_rule
+        mixture_all_rules[i] <- rule
+
         fractions[i] <- fraction
       } else {
-        mixture_rules[i] <- "No Obs Overlap across all folds"
+        mixture_all_rules[i] <- "No Obs Overlap across all folds"
+        mixture_any_rules[i] <- interaction_rule
         fractions[i] <- NA
         total_rules[i] <- NA
       }
     }
 
+    mixture_results$`Mixture Interaction Rules` <- unlist(mixture_any_rules)
+    mixture_results$`Fraction Covered` <- unlist(fractions)
 
-    mixture_results <-
-      cbind(mixture_results, unlist(mixture_rules))
-
-    colnames(mixture_results)[9] <- "Mixture Interaction Rules"
-
-    mixture_results <-
-      cbind(mixture_results, unlist(fractions))
-
-    colnames(mixture_results)[10] <- "Fraction Covered"
-  } else {
-    mixture_results <-
-      cbind(mixture_results, NA)
-
-    colnames(mixture_results)[length(mixture_results)] <- "Mixture Interaction Rules"
-
-    mixture_results <-
-      cbind(mixture_results, NA)
-
-    colnames(mixture_results)[length(mixture_results)] <- "Fraction Covered"
   }
 
   return(mixture_results)

@@ -31,16 +31,19 @@ Imports:
     sl3,
     stats,
     stringr,
-    SuperLearner,
     tidyr,
     utils,
     MASS,
-    here
+    here,
+    qgcomp,
+    ggplot2
 Suggests:
     fastDummies,
     rmarkdown,
     knitr,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    mlbench,
+    xml2
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

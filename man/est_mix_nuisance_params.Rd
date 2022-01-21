@@ -10,8 +10,8 @@ est_mix_nuisance_params(
   At,
   Av,
   W,
-  no_rules,
-  SL.library,
+  no_mix_rules,
+  Q1_stack,
   family,
   rules,
   H.AW_trunc_lvl
@@ -24,9 +24,9 @@ est_mix_nuisance_params(
 
 \item{W}{Vector of characters denoting covariates}
 
-\item{no_rules}{TRUE/FALSE indicator for if no mixture rules were found}
+\item{no_mix_rules}{TRUE/FALSE indicator for if no mixture rules were found}
 
-\item{SL.library}{Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)}
+\item{Q1_stack}{Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)}
 
 \item{family}{Binomial or gaussian}
 

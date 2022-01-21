@@ -6,10 +6,10 @@
 #' @param At_c Training data
 #' @param Av_c Validation data
 #' @param W Vector of characters denoting covariates
-#' @param SL.library Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)
+#' @param Q1_stack Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)
 #' @param H.AW_trunc_lvl Truncation level of the clever covariate (induces more bias to reduce variance)
+#' @param no_marg_rules TRUE/FALSE if no marginal rules were found across the folds
 #'
-#' @import SuperLearner
 #' @importFrom magrittr %>%
 #' @importFrom rlang :=
 #' @importFrom dplyr group_by filter top_n
@@ -18,8 +18,8 @@
 #' @export
 
 
-est_cum_sum_exposure <- function(At_c, Av_c, W, SL.library, H.AW_trunc_lvl) {
-  if (sum(At_c$sum_marg_hits) != 0) {
+est_cum_sum_exposure <- function(At_c, Av_c, W, Q1_stack, no_marg_rules, H.AW_trunc_lvl) {
+  if (no_marg_rules == FALSE) {
     H.AW.list <- list()
 
     for (i in rev(seq(table(At_c$sum_marg_hits)))) {
@@ -45,13 +45,7 @@ est_cum_sum_exposure <- function(At_c, Av_c, W, SL.library, H.AW_trunc_lvl) {
       Av_c$binarized_cat <-
         as.numeric(Av_c$sum_marg_hits == target.lvl)
 
-      gHatSL <- SuperLearner(
-        Y = At_c$binarized_cat,
-        X = X_train_covars,
-        SL.library = SL.library,
-        family = "binomial",
-        verbose = FALSE
-      )
+
 
       gHat1W <- predict(gHatSL, newdata = X_valid_covars)$pred
 
@@ -66,14 +60,7 @@ est_cum_sum_exposure <- function(At_c, Av_c, W, SL.library, H.AW_trunc_lvl) {
     X_train_mix <- At_c[, c("sum_marg_hits", W)]
     X_valid_mix <- Av_c[, c("sum_marg_hits", W)]
 
-    ## QbarAW
-    QbarAWSL_m <- SuperLearner(
-      Y = At_c$y_scaled,
-      X = X_train_mix,
-      SL.library = SL.library,
-      family = "gaussian",
-      verbose = FALSE
-    )
+
 
     QbarAW <- bound_precision(predict(QbarAWSL_m, newdata = X_valid_mix)$pred)
 

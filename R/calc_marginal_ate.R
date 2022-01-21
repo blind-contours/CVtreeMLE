@@ -6,6 +6,7 @@
 #'
 #' @param marginal_data List of dataframes of nuisance parameter data for each mixture
 #' @param mix_comps Vector of characters indicating the mixture components
+#' @param marginal_rules List of dataframes for rules found across the folds
 #' @param Y Vector indicating the Y
 #' @param n_folds Number of folds used in cross-validation
 
@@ -18,14 +19,42 @@
 #'
 #' @export
 
-calc_marginal_ate <- function(marginal_data, mix_comps, Y, n_folds){
+calc_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y, n_folds){
 
   marg_data <- list()
 
   x <- unlist(marginal_data,recursive=FALSE)
   x <- x[!sapply(x,is.null)]
 
-  for (i in seq(mix_comps)) {
+  y <- unlist(marginal_rules,recursive=FALSE)
+  y <- y[!sapply(y,is.null)]
+
+  fold_rules_groups <- marginal_group_split(y[[1]])
+
+  # fold_rules_groups <- y[[1]] %>% dplyr::group_by(target_m)
+  # fold_rules_groups <- dplyr::group_split(fold_rules_groups)
+
+  comp_labels <- list()
+
+  for (i in seq(fold_rules_groups)) {
+    var_comps <- list()
+    rules <- fold_rules_groups[[i]]
+    reference <- rules[rules$quantile == 1,]
+    reference_quant <- reference$var_quant_group
+    comparisons <- rules[rules$quantile > 1,]
+    for (j in seq(nrow(comparisons))){
+      comp_row <- comparisons[j,]
+      comp_label <- paste(comp_row$var_quant_group, reference_quant, sep = "-")
+      var_comps[[j]] <- comp_label
+    }
+
+    comp_labels[[i]] <- var_comps
+  }
+
+  comp_labels <- unlist(comp_labels)
+
+
+  for (i in seq(length(x[[1]]))) {
     # for(j in seq(marginal_data)){
     marg_data[[i]] <-
       dplyr::bind_rows(sapply(x, "[", i))
@@ -34,7 +63,7 @@ calc_marginal_ate <- function(marginal_data, mix_comps, Y, n_folds){
   marginal_results <-
     as.data.frame(matrix(
       data = NA,
-      nrow = length(mix_comps),
+      nrow = length(x[[1]]),
       ncol = 7
     ))
 
@@ -47,7 +76,9 @@ calc_marginal_ate <- function(marginal_data, mix_comps, Y, n_folds){
       "P-value Adj",
       "RMSE")
 
-  rownames(marginal_results) <- mix_comps
+  target_quantile <- as.data.frame(marginal_rules[[1]])
+
+  rownames(marginal_results) <- comp_labels
 
   updated_marginal_data <- list()
 
@@ -56,8 +87,8 @@ calc_marginal_ate <- function(marginal_data, mix_comps, Y, n_folds){
   no_null_indices <- list()
 
   for (i in seq(length(marg_data))) {
-    check <- marg_data[i]
-    if (length(check[[1]]) != 0) {
+    check <- marg_data[[i]]
+    if (anyNA(check$QbarAW) != TRUE) {
       no_null_indices <- append(no_null_indices, i)
     } else{
       no_null_indices <- no_null_indices

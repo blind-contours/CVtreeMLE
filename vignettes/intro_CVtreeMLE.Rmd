@@ -20,17 +20,21 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-Consider we observe $n$ i.i.d. copies of a random variable with a probability distribution that is known to be an element of a particular statistical model. In order to define our statistical target we use cross-validation and partition the total sample into $V$ equal size sub-samples, and use this partitioning to define $V$ split estimation samples (one of the V subsamples) and corresponding complementary parameter-generating sample that is used to generate a target parameter. For each of the $V$ parameter-generating samples, we apply a decision tree algorithm that maps a set of continuous mixture variables into a rule which is applied to the estimation sample in order to derive the statistical target parameter of interest, the average treatment effect. That is, the `CVtreeMLE` package implements algorithms to first identify thresholds in the mixture space using decision trees in the parameter generating sample and (given a set of thresholds is identified which satisfy some loss function), does targeted minimum loss-based estimations (TMLE) of the counterfactual mean had all individuals been exposed to levels of exposures used in the rule $(Y | A = 1, W)$ compared to the counterfactual mean had all individuals not been exposed $(Y | A = 0, W)$. 
+Consider we observe $n$ i.i.d. copies of a random variable with a probability distribution that is known to be an element of a particular statistical model $\mathcal{M}$. Our exposure $A$, is an unknown combination of exposure levels to many components of $A$. That is, unlike in many scenarios where $A$ is simply one binary/continuous treatment/exposure variable, $A$ is in fact a vector of exposures. We are interested in, given some *a priori* specified algorithm, 1. what mixture components of $A$ have explanatory power on the outcome $Y$ and 2. what levels of these exposures are most impactful. Both the most important variables and the most important levels of these mixture variables are unknown and therefore, the statistical target parameter given these variables/levels is also unknown. Thus, we need a methodology that both allows us to identify these variables/levels, and map these findings into a target parameter with valid statistical inference. 
 
-In the current implementation, we define our sample-split data-adaptive statistical target parameter as the average of these V-sample specific target parameters. However, future implementations will provide fold-specific estimates to improve interpretability of rules found across the folds. `CVtreeMLE` demonstrates the use of a data-adaptive methodology which allows new opportunities for statistical learning from data that go beyond the usual requirement that the estimand is *a priori* defined in order to allow for proper statistical inference. `CVtreeMLE` provides a rigorous statistical methodology for the application of decision trees to a mixture space that is both exploratory and confirmatory for the analysis of mixtures within the same data. For more background on Targeted Learning, consider consulting @vdl2011targeted, @vdl2018targeted, and @vdl2022targeted. For more background on data-adaptive target parameters see @Hubbard2016 and chapter 9 in @vdl2018targeted. 
+In order to define our statistical target we use cross-validation and partition the total sample into $V$ equal size sub-samples, and use this partitioning to define $V$ split estimation samples (one of the V subsamples) and corresponding complementary parameter-generating sample that is used to generate a target parameter. For each of the $V$ parameter-generating samples, we apply a decision tree algorithm that maps a set of continuous mixture variables into a rule which is applied to the estimation sample in order to derive the statistical target parameter of interest, the average treatment effect. That is, the `CVtreeMLE` package implements algorithms to first identify thresholds in the mixture space using decision trees in the parameter generating sample and (given a set of thresholds is identified which satisfy some loss function), does targeted minimum loss-based estimations (TMLE) of the counterfactual mean had all individuals been exposed to levels of exposures used in the rule $(Y | A = 1, W)$ compared to the counterfactual mean had all individuals not been exposed $(Y | A = 0, W)$. 
 
-## Decision Trees Iterative Backfitting
+We define our sample-split data-adaptive statistical target parameter as the average of these V-sample specific target parameters. Statistical inference is done in two ways - 1. a meta-analysis approach which calculates a weighted mean of the target parameter for a respective rule across the V-folds paired with pooled variance estimates and a pooled rule which covers all the V-fold rules and 2. a pooled TMLE update step which targets our parameter of interest and calculates the influence curve across all the folds simultaneously. 
 
-Consider our outcome $Y$ is generated through the sum of two functions $h(A)$ and $g(W)$ ($Y = h(A) + g(W)$). Here, $h(A)$ is a decision tree algorithm applied to the vector of exposures $A$. Decision trees and their ensembles are popular methods for the machine learning tasks of classification and regression and are widely used since they are easy to interpret, handle many types of outcomes, and do not require feature scaling or dimensional reduction. Decision trees are particularly good at capturing non-linearities and feature interactions which is of specific interest in mixed exposures. Tree ensemble algorithms such as random forests and boosting are among the top performers for classification and regression tasks. However, the drawback of these techniques is that the easy interpretability of single classification and regression tree (CART) is lost and the analyst has to rely on measures of variable importance that do not directly link the exposure with the outcome (change in model fit when a variable is removed compared to the full model). 
+`CVtreeMLE` demonstrates the use of a data-adaptive methodology which allows new opportunities for statistical learning from data that go beyond the usual requirement that the estimand is *a priori* defined in order to allow for proper statistical inference. `CVtreeMLE` provides a rigorous statistical methodology for the application of decision trees to a mixture space that is both exploratory and confirmatory for the analysis of mixtures within the same data. For more background on Targeted Learning, consider consulting @vdl2011targeted, @vdl2018targeted, and @vdl2022targeted. For more background on data-adaptive target parameters see @Hubbard2016 and chapter 9 in @vdl2018targeted. 
 
-In most research scenarios, the analyst is also interested in deriving statistical inference after fitting a single CART algorithm, that is, the analyst is interested in a p-value for the difference in mean outcomes between the nodes that delineate certain regions in the joint space. Inference on this difference in means involves conditioning on parent nodes in the branch that led to this split in the tree. There are two main issues with this approach of deriving statistical inference in CART models. The first is that the same data is used to both identify partitioning nodes and make statistical inference on these nodes that were not known *a priori*. Obviously, this approach leads to biased estimates due to overfitting as one is "double dipping" by using the full data to both identify values in the exposures used as splits in the decision tree and make statistical inference given these split values.  The second issue is the need to flexibly control for covariates $W$ in an unrestricted, non-parametric fashion, while simultaneously fitting a CART model to a vector of exposures $A$. This is because, in the context of mixed exposures, the analyst is interested in interpretable thresholds of chemical exposures with robust statistical inference after flexibly adjusting for covariates (not making additive assumptions and allowing for many types of interecations in the covariate space). 
+## Iterative Backfitting of Decision Trees
 
-Altogether, to meet this goal requires a new statistical approach in tree fitting on $A$ that flexibly controls for covariates $W$. We do this using a simple iterative backfitting algorithm. The additive model described is a non-parametric regression model of the form: 
+Consider our outcome $Y$ is generated through the sum of two functions $h(A)$ and $g(W)$ ($Y = h(A) + g(W)$). Notice that, here we assume no interactions between $h(A) and g(W)$, an assumption we will test later. Here, $h(A)$ is an ensemble of decision tree algorithms applied to the vector of exposures $A$. Decision trees and their ensembles are popular methods for the machine learning tasks of classification and regression and are widely used since they are easy to interpret, handle many types of outcomes, and do not require feature scaling or dimensional reduction. Decision trees are particularly good at capturing non-linearities and feature interactions which is of specific interest in mixed exposures.
+
+In most research scenarios, the analyst is also interested in deriving statistical inference after fitting a single decision tree algorithm, that is, the analyst is interested in a p-value for the difference in mean outcomes between the nodes that delineate certain regions in the joint space. Inference on this difference in means has involved conditioning on parent nodes in the branch that led to this split in the tree. There are two main issues with this approach of deriving statistical inference in decision tree models. The first is that the same data is used to both identify partitioning nodes and make statistical inference on these nodes that were not known *a priori*. Obviously, this approach leads to biased estimates due to overfitting as one is "double dipping" by using the full data to both identify values in the exposures used as splits in the decision tree and make statistical inference given these split values.  The second issue is the need to flexibly control for covariates $W$ in an unrestricted, non-parametric fashion, while simultaneously fitting a decision tree model to a vector of exposures $A$. This is because, in the context of mixed exposures, the analyst is interested in interpretable thresholds of chemical exposures with robust statistical inference after flexibly adjusting for covariates (not making additive assumptions and allowing for many types of interactions in the covariate space).  
+
+Altogether, to meet this goal requires a new statistical approach in tree fitting on $A$ that flexibly controls for covariates $W$ and ensures that the target parameter we derive from the tree is asymptotically effiient - we need a methodology that derives causal inference from decision trees.  To do this we start with a simple iterative backfitting algorithm. The additive model described is a semi-parametric regression model of the form: 
 
 \begin{equation}
 Y_i =  h(A_{i}) + g(W_{i}) +  \epsilon_i
@@ -40,7 +44,7 @@ Where $A_i$ is a vector of exposure values for individual $i$ and $W_i$ is a vec
 
 * **Initialize** $g(W)$ by fitting a discrete Super Learner for $Y|W$ 
   + **Predict** $Y|W$ to get $Y^*$ 
-* **Initialize** $h(A)$ by fitting a model-based recursive partitioning algorithm based on generalized linear models for $Y|A$ 
+* **Initialize** $h(A)$ by fitting a discrete Super Learner of model-based recursive partitioning algorithms for $Y|A$ 
   + **Predict** $Y|A$ to get $Y^{**}$ 
 
 * **Do** until convergence: 
@@ -51,72 +55,482 @@ Where $A_i$ is a vector of exposure values for individual $i$ and $W_i$ is a vec
   + *Predict* $Y$ using $h(A)$ with no offset to get new $Y^{**}$ 
   + *Predict* $Y$ using $h(A)$ with offset ($h(A,W)$)
   
-_Where_ convergence is defined as no change in the difference between $g(A,W)$ and $h(A,W)$ between iterations. In this way, we can say that the two models have converged to the same model.  
+_Where_ convergence is defined as no change in the difference between $g(A,W)$ and $h(A,W)$ between iterations based on a threshold (by default this value is defined as $\delta$ = 0.001). In this way, we can say that the two models have converged to the same model.  
   
 This algorithm is applied to $A$ as a mixture to generate a decision tree that includes multiple different exposures in $A$ while adjusting for $W$ non-parametrically. Likewise, the backfitting algorithm is applied to each individual component of $A$, $A_i$, while controlling for other mixture variables $A_{\ne i}$ and $W$. In this way, univariate thresholds are determined for each mixture variable individually. This backfitting procedure allows us to estimate $Y = h(A) + g(W)$ such that we are able to fit our decision tree models $h(a)$ while adjusting for the covariate model $g(W)$. Convergence is defined as an absolute difference between $g(A,W)$ and $h(A,W)$ 
 
-## Rule Ensemble Fitting
+## Mixture Rule Ensemble Fitting
+
+The [`pre` package](https://github.com/marjoleinF/pre)[@Fokkema2020a] is used to fit rule ensembles on the mixture components modeled together. Within the respective parameter generating sample, `At`,  the `pre` package is fit to the min-max scaled outcome $Y$. The parameters passed to `pre` are: `use.grad = FALSE`, `tree.unbiased = TRUE`, `removecomplements = TRUE`, `removeduplicates = TRUE`, `maxdepth = pre::maxdepth_sampler()`, `sampfrac = min(1, (11 * sqrt(dim(At)[1]) + 1) / dim(At)[1])`, `nfolds = 10`; meaning that the tree is fit to the mixture without gradient boosting (using glmtree instead of ctree), the unbiased tree generation algorithm is used from `pre`, we remove identical trees and trees found in earlier rule ensembles, the max depth sampler randomly generates different depths of trees for the ensemble partitioning, the sampling fraction of observations used to create the rules is set to it's default value in the `pre` package and we use 10 fold cross-validation. The `offset` parameter takes the $Y^{*}$ predictions during backfitting. In this way, because of the use of cross-validation (CV) to identify the size of the linear combination of decision trees, this approaches invokes in it the Super Learner methodology such that we are guaranteed asymptotically to choose the correct set of nodes that explains the underlying joint distribution.  
+
+## Marginal Rule Decision Tree Fitting
+
+We create a new learner for the [`sl3`package](https://github.com/tlverse/sl3) [@coyle2021sl3] to allow for ensemble
+machine learning of individual decision tree algorithms. This new learner is called `Lrnr_glmtree` and uses the [`partykit` package](http://partykit.r-forge.r-project.org/partykit/)[partykit2015], this `Lrnr_glmtree` function takes in various hyper-parameters for `glmtree` and constructs a Super Learner based on `alpha`, `prune type`, `minsize` and `max-depth`. The `alpha` parameter specifies the p-value for any parameter stability test in order to make a node split - a node is split if p-value falls below `alpha`. `prune = AIC` indicates that the `AIC` post-pruning is performed on the tree. `minsize` is the minimum number of observations in a node. `maxdepth` is the maximum depth of the tree. As we will see later, we create a `Super Learner` of decision trees by varying these hyper-parameters in order to find the decision tree that best fits our data.
+
+## Estimates for Consistent Trees 
+
+`CVtreeMLE` ensures that estimates for trees found are stable by only including rules that have the same mixture variables included in them across all folds. For example, consider the analyst runs `CVtreeMLE` using 10-fold cross-validation and in all ten folds a rule was determined that had variables $X_1$ and $X_2$ - in this case, estimates of the ATE given exposure to this rule would be estimated. That is, in the recursive partitioning, a rule may be slightly different in where the variables are split, but if the same variables are found across all the folds, a target parameter is calculated for this rule. This can look like: 
+
+1. $X_1 > 1.2$ & $X_2 < 0.4$
+2. $X_1 > 1.1$ & $X_2 < 0.4$
+3. $X_1 > 1.0$ & $X_2 < 0.3$
+4. $X_1 > 1.2$ & $X_2 < 0.3$
+5. $X_1 > 1.2$ & $X_2 < 0.5$
+6. $X_1 > 1.3$ & $X_2 < 0.4$
+7. $X_1 > 1.1$ & $X_2 < 0.5$
+8. $X_1 > 1.1$ & $X_2 < 0.5$
+9. $X_1 > 1.2$ & $X_2 < 0.3$
+10. $X_1 > 1.2$ & $X_2 < 0.4$
+
+Here, where $X_1$ and $X_2$ are partitioned is slightly different but the same two variables were included in a rule found in all the folds and therefore this is a consistent decision tree for these two variables. If however, $X_1$ and $X_2$ are not found in every fold of the data, this is considered an unstable tree, or interaction, and estimates are not determined. In this way, it is important to run `CVtreeMLE` with a high number of folds to ensure that the parameter-generating sample is large enough to accurately determined if there are interactions in the mixture space.  
+
+## Rule Coverage 
+
+As seen above, `CVtreeMLE` will deliver estimates only for trees that have the same variables in them across all the folds; however, the actual tree may be slightly different across the folds. To check how stable a tree is, and therefore, how interpretable the estimates are as it relates to exact exposure levels determined, we use a Jaccard coefficient coverage measure defined as; 
+
+$$J(A,B) = \frac{|A \cap B|}{|A \cup B|}$$
+
+In our case, the numerator is the number of observations that are included in all the rules (intersection) determined across the folds. The denominator is the total number of observations indicated by any of the rules found across the folds (union). The ratio then gives us a measure of how consistent the determined rules are in the trees. A coverage score of 100\% indicates that the rules across the folds were exactly the same or rather the number of observations included in rules across all the folds were the same as the total number of individuals indicated by the rules in all folds. A coverage score of 80\% indicates that 20\% of individuals were not included in the respective rule for all the folds. 
+
+## Creating a Total Rule Across Folds
+
+For decision trees that include the same variables across the folds for the mixture variables, we create a total rule based on observations included in rules in any of the folds. Considering the example above: 
+
+1. $X_1 > 1.2$ & $X_2 < 0.4$
+2. $X_1 > 1.1$ & $X_2 < 0.4$
+3. $X_1 > 1.0$ & $X_2 < 0.3$
+4. $X_1 > 1.2$ & $X_2 < 0.3$
+5. $X_1 > 1.2$ & $X_2 < 0.5$
+6. $X_1 > 1.3$ & $X_2 < 0.4$
+7. $X_1 > 1.1$ & $X_2 < 0.5$
+8. $X_1 > 1.1$ & $X_2 < 0.5$
+9. $X_1 > 1.2$ & $X_2 < 0.3$
+10. $X_1 > 1.2$ & $X_2 < 0.4$
+
+The average rule would be $X_1 > 1.0$ & $X_2 < 0.5$. This is because this rule includes observations across all rules found across any fold. This rule would then be accompanied by a coverage score to indicate how many observations are indicated by this rule compared to the sum of all rules found across the folds. Of course, this pooled rule may be  anti-conservative if there is high variability in the decision tree nodes. If there is strong stability, the pooled rule will be equal to the rules found across the folds.
+
+## Data Adaptively Determining Exposure Levels 
+
+As discussed, our exposure of interest $A$ is not defined *a priori*. We need to "discover" our exposure by applying a decision tree algorithm to our empirical data $P_n$. Our algorithm is a recursive partitioning algorithm where the model’s objective function is used for estimating the parameters and the split points; the corresponding model scores are tested for
+parameter instability in each node to assess which variable should be used for partitioning. The benefits of employing this approach are: The objective function used for parameter
+estimation is also used for partitioning (testing and split point estimation). The recursive partitioning allows for modeling of nonlinear relationships and automated detection of
+interactions among the explanatory mixture variables.
+
+Consider a parametric $\mathcal{M}$(Y, $\theta$) with (possibly vector-valued) observations $Y \in \mathcal{Y} $ and a k-dimensional vector of parameters $\theta \in \Theta$. Given $n$ observations $Y_i (i = 1, . . . , n)$ the model can be fitted by minimizing some objective function $\Psi(Y, \theta)$ yielding the parameter
+estimate $\hat{\theta}$, 
+
+$$\hat{\theta} = argmin_{\theta \in \Theta} \sum_{i = 1}^n\Psi(Y_i, \theta)$$
+
+Estimators of this type include various well-known estimation techniques, the most popular being ordinary least squares (OLS) or maximum likelihood (ML) among other M-type estimators. 
+
+However, in many situations, it is unreasonable to assume that a single global model $\mathcal{M}(Y, \theta)$ fits all $n$ observations well. But it might be possible to partition the observations with respect to some variables such that a well-fitting model can be found locally in each cell
+of the partition. In such a situation, we can use a recursive partitioning approach based on $\ell$ partitioning variables $Z_j \in Z_j ( j = 1, . . . , \ell)$ to adaptively find a good approximation of this partition. More formally, we assume that a partition $\{ \mathcal{B}_b\}b=1,...,B$ of the space $Z = Z_1 × ... × Z\ell$ exists with $B$ cells (or segments) such that in each cell $\mathcal{B}_b$ a model $\mathcal{M}(Y, \theta_b)$ with a cell-specific parameter $\theta_b$ holds. We denote this segmented model by $\mathcal{M}_B(Y, \{\theta_b\})$ where
+$\{\theta_b\}b=1,...,B$ is the full combined parameter. Special cases of such segmented models are classification and regression trees where many partitioning variables $Z_j$ but only very simple models $M$ are used. For example, with regression trees a simple model $\mathcal{M}$ is chosen: the parameter $\theta$ describes the mean of the univariate observations $Y_i$ and is estimated by OLS (or equivalently ML). In more traditional CART based models, our $\mathcal{M}$ are usually the Gini impurity measure, entropy, or information gain. 
+
+Given the correct partition $\{B_b\}$ the estimation of the parameters $\{\theta_b\}$ that minimize the global objective function can easily be achieved by computing the locally optimal parameter estimates $\hat{\theta}_b$ in each segment $\mathcal{B}_b$. However, if $\{\mathcal{B}_b\}$ is unknown, minimization of the global objective function:
+
+$$argmin\sum_{b=1}^B \sum_{i \in I_b} \Psi (Y_i,\theta_b)$$
+
+Therefore, we define this recursive partitioning model as $h(A)$:
+
+$$ h(A) = argmin\sum_{b=1}^B \sum_{i \in I_b} \Psi (Y_i,\theta_b)$$
+And $g(W)$ as $Q_n(W)$ or a non-parametric estimator $Y$ given covariates $W$. Our full additive model is then: 
+
+$$\hat{Y} = argmin\sum_{b=1}^B \sum_{i \in I_b} \Psi (Y_i,\theta_b) + Q_n(W) $$
+Where $Q_n$ is a non-parameter estimator (Super Learner). Now, consider the partition node results $B$ found in $h(A)$ that minimize some objective loss function for $\Psi$, we can denote exposure to this combination of levels of exposures levels $b_i$ found in the mixture $A$ as $a_b(P_n) = 1$. That is, $a_b(P_n) = 1$ are observations that have exposure levels found in the nodes for $\Psi$. 
+
+We then use these exposure groups identified through $\Psi$ as our _data-adaptive target parameter_: 
+
+$$\Psi_{a_b(P_n) = 1, a_b(P_n) = 0} (P) = E_P[E_P(Y | A = a_b(P_n) = 1, W) - E_P(Y | A = a_b(P_n) = 0, W)]$$
+In words, this is the mean difference in the counterfactual outcomes if all individuals were exposed to $a_b(P_n)$ compared to if all individuals were unexposed. Again, $a_b(P_n)$ is a rule consisting of a set of thresholds which defines exposure and is found data-adaptively using a pre-specified model applied to the parameter-generating sample of the full data.
+
+For which the substitution estimator is: 
+
+$$ \frac{1}{n} \sum_{i = 1} \{Q_n(a_b(P_n) = 1, W_i) -  Q_n(a_b(P_n) = 0, W_i)\} $$
+Here, $Q_n$ is a non-parametric esitmator. 
+
+If we were to use the full data to both identify partitions $b$ in the mixture space and fit out substitution estimator, this dual use of the data will result in over-fitting bias; consider if our data-generating distribution where: 
+
+$$E_W\{E(Y | A = a_b(Pn) = 1, W) - E(Y | A = a_b(Pn) = 0, W)\} = 0 $$
+
+Our substitution estimator would be positively biased. If we were to do sample splitting such that a training sample is used to defined to define $a_b(Pn)$ and a separate estimation sample is used to estimate $E_W\{E(Y| A= a_b(P_n) = 1, W) - E(Y| A= a_b(P_n) = 0, W) \}$. In this way, deriving valid statistical inference is possible. However, by using such sample splitting methods, our power is reduced given the smaller number of observations used in the estimation sample. 
+
+## Data Adaptive Target Parameter
+
+V-fold cross-validation involves: (i) ${1,..., n}$, observations, is divided into $V$ equal size subgroups, (ii) for each $v$, an estimation-sample, notationally $P_{n,v}$ , is defined by the v-th subgroup of size $n/V$, while the parameter-generating sample, $P_{n,v^c}$, is its complement. More concretely, for split $v$ the empirical distribution, $P_{n,v^c}$, is used to define the exposure $A$ given some $\textit{a priori}$ algorithm which creates a summary measure of the mixture, the observations not in $P_{n,v^c}$, namely the empirical distribution for $P_{n,v}$ then is used to generate the parameter of interest. 
+
+The choice of target parameter mapping and corresponding estimator mapping is informed by $P_{n,v^c}$ but not $P_{n,v}$, the sample spit data-adaptive statistical target parameter $\Psi_n : \mathcal{M} \rightarrow R$ is: 
+
+$$ \Psi_n(P) = Ave\{ \Psi_{P_{n,v^c}}(P)\} \equiv \frac{1}{V} \sum_{v=1}^V \Psi_{P_{n,v^c}}(P)$$
+
+As can be seen, this target parameter mapping depends on the data, the corresponding estimator can be written as: 
+
+$$ \psi_n = \hat{\Psi}(P_n) = Ave\{ \hat{\Psi}_{P_{n,v^c}}(P_{n,v})\} = \frac{1}{V} \sum_{v=1}^V \Psi_{P_{n,v^c}}(P_{n,v})$$
+In words, this is the average treatment effect estimated in our estimation sample $P_{n,v}$, based on decision rules and estimators derived in the parameter generating sample $P_{n,v^c}$.
+
+Our substitution estimator is thus: 
+
+$$\hat{\Psi}_{P_{n,v^c}}(P_{n,v}) = \frac{1}{n_v}\sum_{i:Z_i=v} \{Q_{n,v^c}(a_b(P_{n,v^c}) = 1, W_i) - Q_{n,v^c}(a_b(P_{n,v^c}) = 0, W_i) \}$$
+
+where $Q_{n,v^c} = \hat{Q}(P_{n,v^c})$. This is the difference in averages of predicted values (based on a fit of $Q$ in the parameter generating sample or $Q_{n,v^c}$) across the observation in the estimation sample across covariates $W_i$ and the binary variable $A$ determined in the training sample $a_b(P_{n,v^c})$. 
+
+Overall, in the CV procedure, in each fold we use the parameter-generating sample to identify some set of nodes $b$ in our $h(A)$ function. This decision tree is applied to the training data and the estimator $Q_{n,v^c}$ is created given the rule found in this fold and covariates for observations in this training fold. $Q_{n,v^c}$ is thus the outcome model, or $Y|A,W$. The decision tree rule is then applied to the estimation sample data to create $A$ for the estimation sample. Now given an identified exposure for the estimation sample, we get the difference of averages of the predicted values by predicting the estimation sample data through our $Q_{n,v^c}$ which was trained on the parameter-generating sample. 
+
+## TMLE for Data-Adaptive Parameters
+
+In `CVtreeMLE`, the $Q$ is estimated as a very large semi-parametric model by using Super Learner. In doing so, our bias is reduced relative to estimation according to a misspecified parametric model. However, this substitution estimator is still overly biased and not asymptotically linear which makes robust statistical inference based on this estimator problematic. That is, our bias-variance trade-off is not optimized for our parameter of interest, which is the average treatment effect given our counterfactual of interest, at this initial stage, our estimator's bias/variance trade-off is optimized for the entire density of $Y$. 
+
+However, a targeted maximum likelihood estimator based on this initial estimator reduces bias and under weak assumptions has an asymptotically normal sampling distribution. 
+
+The efficient influence curve for $\Psi_{a_b(P_n) = 1, a_b(P_n) = 0} (P) = E_P[E_P(Y | A = a_b(P_n) = 1, W) - E_P(Y | A = a_b(P_n) = 0, W)]$ is given by: 
+
+$$D^*_{P_{n,v^c}}(O) = \{ \frac{I(A = a_b(P_{n,v^c}) = 1)}{g_0(a_b(P_{n,v^c}) = 1 | W)} - \frac{I(A = a_b(P_{n,v^c}) = 0)}{g_0(a_b(P_{n,v^c}) = 0 | W)}\}(Y - Q_0(A,W)) + Q_0(a_b(P_{n,v^c}) = 1,W) - Q_0(a_b(P_{n,v^c}) = 0,W) - \Psi_{a_b(P_n) = 1, a_b(P_n) = 0}(P_0) $$
+
+This suggests the following least favorable submodel: 
+
+$$Logit Q_{n,v,\epsilon}(A,W) = Logit Q_{n,v}(A,W) + \epsilon H_{P_n,v^c}(A,W;g)$$
+
+Where: 
+
+$$H_{P_{n,v^c}}(A,W;g) = \frac{I(A = a_b(P_{n,v^c}) = 1)}{g_0(a_b(P_{n,v^c}) = 1 | W)} - \frac{I(A = a_b(P_{n,v^c}) = 0)}{g_0(a_b(P_{n,v^c}) = 0 | W)}$$
+
+and $g(a|W) \equiv P(A=a|W)$. By estimating $g$ on the parameter-generating sample, we obtain this clever covariate, $H_{P_{n,v^c}}(A,W;g_{n,v^c})$. That is, in the same fashion as our $Q$ estimator, we train a $g$ estimator to estimate the probability of exposure given covariates using the parameter-generating sample $P_{n,v^c}$ - then using this estimator we predict the probabilities of being exposed using data in the estimation sample $P_{n,v}$. The resulting TMLE estimator for $\Psi_{P_{n,v^c}}(P_0)$ is: 
+
+$$\hat{\Psi}^{TMLE}_{P_n,v^c}(P_{n,v}) = \frac{1}{n_v}\sum_{i:Z_i=v} \{Q_{n,v^c, \epsilon}(a_b(P_{n,v^c}) = 1, W_i) - Q_{n,v^c, \epsilon}(a_b(P_{n,v^c}) = 0, W_i) \} $$
+
+That is, in each of our $v$ folds, indicating our estimation sample, calculate the TMLE updated expected difference in counterfactual means if all individuals in the estimation sample were exposed to the mixture rule compared to if no individuals were exposed. Here, the mixture rule is determined in the parameter-generating sample, as are the initial estimators for $Q$ and $g$ - using these estimators, a clever covariate and least favorable submodel is created to fluctuate the initial predictions in the estimation sample to create asymptotically unbiased estimates of our target parameter. 
+
+The estimated influence curve at each observation $O_i$ in the estimation sample $P_{n,v}$ is given by: 
+
+$$D^*_{n,v,P_{n,v^c}}(O) = \{ \frac{I(A = a_b(P_{n,v^c}) = 1)}{g_{n,v^c}(a_b(P_{n,v^c}) = 1 | W)} - \frac{I(A = a_b(P_{n,v^c}) = 0)}{g_{n,v^c}(a_b(P_{n,v^c}) = 0 | W)}\}(Y - Q_{n,v^c,\epsilon_{n,v}}(A,W)) + [ Q_{n,v^c,\epsilon_{n,v}}(a_b(P_{n,v^c}) = 1,W) - Q_0(a_b(P_{n,v^c}) = 0,W) ] - \hat{\Psi}^{TMLE}_{P_{n,v^c}}(P_{n,v}) $$
+
+The estimated influence curve values estimated in the above equation provide us with an estimate of the standard error of the TMLE parameter: 
+
+$$se(\hat{\Psi}_{P_n,v^c}^{TMLE}) = \sqrt{\frac{\hat{var}(D^*_{n,v,P_{n,v^c}}(O))}{n/V}}$$
+
+We combine our v-specific TMLEs across the estimation samples by taking a simple average of our parameter across the folds: 
+
+$$\hat{\Psi}(P_n) = \frac{1}{V} \sum_{v=1}^V \hat{\Psi}^{TMLE}_{P_n,v^c}(P_{n,v})$$
+
+Similarly, the asymptotic variance of this estimator can also simply be averaged across the folds: 
+
+$$\sigma^2_n = \frac{1}{V}\sum_{v=1}^V P_{n,v}(D^*_{n,v,P_{n,v^c}})^2$$ 
+And likewise, we calculate the standard error for our target parameter in the usual way: 
+
+$$se(\hat{\Psi}(P_n)) = \sigma_n / \sqrt{n}$$ 
+With corresponding 0.95-confidence intervals as $\psi_n \pm 1.96 \sigma_n / \sqrt{n}$
 
 
+## Conditions for asymptotic linearity for TMLE
 
-## Target Parameter
+Let $\Psi(P_0)$ be the parameter of interest and $\Psi(P^*_n)$ be the TMLE estimator.  We can write the linearization of the TMLE estimator as:
 
-Our target parameter of interest is the average treatment effect, or the counterfactual mean difference if all individuals were exposed to rules in a decision tree compared to if no individuals were exposed to that tree. Our target parameter can be written as a g-computation estimand: 
+$$\Psi(P^*_n) - \Psi(P_0) = (P^*_n - P_0)D(P^*_n) + R(n)$$ 
+In words,  the estimator minus truth can be written as an empirical process multiplied by the efficient influence curve (EIC) plus some second order remainder. The difference between the estimator and true value can be treated as an i.i.d sum of influence curves, the i.i.d sum will be normally distributed with variance equal to variance of the IC over sample size. 
+        
+Applying empirical process theory shows that asymptotic linearity requires that $D(P^*_n)$ falls in a $P_0$-Donsker class with probability tending to 1. Without going into details, this requires that the estimators $Q_n$ and $g_n$ for $Q_0(A,W) \equiv E(Y | A = a, W)$ and $g_0(W) \equiv P_0(A = 1, W)$ are not too adaptive. If these estimators are too adaptive you get dependence in the IC within a study - CLT breaks down, and therefore we would need to be careful about what learners are in SL to ensure the learners are not too data-adaptive.
 
-$$\psi(P_{0})\,=\,\sum_{w}\,\left[\sum_{y}\,P(Y=y\mid A=1,W=w)-\,\sum_{y}\,P(Y = y\mid A=0,W=w)\right]P(W=w)$$  
-
-which allows us to obtain an unconfounded marginal estimation of the ATE under causal untestable assumptions. These assumptions are conditional mean independence, positivity and consistency or stable unit treatment value assignment. (SUTVA) [@robins1986], [@robins2000]. Therefore, in order for our statistical estimand to be equal to a our causal quantity of interest, these assumption must be met.
-
-Importantly, the ATE can be estimated **non-parametrically** using the g-formula which allows us to utlize machine learning. The correct model specification is crucial to obtain unbiased estimates of the true ATE [@rubin2011]. Alternatively, inverse probability of treatment weighting (IPTW) methods, introduced by Rosenbaum and Rubin [@rosenbaum1983], are also commonly used for estimation of the ATE. The propensity score is a balancing score that can be used to create statistically equivalent exposure groups to estimate the ATE via matching, weighting, or stratification [@rosenbaum1983]. However, very low or very high propensity scores can lead to very large weights, resulting in unstable ATE estimates with high variance and values outside the constraints of the statistical model [@lunceford2004].  
-
-Furthermore, when analyzing observational data with a large number of variables and potentially complex relationships among them, model misspecification during estimation is of particular concern. Hence, the correct model specification in parametric modelling is crucial to obtain unbiased estimates of the true ATE [@van2011]. 
-
-However, Mark van der Laan and Rubin [@van2006] introduced in 2006 a **double-robust** estimation procedure to **reduce bias** against misspecification. The targeted maximum likelihood estimation (**TMLE**) is a semiparametric, efficient substitution estimator [@van2011]. 
-
-`CVtreeMLE` data-adaptively identifies the **binary exposure** using decision trees within a training fold of the data and estimates the TMLE updated ATE in the validation fold of the data. 
-
-## TMLE
-
-**TMLE** allows for data-adaptive estimation while obtaining valid statistical inference based on the targeted minimum loss-based estimation and machine learning algorithms to minimise the risk of model misspecification [@van2011]. The main characteristics of **TMLE** are:      
-
-1. **TMLE** is a general algorithm for the construction of double-robust, semiparametric, efficient substitution estimators. **TMLE** allows for data-adaptive estimation while obtaining valid statistical inference. 
-
-2. **TMLE** implementation uses the g-computation estimand. Briefly, the **TMLE** algorithm uses information in the estimated exposure mechanism (P(A|W) denoted $g$ mechanism) to update the initial estimator of the conditional expectation of the outcome ($Q$ mechanism) given the treatment and the set of covariates W, E$_{0}$(Y|A,W). 
-
-3. The targeted estimates are then substituted into the parameter mapping $\Psi$. The updating step achieves a targeted bias reduction for the parameter of interest $\Psi(P_{0})$ (the true target parameter) and serves to solve the efficient score equation, namely the Influence Curve (IC). As a result, **TMLE** is a **double-robust** estimator. 
-
-4. **TMLE** it will be consistent for $\Psi(P_{0})$ if either the conditional expectation E$_{0}$(Y|A,W) or the exposure mechanism P$_{0}$(A|W) are estimated consistently.   
-
-5. **TMLE** will be efficient if the previous two functions are consistently estimated achieving the lowest asymptotic variance among a large class of estimators. These asymptotic properties typically translate into **lower bias and variance** in finite samples [@buh2016]. 
-
-6. The general formula to estimate the ATE using the TMLE method:  
-
-$$\psi TMLE,n = \Psi(Q_{n}^{*})= {\frac{1}{n}\sum_{i=1}^{n}\bar{Q}_{n}^{1}\left(1,\ W_{i}\right)-\bar{Q}_{n}^{1}\left(0,\ W_{i}\right)}.  (1)$$
-7. The efficient influcence curve (IC) based on the Functional Delta Method and Empirical Process Theory [@fisher2018] is applied for statistical inference using TMLE:  
-
-$$IC_{n}(O_{i})=\left(\frac{I\left(A_{i}=1\right)}{g_n\left(1\left|W_{i}\right)\right)}\ -\ \frac{I\left(A_{i}=0\right)}{g_n\left(0\left|W_{i}\right)\right)}\ \right)\left[Y_{i}-\bar{Q}_{n}^{1}\left(A_{i},W_{i}\right)\right]+\bar{Q}_{n}^{1}\left(1,\ W_{i}\right)-\bar{Q}_{n}^{1}\left(0,\ W_{i}\right) - \psi TMLE,n. (2)$$  
-where the variance of the ATE:  
-
-$$\sigma({\psi_{0}})=\sqrt{\frac{Var(IC_{n})}{n}}.  (3)$$
-# TMLE using the Super Learner 
-
-`CVtreeMLE` uses Super Learner from the legacy `Super Learner` package and `sl3` package. Super Learner uses V-fold cross-validation and ensembled learning (prediction using all the predictions of multiple stacked learning algorithms) techniques to improve model prediction performance [@breiman1996].  The primary goal using Super Learner is to obtain less biased estimates for $\bar Q_{n}^{0}(A,W)$ and $g_{0}(A,W)$. This is achieved obtaining the smallest expected loss function for Y and A. For instance, the negative logarithmic loss function for Y is computed as the minimizer of the expected squared error loss:   
-$$\bar Q_{0}\,=\, \text{arg min}_{\bar Q}E_{0}L(O, \bar Q),$$   
-where $L(O, \bar Q)$ is:
-$$ (Y \,-\, \bar Q(A, W))^{2}$$
+In the standard TMLE case then, TMLE suffers when the initial estimator is too adaptive - this leaves very little signal in the data to fit the residual bias with respect to the initial estimator in the targeting step. In order to rely on the central limit theorem for statistical inference, empirical process conditions put bounds on how adaptive the initial estimator can be. However, we would like to have a method that does not have these limitation - so we can have a true statistical machine - that is we don't have to worry about what goes in the Super Learner library.
 
 
+## CV-TMLE
 
+*CV-TMLE* allows for more flexible estimators without worry of over-fitting. It has been formally established (citation) that CV-TMLE asymptotics, under stated conditions, avoid previous empirical process conditions necessary for TMLE.  Implications of this theorem better allow super learning for construction of semiparametric efficient estimators of target parameters. As stated above `CVtreeMLE` implements *CV-TMLE* by partitioning the data such that estimators for $Q$ and $g$ are trained in the parameter-generating portion of the data and the TMLE update of the target parameter is done on the estimation samples. In this way, our estimators are more independent: just like an average of i.i.d random variables, which doesn't require entropy conditions any more. Thus suggests that one can establish a CLT for this cross-validated empirical process term without having to enforce restricting entropy conditions (that thereby limit the adaptiveness of the initial estimators.). More simply, by partitioning the data we can avoid over-fitting and ensure there is enough bias in our initial estimates such that targeting towards our parameter of interest is possible. As such, when using `CVtreeMLE` the analyst does not need to be concerned about highly adaptive estimators being included in the Super Learner library.  
 
+## Conclusion
 
+In sum, `CVtreeMLE` is a statistical approach, built on asympototic theory for semi-parametric estimators, that allows for robust target parameters to be derived from decision tree results. The goal is to provide interpretable and reliable results for analysts who are interested in statistical estimation of mixed exposures. Below we now show examples of how to use `CVtreeMLE` with more detailed interpretations of results. 
 
 To start, let's load the packages we'll need and set a seed for simulation:
-
+  
 ```{r setup}
 library(data.table)
-library(sl3)
+library(devtools)
 library(CVtreeMLE)
+devtools::load_all('~/sl3')
+library(kableExtra)
+library(qgcomp)
+library(dplyr)
 
 set.seed(11249)
+```
+
+
+## Simulate Data
+
+Let's start by simulating data in a similar way as we did in the `README.md` tutorial: 
+
+```{r simulation inputs}
+n_obs <- 500 # number of observations we want to simulate
+splits <- c(0.8, 2.5, 3.6) # split points for each mixture
+mins <- c(0, 0, 0) # minimum values for each mixture
+maxs <- c(3, 4, 5) # maximum value for each mixture
+mu <- c(0, 0, 0) # mu for each mixture
+sigma <- matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3) # variance/covariance of mixture variables
+w1_betas <- c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04) # subspace probability relationship with covariate W1
+w2_betas <- c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04) # subspace probability relationship with covariate W2
+mix_subspace_betas <- c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09) # probability of mixture subspace (for multinomial outcome generation)
+subspace_assoc_strength_betas <- c(0, 3, 0, 0, 0, 0, 0, 0) # mixture subspace impact on outcome Y, here the subspace where M1 is lower and M2 and M3 are higher based on values in splits
+marginal_impact_betas <- c(0, 0, 0) # marginal impact of mixture component on Y
+eps_sd <- 0.01 # random error
+binary <- FALSE # if outcome is binary
+```
+
+As discussed, the `subspace_assoc_strength_betas` parameter is used to indicate the subspace we want to use and the expected outcome in that subspace.
+
+The indices correspond to an area in the cube:
+
+1.  All mixtures lower than specified thresholds
+2.  M1 is higher but M2 and M3 are lower
+3.  M2 is higher but M1 and M3 are lower
+4.  M1 and M2 are higher and M3 is lower
+5.  M3 is higher and M1 and M2 are lower
+6.  M1 and M3 are higher and M2 is lower
+7.  M2 and M3 are higher and M1 is lower
+8.  All mixtures are higher than thresholds
+
+Therefore, we are simulating here an outcome of 1.2 when this rule is met $M_1 > 0.8$ & $M_2 < 2.5$ & $M_3 < 3.6$. The outcome is 0 in all other spaces around the mixture cube.   
+
+Let's create this data:
+  
+```{r simulate data, warning=FALSE}
+sim_data <- simulate_mixture_cube(
+  n_obs = n_obs, 
+  splits = splits,
+  mins = mins,
+  maxs = maxs,
+  mu = mu,
+  sigma = sigma,
+  w1_betas = w1_betas,
+  w2_betas = w2_betas,
+  mix_subspace_betas = mix_subspace_betas,
+  subspace_assoc_strength_betas = subspace_assoc_strength_betas,
+  marginal_impact_betas = marginal_impact_betas,
+  eps_sd = eps_sd,
+  binary = binary
+)
+
+head(sim_data) %>%
+  kableExtra::kbl(caption = "Simulated Data") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+```
+
+## Set up Estimators used in Super Learners 
+
+Here, we set up our Super Learner using `SL3` for the iterative backfitting procedure and the outcome mechanism $Q$. These learners will fit $Y|W$ offset by $Y|A$ as we fit decision trees to the exposure variables both jointly and individially. This Super Learner will also fit $Y|A,W$ once rules are established for the $Q$ nuisance parameter needed for our target parameter of interest. 
+
+```{r setup first stack learners}
+lrnr_glm <- Lrnr_glm$new()
+lrnr_bayesglm <- Lrnr_bayesglm$new()
+lrnr_gam <- Lrnr_gam$new()
+lrnr_ranger <- Lrnr_ranger$new()
+
+# put all the learners together (this is just one way to do it)
+learners <- c(lrnr_glm, lrnr_bayesglm, lrnr_gam, lrnr_ranger)
+
+Q1_stack <- make_learner(Stack, learners)
+```
+
+## Build the decision tree Super Learner
+
+Here we will now build our Super Learner made from decision trees from the `Lrnr_glmtree` learner in `sl3`:
+
+```{r setup tree stack learners}
+lrnr_glmtree_001 <- Lrnr_glmtree$new(alpha = 0.5, maxdepth = 3)
+lrnr_glmtree_002 <- Lrnr_glmtree$new(alpha = 0.6,  maxdepth = 4)
+lrnr_glmtree_003 <- Lrnr_glmtree$new(alpha = 0.7, maxdepth = 2)
+lrnr_glmtree_004 <- Lrnr_glmtree$new(alpha = 0.8, maxdepth = 1)
+
+learners <- c( lrnr_glmtree_001, lrnr_glmtree_002, lrnr_glmtree_003, lrnr_glmtree_004)
+discrete_sl_metalrn <- Lrnr_cv_selector$new()
+
+tree_stack <- make_learner(Stack, learners)
+
+discrete_tree_sl <- Lrnr_sl$new(
+  learners = tree_stack,
+  metalearner = discrete_sl_metalrn
+)
+
+```
+
+
+## Run `CVtreeMLE`
+
+We will now pass the simulated data, learners, and variable names for each node in $O = W,A,Y$ to the `CVtreeMLE` function. **NOTE** in this vignette we are only using 2-fold CV for quick computation times in construction of the vignette. In reality, the user should use at least 10-fold CV.
+
+
+```{r run simulation}
+ptm <- proc.time()
+
+sim_results <- CVtreeMLE(data = sim_data,
+                         W = c("W", "W2"),
+                         Y = "y",
+                         A = c(paste("M", seq(3), sep = "")),
+                         back_iter_SL = Q1_stack,
+                         tree_SL = discrete_tree_sl, 
+                         n_folds = 2,
+                         family = "gaussian",
+                         H.AW_trunc_lvl = 10,
+                         parallel = TRUE,
+                         num_cores = 2,
+                         max_iter = 5,
+                         verbose = TRUE)
+proc.time() - ptm
+```
+
+
+
+Let's first look at the RMSE for the iterative back-fitting models. Because our rules are determined in these models, from which our target parameter is derived it's important that our models fit well.  Given our simulated data, we would expect the mixture model to have the lowest RMSE.
+
+```{r model RMSE}
+RMSE_results <- sim_results$`Model RMSEs`
+RMSE_results %>%
+kableExtra::kbl(caption = "Model Fit Results") %>%
+kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+```
+
+The our mixture decision tree model has the lowest RMSE.
+
+A popular method in mixtures currently is the quantile-sum g-computation method (keil citation). Let's compare our model fit for this simulated data to that of quantile-sum g-computation.
+
+```{r additive quantile g-comp}
+ qgcomp_additive_model <- qgcomp(y~M1+M2+M3+W+W2, expnms=c("M1", "M2", "M3"), data=sim_data)
+ sqrt(mean((predict(qgcomp_additive_model$fit) - sim_data$y)^2))
+```
+ 
+ 
+```{r multi quantile g-comp}
+qgcomp_multi_model <- qgcomp(y~M1*M2*M3+W+W2, expnms=c("M1", "M2", "M3"), data=sim_data)
+sqrt(mean((predict(qgcomp_multi_model$fit) - sim_data$y)^2))
+```
+
+As we can see, our results return a much smaller RMSE, which means our models fit this simulated data better. 
+
+We can look at the pooled TMLE results for this model: 
+
+```{r mixture results}
+pooled_mixture_results <- sim_results$`Pooled TMLE Mixture Results`
+pooled_mixture_results %>%
+  kableExtra::kbl(caption = "Pooled TMLE Mixture Results") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+```
+*Note - results in explanations below may change slightly based on runs: 
+
+Above, the mixture ATE for this rule is 2.92 (2.73 - 3.10), which covers our true ATE used to generate the data which was 3. The mixture ATE is interpreted as: the average counterfactual mean outcome if all individuals were exposed to the rule shown in `Mixture Interaction Rules` compared to if all individuals were unexposed is 2.92. That is, those individuals who are exposed to this rule have an outcome that is 2.92 higher compared to those that are not exposed to this rule. The standard error, confidence intervals and p-values are derived from the influence curve of this estimator as described above. 
+
+
+```{r fold specific results}
+mixture_v_results <- sim_results$`V-Specific Mix Results`
+mixture_v_results$M1M2M3 %>%
+  kableExtra::kbl(caption = "V-Fold Mixture Results") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+```
+
+We can plot our v-fold mixture results findings using the `plot_mixture_results` function. This will return a list of plots with names corresponding to the interactions found.
+
+```{r plot sim_mixture_results, fig.height = 3, fig.width = 8}
+mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific Mix Results`)
+mixture_plots$M1M2M3
+```
+
+This plot shows the ATE specific for each fold and for the weighted-mean results over the fold with corresponding pooled variance. The rule is the pooled rule which includes all observations that were indicated by the fold specific rules. 
+
+```{r marginal results}
+pooled_marginal_results <- sim_results$`Pooled TMLE Marginal Results`
+pooled_marginal_results %>%
+  kableExtra::kbl(caption = "Pooled Marginal Results") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+```
+
+This plot shows the data-adaptively identified quantile comparisons for each variable. Here `M1_2 - M1_1` shows the second quantile for variable $M1$ minus the first quantile for $M1$. As expected, this difference is positive and the other two are negative given how we simulated our data. 
+
+Similarly we can investigate and plot the v-fold specific estimates: 
+
+```{r plot sim marginal results, fig.height = 3, fig.width = 8}
+marginal_plots <- plot_marginal_results(v_marginal_results =  sim_results$`V-Specific Marg Results`, mix_comps = c(paste("M", seq(3), sep = "")))
+marginal_plots$M1
+```
+Same as the mixtures plot, the marginal plot shows the ATE for an individual variable in the mixture with corresponding ATE and variance estimates. The top rule is the pooled rule for the reference category, the rule(s) in the boxes are the pooled rules for each quantile that was found for the variable of interest. 
+
+## NIEHS Mixture Workshop Data
+
+The `CVtreeMLE` package comes with 2 datasets from the 2015-NIEHS-Mixtures-Workshop simulation data (https://github.com/niehs-prime/2015-NIEHS-MIxtures-Workshop). Let's load this data and run `CVtreeMLE` to see if we identify 1. any interactions in the variables and 2. the correct marginal relationships and directions of the mixture variables. 
+
+```{r metals example}
+data("NIEHS_data_1", package="CVtreeMLE")
+```
+
+```{r run NIEHS}
+ptm <- proc.time()
+NIEHS_data_1 <- as.data.frame(NIEHS_data_1)
+NIEH_1_results <- CVtreeMLE(data = NIEHS_data_1,
+                            W = "Z",
+                            Y = "Y",
+                            A = c("X1", "X2", "X3", "X4", "X5", "X6", "X7"),
+                            back_iter_SL = Q1_stack,
+                            tree_SL = discrete_tree_sl, 
+                            n_folds = 2,
+                            family = "gaussian",
+                            H.AW_trunc_lvl = 10,
+                            parallel = TRUE,
+                            num_cores = 2,
+                            max_iter = 5,
+                            verbose = FALSE)
+proc.time() - ptm
+```
+
+Again, let's look at our model fits first: 
+
+```{r NIEHS RMSE}
+NIEH_1_RMSE <- NIEH_1_results$`Model RMSEs`
+NIEH_1_RMSE %>%
+  kableExtra::kbl(caption = "NIEH Data 1 Model Fit Results") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+```
+
+And again we can compare our fits to an existing available method for mixtures: 
+
+```{r quant_sum NIEHS}
+NIEHS_data_1_model <- qgcomp(Y~., expnms=c("X1", "X2", "X3", "X4", "X5", "X6", "X7"), data=NIEHS_data_1)
+sqrt(mean((predict(NIEHS_data_1_model$fit) - NIEHS_data_1$Y)^2))
+```
+
+Let's look at the pooled TMLE results for interactions found in this NIEH dataset: 
+
+```{r NIEH mixture results}
+NIEH_1_intxn_results <- NIEH_1_results$`Pooled TMLE Mixture Results`
+NIEH_1_intxn_results %>%
+  kableExtra::kbl(caption = "NIEH Mixture Results") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+```
+
+
+We can look at the v-fold specific estimates for an interaction found between variables $X_1$ and $X_5$
+
+```{r NIEH v-fold mixture results}
+NIEH_v_intxn_results <- NIEH_1_results$`V-Specific Mix Results`
+NIEH_v_intxn_results[[1]] %>%
+  kableExtra::kbl(caption = "v-fold NIEH Mixture Results") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+```
+
+We see the fits of the models used to derive our exposure variables are much lower. 
+
+```{r plot marginal results}
+marginal_plots <- plot_marginal_results(v_marginal_results = NIEH_1_results$`V-Specific Marg Results`, mix_comps =  c("X1", "X2", "X3", "X4", "X5", "X6", "X7"))
+names(marginal_plots)
+
+```
+
+This list shows what mixture variable marginal results were found for.
+  
+```{r NIEH marginal plot example, fig.height = 3, fig.width = 8}
+marginal_plots$X1
+```
+
+```{r plot interaction results, fig.height = 3, fig.width = 8}
+mixture_plots <- plot_mixture_results(v_intxn_results = NIEH_1_results$`V-Specific Mix Results`)
+mixture_plots$X2X5
 ```
 

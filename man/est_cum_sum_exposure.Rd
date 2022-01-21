@@ -4,7 +4,7 @@
 \alias{est_cum_sum_exposure}
 \title{Calculate the cumulative sum exposure based on marginals found in the fold}
 \usage{
-est_cum_sum_exposure(At_c, Av_c, W, SL.library, H.AW_trunc_lvl)
+est_cum_sum_exposure(At_c, Av_c, W, Q1_stack, no_marg_rules, H.AW_trunc_lvl)
 }
 \arguments{
 \item{At_c}{Training data}
@@ -13,7 +13,9 @@ est_cum_sum_exposure(At_c, Av_c, W, SL.library, H.AW_trunc_lvl)
 
 \item{W}{Vector of characters denoting covariates}
 
-\item{SL.library}{Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)}
+\item{Q1_stack}{Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)}
+
+\item{no_marg_rules}{TRUE/FALSE if no marginal rules were found across the folds}
 
 \item{H.AW_trunc_lvl}{Truncation level of the clever covariate (induces more bias to reduce variance)}
 }
