@@ -18,8 +18,10 @@
 
 compute_meta_mix_results <- function(v_fold_mixture_results, mix_comps, n_folds, data) {
 
-  v_fold_mixture_group <- v_fold_mixture_results %>% dplyr::group_by(Variables)
-  v_fold_mixture_group <- dplyr::group_split(v_fold_mixture_group)
+
+  v_fold_mixture_group <- v_fold_mixture_group_split(v_fold_mixture_results)
+  # v_fold_mixture_group <- v_fold_mixture_results %>% dplyr::group_by(Variables)
+  # v_fold_mixture_group <- dplyr::group_split(v_fold_mixture_group)
 
   v_fold_mixture_w_pooled <- list()
   intxn_names_list <- list()

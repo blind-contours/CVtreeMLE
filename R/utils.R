@@ -126,7 +126,27 @@ marginal_group_split <- function(data) {
   return(data)
 }
 
+###################################################################
+#' @title v-fold marginal group split
+#' @param data Input data
 
+#' @importFrom rlang .data
+v_fold_marginal_qgroup_split <- function(data) {
+  data <- data %>% dplyr::group_by(.data$comparison)
+  data <- dplyr::group_split(data)
+  return(data)
+}
+
+###################################################################
+#' @title v-fold group split
+#' @param data Input data
+
+#' @importFrom rlang .data
+v_fold_mixture_group_split <- function(data) {
+  data <- data %>% dplyr::group_by(.data$Variables)
+  data <- dplyr::group_split(data)
+  return(data)
+}
 
 ###################################################################
 #' @title Get rules from partykit object in rule fitting

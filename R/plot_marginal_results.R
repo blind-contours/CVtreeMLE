@@ -7,7 +7,7 @@
 #'
 #' @export
 
-plot_marginal_results <- function(v_marginal_results, mix_comps = A) {
+plot_marginal_results <- function(v_marginal_results, mix_comps) {
   plot_list <- list()
 
   for (var in mix_comps) {

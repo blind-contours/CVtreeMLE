@@ -36,8 +36,10 @@ est_marg_nuisance_params <- function(At,
 
   marginal_data <- list()
 
-  marg_decisions_groups <- marg_decisions %>% dplyr::group_by(target_m)
-  marg_decisions_groups <- dplyr::group_split(marg_decisions_groups)
+  marg_decisions_groups <- marginal_group_split(marg_decisions)
+
+  # marg_decisions_groups <- marg_decisions %>% dplyr::group_by(target_m)
+  # marg_decisions_groups <- dplyr::group_split(marg_decisions_groups)
 
   if (no_marg_rules == FALSE) {
     for (i in seq(marg_decisions_groups)) {

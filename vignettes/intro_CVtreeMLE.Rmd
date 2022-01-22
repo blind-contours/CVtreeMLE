@@ -20,6 +20,7 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
+
 Consider we observe $n$ i.i.d. copies of a random variable with a probability distribution that is known to be an element of a particular statistical model $\mathcal{M}$. Our exposure $A$, is an unknown combination of exposure levels to many components of $A$. That is, unlike in many scenarios where $A$ is simply one binary/continuous treatment/exposure variable, $A$ is in fact a vector of exposures. We are interested in, given some *a priori* specified algorithm, 1. what mixture components of $A$ have explanatory power on the outcome $Y$ and 2. what levels of these exposures are most impactful. Both the most important variables and the most important levels of these mixture variables are unknown and therefore, the statistical target parameter given these variables/levels is also unknown. Thus, we need a methodology that both allows us to identify these variables/levels, and map these findings into a target parameter with valid statistical inference. 
 
 In order to define our statistical target we use cross-validation and partition the total sample into $V$ equal size sub-samples, and use this partitioning to define $V$ split estimation samples (one of the V subsamples) and corresponding complementary parameter-generating sample that is used to generate a target parameter. For each of the $V$ parameter-generating samples, we apply a decision tree algorithm that maps a set of continuous mixture variables into a rule which is applied to the estimation sample in order to derive the statistical target parameter of interest, the average treatment effect. That is, the `CVtreeMLE` package implements algorithms to first identify thresholds in the mixture space using decision trees in the parameter generating sample and (given a set of thresholds is identified which satisfy some loss function), does targeted minimum loss-based estimations (TMLE) of the counterfactual mean had all individuals been exposed to levels of exposures used in the rule $(Y | A = 1, W)$ compared to the counterfactual mean had all individuals not been exposed $(Y | A = 0, W)$. 
@@ -369,7 +370,7 @@ sim_results <- CVtreeMLE(data = sim_data,
                          A = c(paste("M", seq(3), sep = "")),
                          back_iter_SL = Q1_stack,
                          tree_SL = discrete_tree_sl, 
-                         n_folds = 2,
+                         n_folds = 3,
                          family = "gaussian",
                          H.AW_trunc_lvl = 10,
                          parallel = TRUE,
