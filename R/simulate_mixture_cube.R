@@ -55,14 +55,17 @@ simulate_mixture_cube <- function(n_obs,
                                   marginal_impact_betas,
                                   eps_sd,
                                   binary) {
-
-  transform <- function(x){(x-min(x))/(max(x)-min(x))}
-  barck_trans <- function(x, max, min){x*(max - min) + min}
+  transform <- function(x) {
+    (x - min(x)) / (max(x) - min(x))
+  }
+  barck_trans <- function(x, max, min) {
+    x * (max - min) + min
+  }
 
   ## create multivariate normal which we are going to generate our correlated uniform
   ## for each mixture block
 
-  rawvars <- mvrnorm(n=n_obs, mu=mu, Sigma=sigma)
+  rawvars <- mvrnorm(n = n_obs, mu = mu, Sigma = sigma)
   # CDF of these variables for mixture
   pvars <- stats::pnorm(rawvars)
 
@@ -77,18 +80,19 @@ simulate_mixture_cube <- function(n_obs,
 
   probs_list <- c()
 
-  for (i in seq(W)){
-
+  for (i in seq(W)) {
     w <- W[i]
     w2 <- W2[i]
 
-    denominator <- sum(exp(b0i[2] + (b1i[2]*w) + (b2i[2]*w2)),
-                       exp(b0i[3] + (b1i[3]*w) + (b2i[3]*w2)),
-                       exp(b0i[4] + (b1i[4]*w) + (b2i[4]*w2)),
-                       exp(b0i[5] + (b1i[5]*w) + (b2i[5]*w2)),
-                       exp(b0i[6] + (b1i[6]*w) + (b2i[6]*w2)),
-                       exp(b0i[7] + (b1i[7]*w) + (b2i[7]*w2)),
-                       exp(b0i[8] + (b1i[8]*w) + (b2i[8]*w2)))
+    denominator <- sum(
+      exp(b0i[2] + (b1i[2] * w) + (b2i[2] * w2)),
+      exp(b0i[3] + (b1i[3] * w) + (b2i[3] * w2)),
+      exp(b0i[4] + (b1i[4] * w) + (b2i[4] * w2)),
+      exp(b0i[5] + (b1i[5] * w) + (b2i[5] * w2)),
+      exp(b0i[6] + (b1i[6] * w) + (b2i[6] * w2)),
+      exp(b0i[7] + (b1i[7] * w) + (b2i[7] * w2)),
+      exp(b0i[8] + (b1i[8] * w) + (b2i[8] * w2))
+    )
 
     a0 <- exp(b0i[1] + (b1i[1] * w) + (b2i[1] * w2)) / (1 + denominator)
     a1 <- exp(b0i[2] + (b1i[2] * w) + (b2i[2] * w2)) / (1 + denominator)
@@ -97,12 +101,11 @@ simulate_mixture_cube <- function(n_obs,
     a4 <- exp(b0i[5] + (b1i[5] * w) + (b2i[5] * w2)) / (1 + denominator)
     a5 <- exp(b0i[6] + (b1i[6] * w) + (b2i[6] * w2)) / (1 + denominator)
     a6 <- exp(b0i[7] + (b1i[7] * w) + (b2i[7] * w2)) / (1 + denominator)
-    a7 <- 1 - sum(a0,a1,a2,a3,a4,a5,a6)
+    a7 <- 1 - sum(a0, a1, a2, a3, a4, a5, a6)
 
     probs_a <- c(a0, a1, a2, a3, a4, a5, a6, a7)
 
     probs_list[[i]] <- probs_a
-
   }
 
   probs_df <- as.data.frame(do.call(rbind, probs_list))
@@ -115,7 +118,7 @@ simulate_mixture_cube <- function(n_obs,
 
   res <- as.data.frame(res)
 
-  mixture_section_indicator <- expand.grid(c(0,1), c(0,1), c(0,1))
+  mixture_section_indicator <- expand.grid(c(0, 1), c(0, 1), c(0, 1))
   colnames(mixture_section_indicator) <- c("M1", "M2", "M3")
 
   Ms <- as.data.frame(matrix(data = NA, ncol = 3, nrow = n_obs))
@@ -123,7 +126,7 @@ simulate_mixture_cube <- function(n_obs,
 
   for (i in 1:nrow(mixture_section_indicator)) {
     ## iteration through the subspaces
-    mix_space <- mixture_section_indicator[i,]
+    mix_space <- mixture_section_indicator[i, ]
 
     ## 0 or 1 for for each mixture
     M1_01 <- mix_space[1]
@@ -134,7 +137,7 @@ simulate_mixture_cube <- function(n_obs,
     if (M1_01 == 0) {
       m1_min <- mins[1]
       m1_max <- splits[1]
-    } else{
+    } else {
       m1_min <- splits[1]
       m1_max <- maxs[1]
     }
@@ -143,7 +146,7 @@ simulate_mixture_cube <- function(n_obs,
     if (M2_01 == 0) {
       m2_min <- mins[2]
       m2_max <- splits[2]
-    } else{
+    } else {
       m2_min <- splits[2]
       m2_max <- maxs[2]
     }
@@ -152,53 +155,52 @@ simulate_mixture_cube <- function(n_obs,
     if (M3_01 == 0) {
       m3_min <- mins[3]
       m3_max <- splits[3]
-    } else{
+    } else {
       m3_min <- splits[3]
       m3_max <- maxs[3]
     }
 
     unifvars <- qunif(pvars, min = 0, max = 1)
 
-    M1_sec <- barck_trans(unifvars[,1], min = m1_min, max = m1_max)
-    M2_sec <- barck_trans(unifvars[,2], min = m2_min, max = m2_max)
-    M3_sec <- barck_trans(unifvars[,3], min = m3_min, max = m3_max)
+    M1_sec <- barck_trans(unifvars[, 1], min = m1_min, max = m1_max)
+    M2_sec <- barck_trans(unifvars[, 2], min = m2_min, max = m2_max)
+    M3_sec <- barck_trans(unifvars[, 3], min = m3_min, max = m3_max)
 
     subspace_data <- cbind(M1_sec, M2_sec, M3_sec)
 
-    Ms[res$rcat == paste("p", i, sep = ""),] <- subspace_data[res$rcat == paste("p", i, sep = ""),]
+    Ms[res$rcat == paste("p", i, sep = ""), ] <- subspace_data[res$rcat == paste("p", i, sep = ""), ]
   }
 
   ## here we create new data for the marginals -if marginals are used the mixture should not be used, this is done to test if tmle3mixrules currently identifies no rule
   unifvars <- qunif(pvars, min = 0, max = 1)
 
-  M1_marg <- barck_trans(unifvars[,1], min = mins[1], max =  maxs[1])
-  M2_marg <- barck_trans(unifvars[,2], min = mins[2], max =  maxs[2])
-  M3_marg <- barck_trans(unifvars[,3], min = mins[3], max =  maxs[3])
+  M1_marg <- barck_trans(unifvars[, 1], min = mins[1], max = maxs[1])
+  M2_marg <- barck_trans(unifvars[, 2], min = mins[2], max = maxs[2])
+  M3_marg <- barck_trans(unifvars[, 3], min = mins[3], max = maxs[3])
 
-  m1_marg <- ifelse(M1_marg > splits[1], 1,0)
-  m2_marg <- ifelse(M2_marg > splits[2], 1,0)
-  m3_marg <- ifelse(M3_marg > splits[3], 1,0)
+  m1_marg <- ifelse(M1_marg > splits[1], 1, 0)
+  m2_marg <- ifelse(M2_marg > splits[2], 1, 0)
+  m3_marg <- ifelse(M3_marg > splits[3], 1, 0)
 
-  if(binary == TRUE) {
+  if (binary == TRUE) {
     y <-
       stats::plogis(subspace_assoc_strength_betas[1] +
-                      subspace_assoc_strength_betas[2] * as.numeric(res$rcat == "p2") +
-                      subspace_assoc_strength_betas[3] * as.numeric(res$rcat == "p3") +
-                      subspace_assoc_strength_betas[4] * as.numeric(res$rcat == "p4") +
-                      subspace_assoc_strength_betas[5] * as.numeric(res$rcat == "p5") +
-                      subspace_assoc_strength_betas[6] * as.numeric(res$rcat == "p6") +
-                      subspace_assoc_strength_betas[7] * as.numeric(res$rcat == "p7") +
-                      subspace_assoc_strength_betas[8] * as.numeric(res$rcat == "p8") +
-                      marginal_impact_betas[1] * m1_marg +
-                      marginal_impact_betas[2] * m2_marg +
-                      marginal_impact_betas[3] * m2_marg +
-                      W +
-                      W2 +
-                      rnorm(length(res$rcat), mean = 0, sd = eps_sd))
+        subspace_assoc_strength_betas[2] * as.numeric(res$rcat == "p2") +
+        subspace_assoc_strength_betas[3] * as.numeric(res$rcat == "p3") +
+        subspace_assoc_strength_betas[4] * as.numeric(res$rcat == "p4") +
+        subspace_assoc_strength_betas[5] * as.numeric(res$rcat == "p5") +
+        subspace_assoc_strength_betas[6] * as.numeric(res$rcat == "p6") +
+        subspace_assoc_strength_betas[7] * as.numeric(res$rcat == "p7") +
+        subspace_assoc_strength_betas[8] * as.numeric(res$rcat == "p8") +
+        marginal_impact_betas[1] * m1_marg +
+        marginal_impact_betas[2] * m2_marg +
+        marginal_impact_betas[3] * m2_marg +
+        W +
+        W2 +
+        rnorm(length(res$rcat), mean = 0, sd = eps_sd))
 
-    y <- ifelse(y > 0.50, 1,0)
-
-  } else{
+    y <- ifelse(y > 0.50, 1, 0)
+  } else {
     y <-
       ## section for mixture subspaces
       subspace_assoc_strength_betas[1] +
@@ -215,7 +217,6 @@ simulate_mixture_cube <- function(n_obs,
       W +
       W2 +
       rnorm(length(res$rcat), mean = 0, sd = eps_sd)
-
   }
 
   obs <- as.data.frame(cbind(W, W2, Ms, y))

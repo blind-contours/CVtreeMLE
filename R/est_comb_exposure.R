@@ -32,7 +32,7 @@ est_comb_exposure <- function(At, Av, Y = "y_scaled", W, marg_rule_train, marg_r
     #   marg_rule_train[, colSums(is.na(marg_rule_train)) < nrow(marg_rule_train)]
 
     At_marg_comb <-
-      cbind(marg_rule_train, At_mc[W], At_mc["y_scaled"] )
+      cbind(marg_rule_train, At_mc[W], At_mc["y_scaled"])
 
     # At_marg_comb <- At_marg_comb[, colSums(is.na(At_marg_comb)) < nrow(At_marg_comb)]
 
@@ -70,10 +70,9 @@ est_comb_exposure <- function(At, Av, Y = "y_scaled", W, marg_rule_train, marg_r
     Av_marg_comb$QbarAW_combo <- QbarAW
     Av_marg_comb$y_scaled <- Av_mc$y_scaled
     Av_marg_comb$raw_outcome <- Av[, Y]
-  }else{
+  } else {
     Av_marg_comb <- NA
     QbarAWSL_m <- NA
-
   }
 
   return(list("data" = Av_marg_comb, "learner" = sl_fit))

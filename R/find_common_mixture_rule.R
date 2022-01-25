@@ -29,7 +29,7 @@ find_common_mixture_rules <- function(group_list,
 
       ## pooled rule - any meet
 
-      intxn_rule <- paste("(",paste(group$description, collapse = ")|("), ")")
+      intxn_rule <- paste("(", paste(group$description, collapse = ")|("), ")")
 
       intxn_data <- data %>%
         mutate("intxn_rule" := ifelse(eval(parse(text = intxn_rule)), 1, 0))
@@ -117,7 +117,6 @@ find_common_mixture_rules <- function(group_list,
 
     mixture_results$`Mixture Interaction Rules` <- unlist(mixture_any_rules)
     mixture_results$`Fraction Covered` <- unlist(fractions)
-
   }
 
   return(mixture_results)

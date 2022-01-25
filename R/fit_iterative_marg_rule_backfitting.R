@@ -28,7 +28,6 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
                                                 fold,
                                                 max_iter,
                                                 verbose) {
-
   future::plan(future::sequential, gc = TRUE)
 
   n <- dim(At)[1]
@@ -63,11 +62,11 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
     )
     # delayed_sl_fit <- delayed_learner_train(discrete_sl, task)
 
-    sl_fit <- discrete_sl$train(task)
+    sl_fit <- suppressWarnings(discrete_sl$train(task))
 
     Qbar_ne_M_W_initial <- sl_fit$predict()
 
-    At[,"Qbar_ne_M_W_initial"] <- Qbar_ne_M_W_initial
+    At[, "Qbar_ne_M_W_initial"] <- Qbar_ne_M_W_initial
 
     task <- sl3::make_sl3_Task(
       data = At,
@@ -77,9 +76,9 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
     )
 
     # formula <-
-      # as.formula(paste("y_scaled", "~", target_m))
+    # as.formula(paste("y_scaled", "~", target_m))
 
-    ctree_fit <- tree_SL$train(task)
+    glmtree_fit <- tree_SL$train(task)
     # ctree_fit <- partykit::glmtree(formula,
     #                      data = At,
     #                      alpha = alpha,
@@ -87,9 +86,9 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
     #                      minsize = minsize,
     #                      maxdepth = max_depth)
 
-    Qbar_M_W_initial <- ctree_fit$predict()
+    Qbar_M_W_initial <- glmtree_fit$predict()
 
-    At[,"Qbar_M_W_initial"] <- Qbar_M_W_initial
+    At[, "Qbar_M_W_initial"] <- Qbar_M_W_initial
 
     iter <- 0
     stop <- FALSE
@@ -125,7 +124,7 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
       preds_offset <- sl_fit_backfit_offset$predict()
       preds_no_offset <- sl_fit_backfit_no_offset$predict()
 
-      At[,"Qbar_ne_M_W_now"] <- preds_no_offset
+      At[, "Qbar_ne_M_W_now"] <- preds_no_offset
 
       task <- sl3::make_sl3_Task(
         data = At,
@@ -143,37 +142,68 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
         offset = "Qbar_ne_M_W_initial"
       )
 
-      ctree_fit <- tree_SL$train(task)
+      # offset <- task$data$Qbar_ne_M_W_initial
+      # data_offset <- task$data
+      #
+      # fit_glmtree_offset <- do.call(partykit::glmtree, list(
+      #   formula = as.formula(y_scaled ~ offset(Qbar_ne_M_W_initial) | M1),
+      #   data = data_offset,
+      #   alpha = 0.8, maxdepth = 1
+      # ))
+      #
+      # # fit2 <- ctree(formula = as.formula(y_scaled ~ offset(Qbar_ne_M_W_initial) | M1), data = data_offset, alpha = 0.8, maxdepth = 1)
+      #
+      #
+      # offset_preds <- predict(fit_glmtree_offset, newdata = data_offset)
+      #
+      # # offset <- At_no_offset$Qbar_ne_M_W_initial
+      # data_no_offset <- task_no_offset$data
+      # fit_glmtree_no_offset <- do.call(partykit::glmtree, list(
+      #   formula = as.formula(y_scaled ~ offset(Qbar_ne_M_W_initial) | M1),
+      #   offset = offset, data = data_no_offset,
+      #   alpha = 0.8, maxdepth = 1
+      # ))
+      #
+      # no_offset_preds <- predict(fit_ctree_no_offset, newdata = data_no_offset)
+      # offset_preds == no_offset_preds
+      #
+      glmtree_fit_offset <- tree_SL$train(task)
+      # glmtree_fit_no_offset <- tree_SL$train(task_no_offset)
 
-      glmtree_model_preds_offset <- ctree_fit$predict(task)
-      At[, "Qbar_M_W_now"] <- ctree_fit$predict(task_no_offset)
+      glmtree_model_preds_offset <- glmtree_fit_offset$predict(task)
+      glmtree_model_preds_no_offset <- glmtree_fit_offset$predict(task_no_offset)
+      At[, "Qbar_M_W_now"] <- glmtree_model_preds_no_offset
 
       # delta_h <- mean(abs(At$Qbar_ne_M_W_initial - At$Qbar_ne_M_W_now))
       # delta_g <- mean(abs(At$Qbar_M_W_initial - At$Qbar_M_W_now))
 
       curr_diff <- abs(glmtree_model_preds_offset - preds_offset)
 
-      Qbar_ne_M_W_initial <-  At$Qbar_ne_M_W_now
+      Qbar_ne_M_W_initial <- At$Qbar_ne_M_W_now
       At$Qbar_ne_M_W_initial <- Qbar_ne_M_W_initial
       At$Qbar_M_W_initial <- At$Qbar_M_W_now
 
-      selected_learner <- ctree_fit$learner_fits[[which(ctree_fit$coefficients == 1)]]
+      selected_learner <- glmtree_fit_offset$learner_fits[[which(glmtree_fit_offset$coefficients == 1)]]
 
-      if (verbose){
+      if (verbose) {
         if (iter == 1) {
-          print(paste("Fold: ", fold, "|",
-                      "Process: ", target_m,  "Marginal Decision Backfitting", "|",
-                      "Iteration: ", iter, "|",
-                      "Delta: ", "None", "|",
-                      "Diff: ", mean(curr_diff), "|",
-                      "Rules:", list.rules.party(selected_learner$fit_object)))
-        }else{
-          print(paste("Fold: ", fold, "|",
-                      "Process: ", target_m, "Marginal Decision Backfitting", "|",
-                      "Iteration: ", iter, "|",
-                      "Delta: ", mean(curr_diff - prev_diff), "|",
-                      "Diff: ", mean(curr_diff), "|",
-                      "Rules:", list.rules.party(selected_learner$fit_object)))
+          print(paste(
+            "Fold: ", fold, "|",
+            "Process: ", target_m, "Marginal Decision Backfitting", "|",
+            "Iteration: ", iter, "|",
+            "Delta: ", "None", "|",
+            "Diff: ", mean(curr_diff), "|",
+            "Rules:", list.rules.party(selected_learner$fit_object)
+          ))
+        } else {
+          print(paste(
+            "Fold: ", fold, "|",
+            "Process: ", target_m, "Marginal Decision Backfitting", "|",
+            "Iteration: ", iter, "|",
+            "Delta: ", mean(curr_diff - prev_diff), "|",
+            "Diff: ", mean(curr_diff), "|",
+            "Rules:", list.rules.party(selected_learner$fit_object)
+          ))
         }
       }
 
@@ -182,7 +212,7 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
         prev_diff <- curr_diff
       } else if (abs(mean(curr_diff - prev_diff)) <= 0.001) {
         stop <- TRUE
-      } else if (iter >= max_iter){
+      } else if (iter >= max_iter) {
         stop <- TRUE
       } else {
         stop <- FALSE
@@ -195,7 +225,7 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
 
 
     if (length(rules) == 1) {
-      if(rules == "") {
+      if (rules == "") {
         rules <- "No Rules Found"
       }
     }
@@ -208,11 +238,9 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
 
 
     marg_decisions[[i]] <- rules
-
   }
 
   marg_decisions <- do.call(rbind, marg_decisions)
 
   return(marg_decisions)
 }
-

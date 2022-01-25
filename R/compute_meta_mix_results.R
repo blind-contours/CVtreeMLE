@@ -17,8 +17,6 @@
 
 
 compute_meta_mix_results <- function(v_fold_mixture_results, mix_comps, n_folds, data) {
-
-
   v_fold_mixture_group <- v_fold_mixture_group_split(v_fold_mixture_results)
   # v_fold_mixture_group <- v_fold_mixture_results %>% dplyr::group_by(Variables)
   # v_fold_mixture_group <- dplyr::group_split(v_fold_mixture_group)
@@ -32,7 +30,7 @@ compute_meta_mix_results <- function(v_fold_mixture_results, mix_comps, n_folds,
     weighted_mean <- sum(results_df$`Mixture ATE` * (1 / results_df$`Standard Error`^2)) / sum((1 / results_df$`Standard Error`^2))
     weighted_RMSE <- sum(results_df$RMSE * (1 / results_df$`Standard Error`^2)) / sum((1 / results_df$`Standard Error`^2))
 
-    pooled_se <- sqrt(1 /(1/ sum(results_df$`Standard Error`^2)))
+    pooled_se <- sqrt(1 / (1 / sum(results_df$`Standard Error`^2)))
 
     pooled_P_val <- round(2 * stats::pnorm(abs(weighted_mean / pooled_se), lower.tail = F), 5)
 
@@ -43,7 +41,7 @@ compute_meta_mix_results <- function(v_fold_mixture_results, mix_comps, n_folds,
 
     vars <- mix_comps[mix_comps %in% strsplit(results_df$`Mixture Interaction Rules`[1], split = " ")[[1]]]
 
-    intxn_rule <- paste("(",paste(results_df$`Mixture Interaction Rules`, collapse = ")|("), ")")
+    intxn_rule <- paste("(", paste(results_df$`Mixture Interaction Rules`, collapse = ")|("), ")")
 
     intxn_data <- data %>%
       dplyr::mutate("intxn_rule" := ifelse(eval(parse(text = intxn_rule)), 1, 0))
@@ -102,7 +100,15 @@ compute_meta_mix_results <- function(v_fold_mixture_results, mix_comps, n_folds,
     #
     # interaction_rule <- paste(average_rules, collapse = " & ")
 
-    average_results <- cbind(weighted_mean, pooled_se, pooled_CI[1], pooled_CI[2], pooled_P_val, pooled_P_val, weighted_RMSE, interaction_rule, unique(results_df$Variables))
+    average_results <- cbind(
+      round(weighted_mean, 3),
+      round(pooled_se, 3),
+      pooled_CI[1], pooled_CI[2],
+      pooled_P_val, pooled_P_val, round(weighted_RMSE, 3),
+      interaction_rule,
+      unique(results_df$Variables)
+    )
+
     colnames(average_results) <- colnames(results_df)
 
     results <- as.data.frame(rbind(results_df, average_results))
@@ -115,7 +121,5 @@ compute_meta_mix_results <- function(v_fold_mixture_results, mix_comps, n_folds,
   names(v_fold_mixture_w_pooled) <- intxn_names_list
 
 
-    return(v_fold_mixture_w_pooled)
-  }
-
-
+  return(v_fold_mixture_w_pooled)
+}

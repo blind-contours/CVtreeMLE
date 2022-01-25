@@ -4,7 +4,6 @@
 .httr-oauth
 .DS_Store
 inst/
-/doc/
 /Meta/
 /paper/
 README.Rmd

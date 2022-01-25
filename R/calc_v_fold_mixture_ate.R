@@ -19,18 +19,16 @@
 #'
 #' @export
 
-calc_v_fold_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds, no_mixture_rules){
+calc_v_fold_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds, no_mixture_rules) {
+  input_mix_rules <- unlist(input_mix_rules, recursive = FALSE, use.names = FALSE)
+  input_mix_rules <- input_mix_rules[!sapply(input_mix_rules, is.null)]
 
-  input_mix_rules <- unlist(input_mix_rules,recursive=FALSE, use.names = FALSE)
-  input_mix_rules <- input_mix_rules[!sapply(input_mix_rules,is.null)]
-
-  input_mix_data <- unlist(input_mix_data,recursive=FALSE, use.names = FALSE)
-  input_mix_data <- unlist(input_mix_data,recursive=FALSE, use.names = FALSE)
-  input_mix_data <- input_mix_data[!sapply(input_mix_data,is.null)]
+  input_mix_data <- unlist(input_mix_data, recursive = FALSE, use.names = FALSE)
+  input_mix_data <- unlist(input_mix_data, recursive = FALSE, use.names = FALSE)
+  input_mix_data <- input_mix_data[!sapply(input_mix_data, is.null)]
 
 
-  if(no_mixture_rules == FALSE){
-
+  if (no_mixture_rules == FALSE) {
     mixture_results <-
       as.data.frame(matrix(
         data = NA,
@@ -39,7 +37,8 @@ calc_v_fold_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n
       ))
 
     colnames(mixture_results) <-
-      c("Mixture ATE",
+      c(
+        "Mixture ATE",
         "Standard Error",
         "Lower CI",
         "Upper CI",
@@ -47,7 +46,8 @@ calc_v_fold_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n
         "P-value Adj",
         "RMSE",
         "Mixture Interaction Rules",
-        "Variables")
+        "Variables"
+      )
 
     mixture_data_list <- list()
 
@@ -71,24 +71,22 @@ calc_v_fold_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n
 
       ## calculate RMSE for Y| A = rule i, W
       sqrd_resids <- (mix_data$QbarAW.star - mix_data[outcome])^2
-      RMSE <- sqrt(mean(sqrd_resids[,1], na.rm = TRUE))
+      RMSE <- sqrt(mean(sqrd_resids[, 1], na.rm = TRUE))
 
-      mixture_results$`Mixture ATE`[[group]] <- round(ATE_results$ATE,3)
-      mixture_results$`Standard Error`[group] <- round(ATE_results$SE,3)
-      mixture_results$`Lower CI`[group] <- round(ATE_results$CI[1],3)
-      mixture_results$`Upper CI`[group] <-round(ATE_results$CI[2],3)
-      mixture_results$`P-value`[group] <- round(ATE_results$`p-value`,6)
+      mixture_results$`Mixture ATE`[[group]] <- round(ATE_results$ATE, 3)
+      mixture_results$`Standard Error`[group] <- round(ATE_results$SE, 3)
+      mixture_results$`Lower CI`[group] <- round(ATE_results$CI[1], 3)
+      mixture_results$`Upper CI`[group] <- round(ATE_results$CI[2], 3)
+      mixture_results$`P-value`[group] <- round(ATE_results$`p-value`, 6)
       mixture_results$`P-value Adj`[group] <- round(ATE_results$`adj p-value`, 6)
       mixture_results$`RMSE`[group] <- round(RMSE, 3)
 
       mixture_data_list[[group]] <- mix_data
-
     }
 
-    mixture_results[,"Mixture Interaction Rules"] <- do.call(rbind,input_mix_rules)$description
-    mixture_results[,"Variables"] <- do.call(rbind,input_mix_rules)$test
-  }else{
-
+    mixture_results[, "Mixture Interaction Rules"] <- do.call(rbind, input_mix_rules)$description
+    mixture_results[, "Variables"] <- do.call(rbind, input_mix_rules)$test
+  } else {
     mixture_results <-
       as.data.frame(matrix(
         data = NA,
@@ -97,7 +95,8 @@ calc_v_fold_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n
       ))
 
     colnames(mixture_results) <-
-      c("Mixture ATE",
+      c(
+        "Mixture ATE",
         "Standard Error",
         "Lower CI",
         "Upper CI",
@@ -105,11 +104,14 @@ calc_v_fold_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n
         "P-value Adj",
         "RMSE",
         "Mixture Interaction Rules",
-        "Variables")
+        "Variables"
+      )
 
 
     mixture_data_list <- NA
   }
-  return(list(results = mixture_results,
-              mixture_data_list = mixture_data_list))
+  return(list(
+    results = mixture_results,
+    mixture_data_list = mixture_data_list
+  ))
 }

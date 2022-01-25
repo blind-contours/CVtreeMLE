@@ -9,24 +9,25 @@
 #'
 #' @export
 
-calc_additive_ate <- function(additive_data, Y, n_folds){
+calc_additive_ate <- function(additive_data, Y, n_folds) {
 
   ## TODO: figure out why when using doParallel sometimes there is a NULL list appended to the list of lists
-  additive_data <- unlist(additive_data,recursive=FALSE)
-  additive_data <- additive_data[!sapply(additive_data,is.null)]
+  additive_data <- unlist(additive_data, recursive = FALSE)
+  additive_data <- additive_data[!sapply(additive_data, is.null)]
 
-  mix_additive_data = do.call(rbind, lapply(1:length(additive_data), function(i) {
-    fold = additive_data[[i]]
+  mix_additive_data <- do.call(rbind, lapply(1:length(additive_data), function(i) {
+    fold <- additive_data[[i]]
     fold
   }))
 
-  if(any(is.na(mix_additive_data$QbarAW_additive)) == FALSE){
+  if (any(is.na(mix_additive_data$QbarAW_additive)) == FALSE) {
 
     ## least optimal submodel
     logitUpdate <-
-      stats::glm(y_scaled ~ -1 + HAW_additive + offset(qlogis(bound_precision(QbarAW_additive))) ,
-          family = 'quasibinomial',
-          data = mix_additive_data)
+      stats::glm(y_scaled ~ -1 + HAW_additive + offset(qlogis(bound_precision(QbarAW_additive))),
+        family = "quasibinomial",
+        data = mix_additive_data
+      )
 
     epsilon <- logitUpdate$coef
 
@@ -44,7 +45,7 @@ calc_additive_ate <- function(additive_data, Y, n_folds){
     ## Calculate Additive RMSE for non-updated predictions
 
     sqrd_resids <- (mix_additive_data$QbarAW_additive_star - mix_additive_data[Y])^2
-    cum_sum_RMSE <- sqrt(mean(sqrd_resids[,1]))
+    cum_sum_RMSE <- sqrt(mean(sqrd_resids[, 1]))
 
 
     # cum_sum_RMSE <-
@@ -55,28 +56,27 @@ calc_additive_ate <- function(additive_data, Y, n_folds){
 
 
 
-#
-#     updated_additive.MSM.RMSE <-
-#       sqrt((mix_additive_data$QbarAW_additive_star - mix_additive_data[Y])^2/ length(mix_additive_data[Y]))
-#     updated_additive.MSM.RMSE <-
-#       sum(updated_additive.MSM.RMSE[, 1])
+    #
+    #     updated_additive.MSM.RMSE <-
+    #       sqrt((mix_additive_data$QbarAW_additive_star - mix_additive_data[Y])^2/ length(mix_additive_data[Y]))
+    #     updated_additive.MSM.RMSE <-
+    #       sum(updated_additive.MSM.RMSE[, 1])
 
 
     ################################ RUN MSM THROUGH THE CUMULATIVE SUM EXPECTATIONS ############################
 
     mix_additive_data$sum_marg_hits <- as.factor(mix_additive_data$sum_marg_hits)
-    MSM_results <- stats::glm(QbarAW_additive_star~sum_marg_hits, data = mix_additive_data)
-
-  } else{
-    print('No additive results found')
+    MSM_results <- stats::glm(QbarAW_additive_star ~ sum_marg_hits, data = mix_additive_data)
+  } else {
+    print("No additive results found")
     additive.MSM.RMSE <- NA
     updated_additive.MSM.RMSE <- NA
     MSM_results <- NA
-
   }
 
-  return(list(data = mix_additive_data,
-              RMSE_star = cum_sum_RMSE,
-              MSM = MSM_results))
-
+  return(list(
+    data = mix_additive_data,
+    RMSE_star = cum_sum_RMSE,
+    MSM = MSM_results
+  ))
 }

@@ -17,14 +17,13 @@
 
 compute_meta_marg_results <- function(v_fold_marginal_results, data, mix_comps, n_folds) {
 
-  v_fold_marg_group <- v_fold_marginal_results %>% dplyr::group_by(comparison)
-  v_fold_marg_group <- dplyr::group_split(v_fold_marg_group)
+  # v_fold_marg_group <- v_fold_marginal_results %>% dplyr::group_by(comparison)
+  v_fold_marg_group <- v_fold_marginal_qgroup_split(v_fold_marginal_results)
 
   v_fold_marginal_w_pooled <- list()
   list_names <- list()
 
   for (i in seq(v_fold_marg_group)) {
-
     results_df <- v_fold_marg_group[[i]]
 
     var <- mix_comps[mix_comps %in% strsplit(results_df$Reference[1], split = " ")[[1]]]
@@ -33,7 +32,7 @@ compute_meta_marg_results <- function(v_fold_marginal_results, data, mix_comps, 
     weighted_mean <- sum(results_df$`Marginal ATE` * (1 / results_df$`Standard Error`^2)) / sum((1 / results_df$`Standard Error`^2))
     weighted_RMSE <- sum(results_df$RMSE * (1 / results_df$`Standard Error`^2)) / sum((1 / results_df$`Standard Error`^2))
 
-    pooled_se <- sqrt(1 /(1/ sum(results_df$`Standard Error`^2)))
+    pooled_se <- sqrt(1 / (1 / sum(results_df$`Standard Error`^2)))
 
     pooled_P_val <- round(2 * stats::pnorm(abs(weighted_mean / pooled_se), lower.tail = F), 5)
 
@@ -67,7 +66,7 @@ compute_meta_marg_results <- function(v_fold_marginal_results, data, mix_comps, 
 
     ref_max <- subset(ref_max, ref_rule == 1, select = max)
 
-    ref_rule <- paste(var, " > ", round(ref_min[[1]],3), "&", var, "<", round(ref_max[[1]], 3))
+    ref_rule <- paste(var, " > ", round(ref_min[[1]], 3), "&", var, "<", round(ref_max[[1]], 3))
 
     ## comp rule
 
@@ -85,9 +84,21 @@ compute_meta_marg_results <- function(v_fold_marginal_results, data, mix_comps, 
 
     comp_max <- subset(comp_max, comp_rule == 1, select = max)
 
-    comp_rule <- paste(var, " > ", round(comp_min[[1]],3), "&", var, "<", round(comp_max[[1]], 3))
+    comp_rule <- paste(var, " > ", round(comp_min[[1]], 3), "&", var, "<", round(comp_max[[1]], 3))
 
-    average_results <- cbind(weighted_mean, pooled_se, pooled_CI[1], pooled_CI[2], pooled_P_val, pooled_P_val, weighted_RMSE, unique(results_df$comparison), ref_rule, comp_rule)
+    average_results <- cbind(
+      round(weighted_mean, 3),
+      round(pooled_se, 3),
+      round(pooled_CI[1], 3),
+      round(pooled_CI[2], 3),
+      round(pooled_P_val, 6),
+      round(pooled_P_val, 6),
+      round(weighted_RMSE, 3),
+      unique(results_df$comparison),
+      ref_rule,
+      comp_rule
+    )
+
     colnames(average_results) <- colnames(results_df)
 
     list_names[[i]] <- unique(results_df$comparison)
@@ -103,5 +114,3 @@ compute_meta_marg_results <- function(v_fold_marginal_results, data, mix_comps, 
 
   return(v_fold_marginal_w_pooled)
 }
-
-

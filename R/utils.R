@@ -23,6 +23,31 @@ pull_out_rule_vars <- function(x, A) {
 }
 
 ###################################################################
+#' @title Round rules found for easier reading
+#' @param rules Vector or rules
+
+#' @importFrom rlang .data
+round_rules <- function(rules) {
+  rounded_rules <- list()
+  split_rules <- strsplit(rules, " ")
+  for (i in seq(split_rules)) {
+    rule_split <- split_rules[[i]]
+    for (j in seq(rule_split)) {
+      element <- rule_split[[j]]
+      if (grepl("-*\\d+\\.*\\d*", element) == TRUE & grepl("[[:alpha:]]", element) == FALSE) {
+        element_round <- round(as.numeric(element), 3)
+        rule_split[[j]] <- element_round
+      }
+    }
+    round_temp <- paste(rule_split, collapse = " ")
+    rounded_rules[[i]] <- round_temp
+  }
+
+  rounded_rules <- unlist(rounded_rules)
+  return(rounded_rules)
+}
+
+###################################################################
 #' @title Filter data based on fold
 #' @param data Input data
 #' @param fold_k Current fold
@@ -54,7 +79,7 @@ groupby_fold <- function(data) {
 filter_mixture_rules <- function(data, n_folds) {
   data <- data %>%
     dplyr::group_by(.data$test, .data$direction) %>%
-    dplyr::filter(dplyr::n() >=  n_folds)
+    dplyr::filter(dplyr::n() >= n_folds)
   return(data)
 }
 
@@ -80,11 +105,11 @@ filter_marginal_rules <- function(data, n_folds) {
   data <- as.data.frame(data)
   data$fold <- as.numeric(data$fold)
 
-  data <- data[data$rules != "No Rules Found",]
+  data <- data[data$rules != "No Rules Found", ]
 
   data <- data %>%
     dplyr::group_by(.data$target_m, .data$quantile) %>%
-    dplyr::filter(dplyr::n() >=  n_folds)
+    dplyr::filter(dplyr::n() >= n_folds)
 
   data$var_quant_group <- paste(data$target_m, data$quantile, sep = "_")
   return(data)
@@ -184,8 +209,7 @@ list.rules.party <- function(x, i = NULL, ...) {
     if (ncol(dat) == 0) {
       dat <- x$data
     }
-  }
-  else {
+  } else {
     fit <- NULL
     dat <- x$data
   }
@@ -207,10 +231,9 @@ list.rules.party <- function(x, i = NULL, ...) {
       }
       slevels <- levels(dat[, svar])[index == whichkid]
       srule <- paste(svar, " %in% c(\"", paste(slevels,
-                                               collapse = "\", \"", sep = ""
+        collapse = "\", \"", sep = ""
       ), "\")", sep = "")
-    }
-    else {
+    } else {
       if (is.null(index)) {
         index <- 1:length(kid)
       }
@@ -223,12 +246,12 @@ list.rules.party <- function(x, i = NULL, ...) {
       srule <- c()
       if (is.finite(sbreak[1])) {
         srule <- c(srule, paste(svar, ifelse(right, ">",
-                                             ">="
+          ">="
         ), sbreak[1]))
       }
       if (is.finite(sbreak[2])) {
         srule <- c(srule, paste(svar, ifelse(right, "<=",
-                                             "<"
+          "<"
         ), sbreak[2]))
       }
       srule <- paste(srule, collapse = " & ")

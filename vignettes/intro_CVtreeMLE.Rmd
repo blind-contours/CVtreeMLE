@@ -247,9 +247,9 @@ To start, let's load the packages we'll need and set a seed for simulation:
   
 ```{r setup}
 library(data.table)
-library(devtools)
 library(CVtreeMLE)
-devtools::load_all('~/sl3')
+library(devtools)
+load_all('~/sl3')
 library(kableExtra)
 library(qgcomp)
 library(dplyr)
@@ -313,8 +313,8 @@ sim_data <- simulate_mixture_cube(
 )
 
 head(sim_data) %>%
-  kableExtra::kbl(caption = "Simulated Data") %>%
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+  kbl(caption = "Simulated Data") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
 ```
 
 ## Set up Estimators used in Super Learners 
@@ -387,8 +387,8 @@ Let's first look at the RMSE for the iterative back-fitting models. Because our 
 ```{r model RMSE}
 RMSE_results <- sim_results$`Model RMSEs`
 RMSE_results %>%
-kableExtra::kbl(caption = "Model Fit Results") %>%
-kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+kbl(caption = "Model Fit Results") %>%
+kable_classic(full_width = F, html_font = "Cambria")
 ```
 
 The our mixture decision tree model has the lowest RMSE.
@@ -413,8 +413,8 @@ We can look at the pooled TMLE results for this model:
 ```{r mixture results}
 pooled_mixture_results <- sim_results$`Pooled TMLE Mixture Results`
 pooled_mixture_results %>%
-  kableExtra::kbl(caption = "Pooled TMLE Mixture Results") %>%
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+kbl(caption = "Pooled TMLE Mixture Results") %>%
+kable_classic(full_width = F, html_font = "Cambria")
 ```
 *Note - results in explanations below may change slightly based on runs: 
 
@@ -424,8 +424,8 @@ Above, the mixture ATE for this rule is 2.92 (2.73 - 3.10), which covers our tru
 ```{r fold specific results}
 mixture_v_results <- sim_results$`V-Specific Mix Results`
 mixture_v_results$M1M2M3 %>%
-  kableExtra::kbl(caption = "V-Fold Mixture Results") %>%
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+kbl(caption = "V-Fold Mixture Results") %>%
+kable_classic(full_width = F, html_font = "Cambria")
 ```
 
 We can plot our v-fold mixture results findings using the `plot_mixture_results` function. This will return a list of plots with names corresponding to the interactions found.
@@ -440,8 +440,8 @@ This plot shows the ATE specific for each fold and for the weighted-mean results
 ```{r marginal results}
 pooled_marginal_results <- sim_results$`Pooled TMLE Marginal Results`
 pooled_marginal_results %>%
-  kableExtra::kbl(caption = "Pooled Marginal Results") %>%
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+kbl(caption = "Pooled Marginal Results") %>%
+kable_classic(full_width = F, html_font = "Cambria")
 ```
 
 This plot shows the data-adaptively identified quantile comparisons for each variable. Here `M1_2 - M1_1` shows the second quantile for variable $M1$ minus the first quantile for $M1$. As expected, this difference is positive and the other two are negative given how we simulated our data. 
@@ -450,7 +450,7 @@ Similarly we can investigate and plot the v-fold specific estimates:
 
 ```{r plot sim marginal results, fig.height = 3, fig.width = 8}
 marginal_plots <- plot_marginal_results(v_marginal_results =  sim_results$`V-Specific Marg Results`, mix_comps = c(paste("M", seq(3), sep = "")))
-marginal_plots$M1
+marginal_plots$M2
 ```
 Same as the mixtures plot, the marginal plot shows the ATE for an individual variable in the mixture with corresponding ATE and variance estimates. The top rule is the pooled rule for the reference category, the rule(s) in the boxes are the pooled rules for each quantile that was found for the variable of interest. 
 
@@ -471,7 +471,7 @@ NIEH_1_results <- CVtreeMLE(data = NIEHS_data_1,
                             A = c("X1", "X2", "X3", "X4", "X5", "X6", "X7"),
                             back_iter_SL = Q1_stack,
                             tree_SL = discrete_tree_sl, 
-                            n_folds = 2,
+                            n_folds = 3,
                             family = "gaussian",
                             H.AW_trunc_lvl = 10,
                             parallel = TRUE,
@@ -486,8 +486,8 @@ Again, let's look at our model fits first:
 ```{r NIEHS RMSE}
 NIEH_1_RMSE <- NIEH_1_results$`Model RMSEs`
 NIEH_1_RMSE %>%
-  kableExtra::kbl(caption = "NIEH Data 1 Model Fit Results") %>%
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+  kbl(caption = "NIEH Data 1 Model Fit Results") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
 ```
 
 And again we can compare our fits to an existing available method for mixtures: 
@@ -502,8 +502,8 @@ Let's look at the pooled TMLE results for interactions found in this NIEH datase
 ```{r NIEH mixture results}
 NIEH_1_intxn_results <- NIEH_1_results$`Pooled TMLE Mixture Results`
 NIEH_1_intxn_results %>%
-  kableExtra::kbl(caption = "NIEH Mixture Results") %>%
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+  kbl(caption = "NIEH Mixture Results") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
 ```
 
 
@@ -512,8 +512,8 @@ We can look at the v-fold specific estimates for an interaction found between va
 ```{r NIEH v-fold mixture results}
 NIEH_v_intxn_results <- NIEH_1_results$`V-Specific Mix Results`
 NIEH_v_intxn_results[[1]] %>%
-  kableExtra::kbl(caption = "v-fold NIEH Mixture Results") %>%
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+  kbl(caption = "v-fold NIEH Mixture Results") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
 ```
 
 We see the fits of the models used to derive our exposure variables are much lower. 

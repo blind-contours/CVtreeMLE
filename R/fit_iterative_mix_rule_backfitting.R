@@ -20,7 +20,6 @@
 #' @export
 
 fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, max_iter, verbose) {
-
   future::plan(future::sequential, gc = TRUE)
 
   pre_boot_list <- list()
@@ -49,17 +48,17 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, max_
     as.formula(paste("y_scaled", "~", paste(A, collapse = "+")))
 
   pre_model_t0 <- pre::pre(formula,
-                           data = At,
-                           family = "gaussian",
-                           use.grad = FALSE,
-                           tree.unbiased = TRUE,
-                           removecomplements = TRUE,
-                           removeduplicates = TRUE,
-                           maxdepth = pre::maxdepth_sampler(),
-                           sampfrac = min(1, (11 * sqrt(dim(At)[1]) + 1) / dim(At)[1]),
-                           nfolds = 10,
-                           par.final = FALSE,
-                           par.init = FALSE
+    data = At,
+    family = "gaussian",
+    use.grad = FALSE,
+    tree.unbiased = TRUE,
+    removecomplements = TRUE,
+    removeduplicates = TRUE,
+    maxdepth = pre::maxdepth_sampler(),
+    sampfrac = min(1, (11 * sqrt(dim(At)[1]) + 1) / dim(At)[1]),
+    nfolds = 10,
+    par.final = FALSE,
+    par.init = FALSE
   )
 
   QbarAW_initial <- predict(pre_model_t0)
@@ -99,18 +98,18 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, max_
     At$QbarW_now <- preds_no_offset
 
     pre_model <- pre::pre(formula,
-                          data = At,
-                          family = "gaussian",
-                          use.grad = FALSE,
-                          tree.unbiased = TRUE,
-                          removecomplements = TRUE,
-                          removeduplicates = TRUE,
-                          maxdepth = pre::maxdepth_sampler(),
-                          sampfrac = min(1, (11 * sqrt(dim(At)[1]) + 1) / dim(At)[1]),
-                          nfolds = 10,
-                          offset = At$QbarW_initial,
-                          par.final = FALSE,
-                          par.init = FALSE
+      data = At,
+      family = "gaussian",
+      use.grad = FALSE,
+      tree.unbiased = TRUE,
+      removecomplements = TRUE,
+      removeduplicates = TRUE,
+      maxdepth = pre::maxdepth_sampler(),
+      sampfrac = min(1, (11 * sqrt(dim(At)[1]) + 1) / dim(At)[1]),
+      nfolds = 10,
+      offset = At$QbarW_initial,
+      par.final = FALSE,
+      par.init = FALSE
     )
 
     pre_model_preds_offset <- predict(pre_model, newoffset = At$QbarW_initial)
@@ -131,21 +130,25 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, max_
 
     curr_diff <- abs(pre_model_preds_offset - preds_offset)
 
-    if (verbose){
+    if (verbose) {
       if (iter == 1) {
-        print(paste("Fold: ", fold, "|",
-                    "Process: ", "Mixture Decision Backfitting", "|",
-                    "Iteration: ", iter, "|",
-                    "Delta: ", "None", "|",
-                    "Diff: ", mean(curr_diff), "|",
-                    "Rules:", dim(pre_coefs_no_zero)[1]))
-      }else{
-        print(paste("Fold: ", fold, "|",
-                    "Process: ", "Mixture Decision Backfitting", "|",
-                    "Iteration: ", iter, "|",
-                    "Delta: ", mean(curr_diff - prev_diff), "|",
-                    "Diff: ", mean(curr_diff), "|",
-                    "Rules:", dim(pre_coefs_no_zero)[1]))
+        print(paste(
+          "Fold: ", fold, "|",
+          "Process: ", "Mixture Decision Backfitting", "|",
+          "Iteration: ", iter, "|",
+          "Delta: ", "None", "|",
+          "Diff: ", mean(curr_diff), "|",
+          "Rules:", dim(pre_coefs_no_zero)[1]
+        ))
+      } else {
+        print(paste(
+          "Fold: ", fold, "|",
+          "Process: ", "Mixture Decision Backfitting", "|",
+          "Iteration: ", iter, "|",
+          "Delta: ", mean(curr_diff - prev_diff), "|",
+          "Diff: ", mean(curr_diff), "|",
+          "Rules:", dim(pre_coefs_no_zero)[1]
+        ))
       }
     }
 
@@ -157,7 +160,7 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, max_
       prev_diff <- curr_diff
     } else if (abs(mean(curr_diff - prev_diff)) <= 0.001) {
       stop <- TRUE
-    } else if (iter >= max_iter){
+    } else if (iter >= max_iter) {
       stop <- TRUE
     } else {
       stop <- FALSE

@@ -19,15 +19,14 @@
 #'
 #' @export
 
-calc_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y, n_folds){
-
+calc_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y, n_folds) {
   marg_data <- list()
 
-  x <- unlist(marginal_data,recursive=FALSE)
-  x <- x[!sapply(x,is.null)]
+  x <- unlist(marginal_data, recursive = FALSE)
+  x <- x[!sapply(x, is.null)]
 
-  y <- unlist(marginal_rules,recursive=FALSE)
-  y <- y[!sapply(y,is.null)]
+  y <- unlist(marginal_rules, recursive = FALSE)
+  y <- y[!sapply(y, is.null)]
 
   fold_rules_groups <- marginal_group_split(y[[1]])
 
@@ -39,11 +38,11 @@ calc_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y, n_fol
   for (i in seq(fold_rules_groups)) {
     var_comps <- list()
     rules <- fold_rules_groups[[i]]
-    reference <- rules[rules$quantile == 1,]
+    reference <- rules[rules$quantile == 1, ]
     reference_quant <- reference$var_quant_group
-    comparisons <- rules[rules$quantile > 1,]
-    for (j in seq(nrow(comparisons))){
-      comp_row <- comparisons[j,]
+    comparisons <- rules[rules$quantile > 1, ]
+    for (j in seq(nrow(comparisons))) {
+      comp_row <- comparisons[j, ]
       comp_label <- paste(comp_row$var_quant_group, reference_quant, sep = "-")
       var_comps[[j]] <- comp_label
     }
@@ -58,7 +57,7 @@ calc_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y, n_fol
     # for(j in seq(marginal_data)){
     marg_data[[i]] <-
       dplyr::bind_rows(sapply(x, "[", i))
-    }
+  }
 
   marginal_results <-
     as.data.frame(matrix(
@@ -68,13 +67,15 @@ calc_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y, n_fol
     ))
 
   colnames(marginal_results) <-
-    c("Marginal ATE",
+    c(
+      "Marginal ATE",
       "Standard Error",
       "Lower CI",
       "Upper CI",
       "P-value",
       "P-value Adj",
-      "RMSE")
+      "RMSE"
+    )
 
   target_quantile <- as.data.frame(marginal_rules[[1]])
 
@@ -90,7 +91,7 @@ calc_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y, n_fol
     check <- marg_data[[i]]
     if (anyNA(check$QbarAW) != TRUE) {
       no_null_indices <- append(no_null_indices, i)
-    } else{
+    } else {
       no_null_indices <- no_null_indices
     }
   }
@@ -98,11 +99,10 @@ calc_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y, n_fol
   no_null_indices <- unlist(no_null_indices)
 
   for (i in seq(marg_data)) {
-    if(i %in% no_null_indices == TRUE){
+    if (i %in% no_null_indices == TRUE) {
       marg_mix <- marg_data[[i]]
 
       if (length(unique(marg_mix$folds)) == n_folds) {
-
         flux_results <- fit_least_fav_submodel(H.AW = marg_mix$H.AW, data = marg_mix, QbarAW = marg_mix$QbarAW, Qbar1W = marg_mix$Qbar1W, Qbar0W = marg_mix$Qbar0W)
 
         ## back-scale Y
@@ -117,18 +117,17 @@ calc_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y, n_fol
         ATE_results <- calc_ATE_estimates(data = marg_mix, ATE_var = "marg.ATE", outcome = Y, p_adjust_n = length(no_null_indices))
 
         sqrd_resids <- (marg_mix$QbarAW.star - marg_mix[Y])^2
-        RMSE <- sqrt(mean(sqrd_resids[,1]))
+        RMSE <- sqrt(mean(sqrd_resids[, 1]))
 
-        marginal_results$`Marginal ATE`[i] <- ATE_results$ATE
-        marginal_results$`Standard Error`[i] <- ATE_results$SE
-        marginal_results$`Lower CI`[i] <- ATE_results$CI[1]
-        marginal_results$`Upper CI`[i] <- ATE_results$CI[2]
-        marginal_results$`P-value`[i] <- ATE_results$`p-value`
-        marginal_results$`P-value Adj`[i] <- ATE_results$`adj p-value`
-        marginal_results$RMSE[i] <- RMSE
+        marginal_results$`Marginal ATE`[i] <- round(ATE_results$ATE, 3)
+        marginal_results$`Standard Error`[i] <- round(ATE_results$SE, 3)
+        marginal_results$`Lower CI`[i] <- round(ATE_results$CI[1], 3)
+        marginal_results$`Upper CI`[i] <- round(ATE_results$CI[2], 3)
+        marginal_results$`P-value`[i] <- round(ATE_results$`p-value`, 6)
+        marginal_results$`P-value Adj`[i] <- round(ATE_results$`adj p-value`, 6)
+        marginal_results$RMSE[i] <- round(RMSE, 3)
 
         updated_marginal_data[[i]] <- ATE_results$data
-
       } else {
         print(
           paste(
@@ -147,7 +146,6 @@ calc_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y, n_fol
 
         updated_marginal_data[[i]] <- NA
       }
-
     } else {
       print(
         paste(

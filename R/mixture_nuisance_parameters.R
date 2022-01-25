@@ -22,7 +22,6 @@
 #' @export
 
 est_mix_nuisance_params <- function(At, Av, W, no_mix_rules, Q1_stack, family, rules, H.AW_trunc_lvl) {
-
   future::plan(future::sequential, gc = TRUE)
 
   At_mix <- At
@@ -41,7 +40,6 @@ est_mix_nuisance_params <- function(At, Av, W, no_mix_rules, Q1_stack, family, r
       interaction_rule <- At_rules_eval[, interaction]
 
       if (dim(table(interaction_rule)) == 2) {
-
         At_mix$A_mix <- interaction_rule
         Av_mix$A_mix <- Av_rules_eval[, interaction]
 
@@ -131,7 +129,6 @@ est_mix_nuisance_params <- function(At, Av, W, no_mix_rules, Q1_stack, family, r
         Av_mix$Qbar1W <- NA
         Av_mix$Qbar0W <- NA
         mix_interaction_data[[interaction]] <- Av_mix
-
       }
     }
   } else {
@@ -143,7 +140,6 @@ est_mix_nuisance_params <- function(At, Av, W, no_mix_rules, Q1_stack, family, r
     Av_mix$Qbar1W <- NA
     Av_mix$Qbar0W <- NA
     mix_interaction_data[[1]] <- Av_mix
-
   }
 
   return(list(data = mix_interaction_data))

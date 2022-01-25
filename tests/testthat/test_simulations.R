@@ -37,7 +37,7 @@ expected_y <- subset(x = sim_data, M1 < 0.99 & M2 > 2.0 & M3 > 2.5, select = y)
 
 
 # not going to be exactly equal because of confounding and random error so tolerance is set high
-expect_equal(mean(expected_y$y), ATE, tolerance= 0.07)
+expect_equal(mean(expected_y$y), ATE, tolerance = 0.07)
 
 
 ATE <- -2
@@ -86,5 +86,4 @@ expected_y <- subset(x = sim_data, M1 >= 0.99 & M2 <= 2.0 & M3 <= 2.5, select = 
 
 
 # not going to be exactly equal because of confounding and random error so tolerance is set high
-expect_equal(mean(expected_y$y), ATE, tolerance= 0.07)
-
+expect_equal(mean(expected_y$y), ATE, tolerance = 0.07)

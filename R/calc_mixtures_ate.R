@@ -19,21 +19,21 @@
 #'
 #' @export
 
-calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds, no_mixture_rules){
+calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds, no_mixture_rules) {
+  input_mix_rules <- unlist(input_mix_rules, recursive = FALSE, use.names = FALSE)
+  input_mix_rules <- input_mix_rules[!sapply(input_mix_rules, is.null)]
 
-  input_mix_rules <- unlist(input_mix_rules,recursive=FALSE, use.names = FALSE)
-  input_mix_rules <- input_mix_rules[!sapply(input_mix_rules,is.null)]
-
-  input_mix_data <- unlist(input_mix_data,recursive=FALSE, use.names = FALSE)
-  input_mix_data <- input_mix_data[!sapply(input_mix_data,is.null)]
+  input_mix_data <- unlist(input_mix_data, recursive = FALSE, use.names = FALSE)
+  input_mix_data <- input_mix_data[!sapply(input_mix_data, is.null)]
 
 
-  if(no_mixture_rules == FALSE){
-
+  if (no_mixture_rules == FALSE) {
     fold_mix_rules <-
       data.table::rbindlist(input_mix_rules)
     fold_mix_rules <-
-      fold_mix_rules %>% dplyr::group_by(test, direction) %>% dplyr::filter(dplyr::n() >= n_folds)
+      fold_mix_rules %>%
+      dplyr::group_by(test, direction) %>%
+      dplyr::filter(dplyr::n() >= n_folds)
 
     groups <- fold_mix_rules %>%
       dplyr::group_by(test, direction)
@@ -48,7 +48,8 @@ calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds,
       ))
 
     colnames(mixture_results) <-
-      c("Mixture ATE",
+      c(
+        "Mixture ATE",
         "Standard Error",
         "Lower CI",
         "Upper CI",
@@ -57,7 +58,8 @@ calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds,
         "Vars",
         "RMSE",
         "Mixture Interaction Rules",
-        "Fraction Covered")
+        "Fraction Covered"
+      )
 
     mixture_data_list <- list()
 
@@ -67,17 +69,17 @@ calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds,
       vars <- intx_group$test[1]
 
       for (i in seq(dim(intx_group)[1])) {
-        intxn_rule <- intx_group[i,]
+        intxn_rule <- intx_group[i, ]
         search_data <-
           as.data.frame(input_mix_rules[as.numeric(intxn_rule$fold)])
-        srch_indx <- match(intxn_rule$rule , search_data$rule)
+        srch_indx <- match(intxn_rule$rule, search_data$rule)
         fold_data <- input_mix_data[[as.numeric(intxn_rule$fold)]]
         intx_rule_data <- fold_data[[srch_indx]]
         intxn_rule_data_list[[i]] <- intx_rule_data
       }
 
       # Extract the results from each CV-TMLE fold and rbind into a single dataframe.
-      mix_data = do.call(rbind, intxn_rule_data_list)
+      mix_data <- do.call(rbind, intxn_rule_data_list)
 
       flux_results <- fit_least_fav_submodel(mix_data$H.AW, mix_data, mix_data$QbarAW, mix_data$Qbar1W, mix_data$Qbar0W)
       QbarAW.star <- flux_results$QbarAW.star
@@ -93,22 +95,20 @@ calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds,
 
       ## calculate RMSE for Y| A = rule i, W
       sqrd_resids <- (mix_data$QbarAW.star - mix_data[outcome])^2
-      RMSE <- sqrt(mean(sqrd_resids[,1]))
+      RMSE <- sqrt(mean(sqrd_resids[, 1]))
 
-      mixture_results$`Mixture ATE`[group] <- ATE_results$ATE
-      mixture_results$`Standard Error`[group] <- ATE_results$SE
-      mixture_results$`Lower CI`[group] <- ATE_results$CI[1]
-      mixture_results$`Upper CI`[group] <-ATE_results$CI[2]
-      mixture_results$`P-value`[group] <- round(ATE_results$`p-value`,6)
+      mixture_results$`Mixture ATE`[group] <- round(ATE_results$ATE, 3)
+      mixture_results$`Standard Error`[group] <- round(ATE_results$SE, 3)
+      mixture_results$`Lower CI`[group] <- round(ATE_results$CI[1], 3)
+      mixture_results$`Upper CI`[group] <- round(ATE_results$CI[2], 3)
+      mixture_results$`P-value`[group] <- round(ATE_results$`p-value`, 6)
       mixture_results$`P-value Adj`[group] <- round(ATE_results$`adj p-value`, 6)
       mixture_results$`Vars`[group] <- vars
-      mixture_results$`RMSE`[group] <- RMSE
+      mixture_results$`RMSE`[group] <- round(RMSE, 3)
 
       mixture_data_list[[group]] <- mix_data
-
     }
-  }else{
-
+  } else {
     mixture_results <-
       as.data.frame(matrix(
         data = NA,
@@ -117,7 +117,8 @@ calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds,
       ))
 
     colnames(mixture_results) <-
-      c("Mixture ATE",
+      c(
+        "Mixture ATE",
         "Standard Error",
         "Lower CI",
         "Upper CI",
@@ -126,15 +127,16 @@ calc_mixtures_ate <- function(input_mix_rules, input_mix_data, outcome, n_folds,
         "Vars",
         "RMSE",
         "Mixture Interaction Rules",
-        "Fraction Covered")
+        "Fraction Covered"
+      )
 
     group_list <- NA
 
     mixture_data_list <- NA
-
-
   }
-  return(list(results = mixture_results,
-              group_list = group_list,
-              mixture_data_list = mixture_data_list))
+  return(list(
+    results = mixture_results,
+    group_list = group_list,
+    mixture_data_list = mixture_data_list
+  ))
 }

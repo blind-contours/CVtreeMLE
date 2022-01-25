@@ -8,13 +8,12 @@
 #'
 #' @export
 
-evaluate_mixture_rules <- function(data, rules){
-
+evaluate_mixture_rules <- function(data, rules) {
   rule_binary_match_list <- list()
 
   for (i in seq(dim(rules)[1])) {
-    rule_t <- rules[i,]
-    if (rule_t$description != "1"){
+    rule_t <- rules[i, ]
+    if (rule_t$description != "1") {
       mix_decisions <- rule_t$description
       rule_binary <- data %>%
         dplyr::transmute(A = ifelse(eval(parse(text = mix_decisions)), 1, 0))

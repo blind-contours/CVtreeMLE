@@ -1,6 +1,5 @@
 
 create_add_marg_ATE_table <- function(updated_marginal_data, A, Y, n, n_folds) {
-
   additive_results <-
     as.data.frame(matrix(
       data = NA,
@@ -16,7 +15,7 @@ create_add_marg_ATE_table <- function(updated_marginal_data, A, Y, n, n_folds) {
       "P-value"
     )
 
-  if(all(is.na(updated_marginal_data)) == FALSE){
+  if (all(is.na(updated_marginal_data)) == FALSE) {
 
     ## identify the mixture components which had at least one fold where no rule was identified to associate with y - is therefore NA or there is no association with y
     dropped_mixed_marginals <- A[is.na(updated_marginal_data)]
@@ -55,8 +54,7 @@ create_add_marg_ATE_table <- function(updated_marginal_data, A, Y, n, n_folds) {
     additive_results$`Lower CI` <- CI[1]
     additive_results$`Upper CI` <- CI[2]
     additive_results$`P-value` <- p.value
-
-  }else{
+  } else {
     additive_results$`Exp. Additive ATE` <- NA
     additive_results$`Standard Error` <- NA
     additive_results$`Lower CI` <- NA
@@ -66,4 +64,3 @@ create_add_marg_ATE_table <- function(updated_marginal_data, A, Y, n, n_folds) {
 
   return(additive_results)
 }
-

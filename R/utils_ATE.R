@@ -20,23 +20,23 @@ calc_ATE_estimates <- function(data, ATE_var, outcome, p_adjust_n, v_fold = FALS
 
   if (v_fold == TRUE) {
     data[, "Thetas"] <- Thetas
-  }else{
+  } else {
     for (i in seq(Thetas)) {
       data[data$folds == i, "Thetas"] <- Thetas[i][[1]]
     }
   }
 
-  ICs = base::by(data, data$folds, function(data) {
-    result = data["H.AW"] * (data[outcome] - data["QbarAW.star"]) + data["Qbar1W.star"] - data["Qbar0W.star"] - data["Thetas"]
+  ICs <- base::by(data, data$folds, function(data) {
+    result <- data["H.AW"] * (data[outcome] - data["QbarAW.star"]) + data["Qbar1W.star"] - data["Qbar0W.star"] - data["Thetas"]
     result
   })
 
   if (v_fold == TRUE) {
     data[, "IC"] <- ICs
-  }else{
-  for (i in seq(ICs)) {
-    data[data$folds == i, "IC"] <- ICs[i]
-  }
+  } else {
+    for (i in seq(ICs)) {
+      data[data$folds == i, "IC"] <- ICs[i]
+    }
   }
 
   n <- dim(data)[1]
@@ -47,8 +47,10 @@ calc_ATE_estimates <- function(data, ATE_var, outcome, p_adjust_n, v_fold = FALS
 
   Theta <- mean(Thetas)
   # obtain 95% two-sided confidence intervals:
-  CI <- c(Theta + stats::qnorm(alpha / 2, lower.tail = T) * se,
-          Theta + stats::qnorm(alpha / 2, lower.tail = F) * se)
+  CI <- c(
+    Theta + stats::qnorm(alpha / 2, lower.tail = T) * se,
+    Theta + stats::qnorm(alpha / 2, lower.tail = F) * se
+  )
 
   # p-value
   p.value <- 2 * stats::pnorm(abs(Theta / se), lower.tail = F)
@@ -56,7 +58,7 @@ calc_ATE_estimates <- function(data, ATE_var, outcome, p_adjust_n, v_fold = FALS
   p.value.adjust <-
     stats::p.adjust(p.value, method = "bonferroni", n = p_adjust_n)
 
-  return(list("ATE" = Theta, "SE" = se, "CI" = CI, "p-value" = p.value, "adj p-value" = p.value.adjust, "data"= data))
+  return(list("ATE" = Theta, "SE" = se, "CI" = CI, "p-value" = p.value, "adj p-value" = p.value.adjust, "data" = data))
 }
 
 ###############################################################################
@@ -77,7 +79,6 @@ calc_ATE_estimates <- function(data, ATE_var, outcome, p_adjust_n, v_fold = FALS
 calc_clever_covariate <- function(gHat1W, data, exposure, H.AW_trunc_lvl, type = "reg") {
   # assertthat::assert_that(!(max(vals) > 1 | min(vals) < 0))
   if (type == "reg") {
-
     n <- length(gHat1W)
     gHat0W <- 1 - gHat1W
 
@@ -87,15 +88,14 @@ calc_clever_covariate <- function(gHat1W, data, exposure, H.AW_trunc_lvl, type =
 
     H.AW <-
       as.numeric(data[exposure] == 1) / gHat1W - as.numeric(data[exposure] == 0) /
-      gHat0W
+        gHat0W
 
     H.AW <-
       ifelse(H.AW > H.AW_trunc_lvl, H.AW_trunc_lvl, H.AW)
 
     H.AW <-
       ifelse(H.AW < -H.AW_trunc_lvl, -H.AW_trunc_lvl, H.AW)
-  }else{
-
+  } else {
     n <- length(gHat1W)
 
     gHatAW <- rep(NA, n)
@@ -109,7 +109,6 @@ calc_clever_covariate <- function(gHat1W, data, exposure, H.AW_trunc_lvl, type =
 
     H.AW <-
       ifelse(H.AW < -H.AW_trunc_lvl, -H.AW_trunc_lvl, H.AW)
-
   }
   return(H.AW)
 }
@@ -143,5 +142,5 @@ fit_least_fav_submodel <- function(H.AW, data, QbarAW, Qbar1W, Qbar0W) {
   Qbar1W.star <- plogis(qlogis(bound_precision(Qbar1W)) + epsilon * H.AW)
   Qbar0W.star <- plogis(qlogis(bound_precision(Qbar0W)) + epsilon * H.AW)
 
-  return(list("QbarAW.star" = QbarAW.star, "Qbar1W.star" = Qbar1W.star, "Qbar0W.star" =  Qbar0W.star))
+  return(list("QbarAW.star" = QbarAW.star, "Qbar1W.star" = Qbar1W.star, "Qbar0W.star" = Qbar0W.star))
 }

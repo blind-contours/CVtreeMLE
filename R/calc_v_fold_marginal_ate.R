@@ -35,7 +35,6 @@ calc_v_fold_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y
 
   index <- 0
   for (i in seq(y)) {
-
     fold_rules_groups <- marginal_group_split(y[[i]])
 
     for (j in seq(fold_rules_groups)) {
@@ -54,7 +53,7 @@ calc_v_fold_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y
         rule_reference <- reference_rule
 
         # var_comps[k] <- comp_label
-        comp_labels[[index]] <-  comp_label
+        comp_labels[[index]] <- comp_label
         rule_comp_cols[[index]] <- rule_comparison
         rule_ref_cols[[index]] <- rule_reference
       }
@@ -111,13 +110,13 @@ calc_v_fold_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y
     sqrd_resids <- (marg_mix$QbarAW.star - marg_mix[Y])^2
     RMSE <- sqrt(mean(sqrd_resids[, 1]))
 
-    marginal_results$`Marginal ATE`[i] <- ATE_results$ATE
-    marginal_results$`Standard Error`[i] <- ATE_results$SE
-    marginal_results$`Lower CI`[i] <- ATE_results$CI[1]
-    marginal_results$`Upper CI`[i] <- ATE_results$CI[2]
-    marginal_results$`P-value`[i] <- ATE_results$`p-value`
-    marginal_results$`P-value Adj`[i] <- ATE_results$`adj p-value`
-    marginal_results$RMSE[i] <- RMSE
+    marginal_results$`Marginal ATE`[i] <- round(ATE_results$ATE, 3)
+    marginal_results$`Standard Error`[i] <- round(ATE_results$SE, 3)
+    marginal_results$`Lower CI`[i] <- round(ATE_results$CI[1], 3)
+    marginal_results$`Upper CI`[i] <- round(ATE_results$CI[2], 3)
+    marginal_results$`P-value`[i] <- round(ATE_results$`p-value`, 6)
+    marginal_results$`P-value Adj`[i] <- round(ATE_results$`adj p-value`, 3)
+    marginal_results$RMSE[i] <- round(RMSE, 3)
 
     updated_marginal_data[[i]] <- ATE_results$data
   }

@@ -31,7 +31,6 @@ est_marg_nuisance_params <- function(At,
                                      no_marg_rules,
                                      marg_decisions,
                                      H.AW_trunc_lvl) {
-
   future::plan(future::sequential, gc = TRUE)
 
   marginal_data <- list()
@@ -46,9 +45,9 @@ est_marg_nuisance_params <- function(At,
       At_c <- At
       Av_c <- Av
 
-      variable_decisions <-marg_decisions_groups[[i]]
+      variable_decisions <- marg_decisions_groups[[i]]
 
-      quant_one_row <- variable_decisions[variable_decisions$quantile == 1,]
+      quant_one_row <- variable_decisions[variable_decisions$quantile == 1, ]
       quant_one_rule <- quant_one_row$rules
 
       # base_rule_name <- paste(quant_one_row$target_m, "ref_rule", sep = "_")
@@ -59,19 +58,18 @@ est_marg_nuisance_params <- function(At,
       Av_c_ref_data <- Av_c %>%
         dplyr::mutate("A" := ifelse(eval(parse(text = quant_one_rule)), 1, 0))
 
-      At_c_ref_data <- At_c_ref_data[At_c_ref_data[, "A"] == 1,]
-      Av_c_ref_data <- Av_c_ref_data[Av_c_ref_data[,"A"] == 1,]
+      At_c_ref_data <- At_c_ref_data[At_c_ref_data[, "A"] == 1, ]
+      Av_c_ref_data <- Av_c_ref_data[Av_c_ref_data[, "A"] == 1, ]
 
       At_c_ref_data[, "A"] <- 0
       Av_c_ref_data[, "A"] <- 0
 
-      quant_comparisons <- variable_decisions[variable_decisions$quantile > 1,]
+      quant_comparisons <- variable_decisions[variable_decisions$quantile > 1, ]
 
       in_group_marg_data <- list()
 
       for (j in seq(nrow(quant_comparisons))) {
-
-        target_m_row <- quant_comparisons[j,] # marg_decisions[marg_decisions$target_m == A[i],]$rules
+        target_m_row <- quant_comparisons[j, ] # marg_decisions[marg_decisions$target_m == A[i],]$rules
 
         # comp_rule_name <- paste(target_m_row$var_quant_group, "rule", sep = "_")
 
@@ -81,8 +79,8 @@ est_marg_nuisance_params <- function(At,
         Av_c_comp_data <- Av_c %>%
           dplyr::mutate("A" := ifelse(eval(parse(text = target_m_row$rules)), 1, 0))
 
-        At_c_comp_data <- At_c_comp_data[At_c_comp_data[,"A"] == 1,]
-        Av_c_comp_data <- At_c_comp_data[At_c_comp_data[,"A"] == 1,]
+        At_c_comp_data <- At_c_comp_data[At_c_comp_data[, "A"] == 1, ]
+        Av_c_comp_data <- At_c_comp_data[At_c_comp_data[, "A"] == 1, ]
 
         At_data <- rbind(At_c_ref_data, At_c_comp_data)
         Av_data <- rbind(Av_c_ref_data, Av_c_comp_data)
@@ -174,24 +172,22 @@ est_marg_nuisance_params <- function(At,
       marginal_data[[i]] <- in_group_marg_data
     }
 
-    marginal_data <- unlist(marginal_data,recursive=FALSE, use.names = FALSE)
-
-    }
-  else {
-      Av_data$gHat1W <- NA
-      Av_data$H.AW <- NA
-      Av_data$QbarAW <- NA
-      Av_data$Qbar1W <- NA
-      Av_data$Qbar0W <- NA
-      marginal_data[[1]] <- Av_data
-      print(
-        paste(
-          "No ATEs calculated in the validation for",
-          marg_decisions$target_m[i],
-          "due to no rule found in training set for marginal impact"
-        )
+    marginal_data <- unlist(marginal_data, recursive = FALSE, use.names = FALSE)
+  } else {
+    Av_data$gHat1W <- NA
+    Av_data$H.AW <- NA
+    Av_data$QbarAW <- NA
+    Av_data$Qbar1W <- NA
+    Av_data$Qbar0W <- NA
+    marginal_data[[1]] <- Av_data
+    print(
+      paste(
+        "No ATEs calculated in the validation for",
+        marg_decisions$target_m[i],
+        "due to no rule found in training set for marginal impact"
       )
-    }
-
-    return(marginal_data)
+    )
   }
+
+  return(marginal_data)
+}
