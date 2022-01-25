@@ -273,7 +273,6 @@ mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific 
 mixture_plots$M1M2M3
 ```
 
-![](man/figures/README-plot sim mixture results-1.png)
 
 This plot shows the ATE specific for each fold and for the weighted-mean results over the fold with corresponding pooled variance. The rule is the pooled rule which includes all observations that were indicated by the fold specific rules. 
 
@@ -294,7 +293,6 @@ marginal_plots <- plot_marginal_results(v_marginal_results =  sim_results$`V-Spe
 marginal_plots$M1
 ```
 
-![](man/figures/README-plot sim marginal results-1.png)
 
 Same as the mixtures plot, the marginal plot shows the ATE for an individual variable in the mixture with corresponding ATE and variance estimates. The top rule is the pooled rule for the reference category, the rule(s) in the boxes are the pooled rules for each quantile that was found for the variable of interest. 
 
