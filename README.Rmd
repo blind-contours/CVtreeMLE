@@ -103,12 +103,9 @@ consider the following example:
 First load the package and other packages needed
 ```{r libraries, warning=FALSE}
 library(CVtreeMLE)
-library(devtools)
-load_all("~/sl3")
+library(sl3)
 library(kableExtra)
 library(ggplot2)
-library(jtools)
-
 
 set.seed(429153)
 ```

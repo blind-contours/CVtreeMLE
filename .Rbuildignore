@@ -6,3 +6,6 @@
 ^Meta$
 ^paper$
 ^README.Rmd$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

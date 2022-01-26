@@ -2,8 +2,7 @@ library(testthat)
 library(devtools)
 library(CVtreeMLE)
 library(xml2)
-
-devtools::load_all("~/sl3")
+library(sl3)
 
 # Only run in RStudio so that automated CRAN checks don't give errors.
 if (.Platform$GUI == "RStudio") {

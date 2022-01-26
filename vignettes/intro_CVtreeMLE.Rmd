@@ -248,8 +248,7 @@ To start, let's load the packages we'll need and set a seed for simulation:
 ```{r setup}
 library(data.table)
 library(CVtreeMLE)
-library(devtools)
-load_all('~/sl3')
+library(sl3)
 library(kableExtra)
 library(qgcomp)
 library(dplyr)
