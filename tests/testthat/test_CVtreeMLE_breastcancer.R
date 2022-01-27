@@ -1,5 +1,4 @@
 library(testthat)
-library(devtools)
 library(CVtreeMLE)
 library(xml2)
 library(sl3)
