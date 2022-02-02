@@ -457,7 +457,7 @@ Same as the mixtures plot, the marginal plot shows the ATE for an individual var
 
 The `CVtreeMLE` package comes with 2 datasets from the 2015-NIEHS-Mixtures-Workshop simulation data (https://github.com/niehs-prime/2015-NIEHS-MIxtures-Workshop). Let's load this data and run `CVtreeMLE` to see if we identify 1. any interactions in the variables and 2. the correct marginal relationships and directions of the mixture variables. 
 
-```{r metals example}
+```{r NIEHS example}
 data("NIEHS_data_1", package="CVtreeMLE")
 ```
 

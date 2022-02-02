@@ -76,7 +76,7 @@ installing `sl3` from GitHub via
 [`remotes`](https://CRAN.R-project.org/package=remotes):
 
 ```{r sl3-gh-master-installation, eval = FALSE}
-remotes::install_github("tlverse/sl3@master")
+remotes::install_github("tlverse/sl3@devel")
 ```
 
 For the latest features, install the most recent _stable version_  of `CVtreeMLE`

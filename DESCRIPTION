@@ -36,14 +36,15 @@ Imports:
     MASS,
     here,
     qgcomp,
-    ggplot2
+    ggplot2,
+    fastDummies
 Suggests:
-    fastDummies,
     rmarkdown,
     knitr,
     testthat (>= 3.0.0),
     mlbench,
     xml2
+Remotes: tlverse/sl3@devel
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
