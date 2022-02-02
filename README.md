@@ -433,7 +433,7 @@ sim_results <- CVtreeMLE(data = sim_data,
 
 proc.time() - ptm 
 #>    user  system elapsed 
-#> 350.080  16.387 213.231
+#> 374.725  15.906 208.697
 ```
 
 Let’s first look at the RMSE for the iterative back-fitting models.
@@ -469,7 +469,7 @@ RMSE
 M1
 </td>
 <td style="text-align:right;">
-0.0653692
+0.0656893
 </td>
 </tr>
 <tr>
@@ -477,7 +477,7 @@ M1
 M2
 </td>
 <td style="text-align:right;">
-0.0643811
+0.0643526
 </td>
 </tr>
 <tr>
@@ -485,7 +485,7 @@ M2
 M3
 </td>
 <td style="text-align:right;">
-0.0646840
+0.0636764
 </td>
 </tr>
 <tr>
@@ -493,7 +493,7 @@ M3
 M1M2M3
 </td>
 <td style="text-align:right;">
-0.0240230
+0.0217018
 </td>
 </tr>
 </tbody>
@@ -557,10 +557,10 @@ Fraction Covered
 0.019
 </td>
 <td style="text-align:right;">
-5.946
+5.945
 </td>
 <td style="text-align:right;">
-6.019
+6.02
 </td>
 <td style="text-align:right;">
 0
@@ -655,13 +655,13 @@ Variables
 5.76
 </td>
 <td style="text-align:left;">
-0.081
+0.083
 </td>
 <td style="text-align:left;">
-5.601
+5.597
 </td>
 <td style="text-align:left;">
-5.919
+5.923
 </td>
 <td style="text-align:left;">
 0
@@ -673,7 +673,7 @@ Variables
 0.412
 </td>
 <td style="text-align:left;">
-M2 &gt; 2.001 & M3 &gt; 2.533 & M1 &lt;= 0.953
+M3 &gt; 2.533 & M2 &gt; 2.001 & M1 &lt;= 0.953
 </td>
 <td style="text-align:left;">
 M1M2M3
@@ -705,7 +705,7 @@ M1M2M3
 0.416
 </td>
 <td style="text-align:left;">
-M1 &lt;= 0.934 & M2 &gt; 1.966 & M3 &gt; 2.478
+M1 &lt;= 0.934 & M2 &gt; 2.007 & M3 &gt; 2.478
 </td>
 <td style="text-align:left;">
 M1M2M3
@@ -719,13 +719,13 @@ Pooled
 5.823
 </td>
 <td style="text-align:left;">
-0.086
+0.088
 </td>
 <td style="text-align:left;">
-5.6543
+5.651
 </td>
 <td style="text-align:left;">
-5.9916
+5.9956
 </td>
 <td style="text-align:left;">
 0
@@ -756,7 +756,7 @@ We can plot our v-fold mixture results findings using the
 names corresponding to the interactions found.
 
 ``` r
-mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific Mix Results`, move_right = 1)
+mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific Mix Results`, hjust = 1)
 mixture_plots$M1M2M3
 ```
 

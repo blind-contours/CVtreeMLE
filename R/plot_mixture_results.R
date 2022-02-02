@@ -6,7 +6,7 @@
 #'
 #' @export
 
-plot_mixture_results <- function(v_intxn_results, move_right) {
+plot_mixture_results <- function(v_intxn_results, hjust) {
   plot_list <- list()
   for (i in seq(v_intxn_results)) {
     intxn_results <- v_intxn_results[[i]]
@@ -39,7 +39,7 @@ plot_mixture_results <- function(v_intxn_results, move_right) {
       ggplot2::ggtitle(title) +
       ggplot2::theme_classic() +
       ggplot2::theme(text = text_theme, axis.text = axis_text_theme, legend.position = "none") +
-      ggplot2::geom_text(size=4, hjust=move_right, vjust=0, colour = "#3C3C3C", nudge_x = -0, nudge_y = 0.0)
+      ggplot2::geom_text(size=4, hjust=hjust, vjust=0, colour = "#3C3C3C", nudge_x = -0, nudge_y = 0.0)
 
     # ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45))
 

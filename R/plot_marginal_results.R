@@ -7,7 +7,7 @@
 #'
 #' @export
 
-plot_marginal_results <- function(v_marginal_results, mix_comps) {
+plot_marginal_results <- function(v_marginal_results, mix_comps, hjust) {
   plot_list <- list()
 
   for (var in mix_comps) {
@@ -47,7 +47,7 @@ plot_marginal_results <- function(v_marginal_results, mix_comps) {
         ggplot2::ggtitle(title) +
         ggplot2::theme_classic() +
         ggplot2::theme(text = text_theme, axis.text = axis_text_theme, legend.position = "none") +
-        ggplot2::geom_text(size=5, hjust=0.5, vjust=0, colour = "#3C3C3C", nudge_x = 0, nudge_y = 0.0)
+        ggplot2::geom_text(size=5, hjust=hjust, vjust=0, colour = "#3C3C3C", nudge_x = 0, nudge_y = 0.0)
 
       # ggplot2::scale_x_continuous(breaks = round(seq(min(marg_data$`Marginal ATE`), max(marg_data$`Marginal ATE`), by =(max(marg_data$`Marginal ATE`) - min(marg_data$`Marginal ATE`)) / 5), 2))
       # ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45))

@@ -262,19 +262,32 @@ set.seed(11249)
 Let's start by simulating data in a similar way as we did in the `README.md` tutorial: 
 
 ```{r simulation inputs}
-n_obs <- 500 # number of observations we want to simulate
-splits <- c(0.8, 2.5, 3.6) # split points for each mixture
-mins <- c(0, 0, 0) # minimum values for each mixture
-maxs <- c(3, 4, 5) # maximum value for each mixture
-mu <- c(0, 0, 0) # mu for each mixture
-sigma <- matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3) # variance/covariance of mixture variables
-w1_betas <- c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04) # subspace probability relationship with covariate W1
-w2_betas <- c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04) # subspace probability relationship with covariate W2
-mix_subspace_betas <- c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09) # probability of mixture subspace (for multinomial outcome generation)
-subspace_assoc_strength_betas <- c(0, 3, 0, 0, 0, 0, 0, 0) # mixture subspace impact on outcome Y, here the subspace where M1 is lower and M2 and M3 are higher based on values in splits
-marginal_impact_betas <- c(0, 0, 0) # marginal impact of mixture component on Y
-eps_sd <- 0.01 # random error
-binary <- FALSE # if outcome is binary
+ # number of observations we want to simulate
+n_obs <- 200
+# split points for each mixture
+splits <- c(0.8, 2.5, 3.6) 
+# minimum values for each mixture
+mins <- c(0, 0, 0)
+# maximum value for each mixture
+maxs <- c(3, 4, 5) 
+# mu for each mixture
+mu <- c(0, 0, 0)
+# variance/covariance of mixture variables
+sigma <- matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3) 
+# subspace probability relationship with covariate W1
+w1_betas <- c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04)
+# subspace probability relationship with covariate W2
+w2_betas <- c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04)
+# probability of mixture subspace (for multinomial outcome generation)
+mix_subspace_betas <- c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09)
+# mixture subspace impact on outcome Y, here the subspace where M1 is lower and M2 and M3 are higher based on values in splits
+subspace_assoc_strength_betas <- c(0, 3, 0, 0, 0, 0, 0, 0)
+# marginal impact of mixture component on Y
+marginal_impact_betas <- c(0, 0, 0) 
+# random error
+eps_sd <- 0.01 
+# if outcome is binary
+binary <- FALSE
 ```
 
 As discussed, the `subspace_assoc_strength_betas` parameter is used to indicate the subspace we want to use and the expected outcome in that subspace.
@@ -324,10 +337,9 @@ Here, we set up our Super Learner using `SL3` for the iterative backfitting proc
 lrnr_glm <- Lrnr_glm$new()
 lrnr_bayesglm <- Lrnr_bayesglm$new()
 lrnr_gam <- Lrnr_gam$new()
-lrnr_ranger <- Lrnr_ranger$new()
 
 # put all the learners together (this is just one way to do it)
-learners <- c(lrnr_glm, lrnr_bayesglm, lrnr_gam, lrnr_ranger)
+learners <- c(lrnr_glm, lrnr_bayesglm, lrnr_gam)
 
 Q1_stack <- make_learner(Stack, learners)
 ```
@@ -369,7 +381,7 @@ sim_results <- CVtreeMLE(data = sim_data,
                          A = c(paste("M", seq(3), sep = "")),
                          back_iter_SL = Q1_stack,
                          tree_SL = discrete_tree_sl, 
-                         n_folds = 3,
+                         n_folds = 2,
                          family = "gaussian",
                          H.AW_trunc_lvl = 10,
                          parallel = TRUE,
@@ -430,7 +442,7 @@ kable_classic(full_width = F, html_font = "Cambria")
 We can plot our v-fold mixture results findings using the `plot_mixture_results` function. This will return a list of plots with names corresponding to the interactions found.
 
 ```{r plot sim_mixture_results, fig.height = 3, fig.width = 8}
-mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific Mix Results`)
+mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific Mix Results`,hjust = 0.8)
 mixture_plots$M1M2M3
 ```
 
@@ -448,89 +460,8 @@ This plot shows the data-adaptively identified quantile comparisons for each var
 Similarly we can investigate and plot the v-fold specific estimates: 
 
 ```{r plot sim marginal results, fig.height = 3, fig.width = 8}
-marginal_plots <- plot_marginal_results(v_marginal_results =  sim_results$`V-Specific Marg Results`, mix_comps = c(paste("M", seq(3), sep = "")))
+marginal_plots <- plot_marginal_results(v_marginal_results =  sim_results$`V-Specific Marg Results`, mix_comps = c(paste("M", seq(3), sep = "")),hjust = 0.8 )
 marginal_plots$M2
 ```
 Same as the mixtures plot, the marginal plot shows the ATE for an individual variable in the mixture with corresponding ATE and variance estimates. The top rule is the pooled rule for the reference category, the rule(s) in the boxes are the pooled rules for each quantile that was found for the variable of interest. 
-
-## NIEHS Mixture Workshop Data
-
-The `CVtreeMLE` package comes with 2 datasets from the 2015-NIEHS-Mixtures-Workshop simulation data (https://github.com/niehs-prime/2015-NIEHS-MIxtures-Workshop). Let's load this data and run `CVtreeMLE` to see if we identify 1. any interactions in the variables and 2. the correct marginal relationships and directions of the mixture variables. 
-
-```{r NIEHS example}
-data("NIEHS_data_1", package="CVtreeMLE")
-```
-
-```{r run NIEHS}
-ptm <- proc.time()
-NIEHS_data_1 <- as.data.frame(NIEHS_data_1)
-NIEH_1_results <- CVtreeMLE(data = NIEHS_data_1,
-                            W = "Z",
-                            Y = "Y",
-                            A = c("X1", "X2", "X3", "X4", "X5", "X6", "X7"),
-                            back_iter_SL = Q1_stack,
-                            tree_SL = discrete_tree_sl, 
-                            n_folds = 3,
-                            family = "gaussian",
-                            H.AW_trunc_lvl = 10,
-                            parallel = TRUE,
-                            num_cores = 2,
-                            max_iter = 5,
-                            verbose = FALSE)
-proc.time() - ptm
-```
-
-Again, let's look at our model fits first: 
-
-```{r NIEHS RMSE}
-NIEH_1_RMSE <- NIEH_1_results$`Model RMSEs`
-NIEH_1_RMSE %>%
-  kbl(caption = "NIEH Data 1 Model Fit Results") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
-```
-
-And again we can compare our fits to an existing available method for mixtures: 
-
-```{r quant_sum NIEHS}
-NIEHS_data_1_model <- qgcomp(Y~., expnms=c("X1", "X2", "X3", "X4", "X5", "X6", "X7"), data=NIEHS_data_1)
-sqrt(mean((predict(NIEHS_data_1_model$fit) - NIEHS_data_1$Y)^2))
-```
-
-Let's look at the pooled TMLE results for interactions found in this NIEH dataset: 
-
-```{r NIEH mixture results}
-NIEH_1_intxn_results <- NIEH_1_results$`Pooled TMLE Mixture Results`
-NIEH_1_intxn_results %>%
-  kbl(caption = "NIEH Mixture Results") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
-```
-
-
-We can look at the v-fold specific estimates for an interaction found between variables $X_1$ and $X_5$
-
-```{r NIEH v-fold mixture results}
-NIEH_v_intxn_results <- NIEH_1_results$`V-Specific Mix Results`
-NIEH_v_intxn_results[[1]] %>%
-  kbl(caption = "v-fold NIEH Mixture Results") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
-```
-
-We see the fits of the models used to derive our exposure variables are much lower. 
-
-```{r plot marginal results}
-marginal_plots <- plot_marginal_results(v_marginal_results = NIEH_1_results$`V-Specific Marg Results`, mix_comps =  c("X1", "X2", "X3", "X4", "X5", "X6", "X7"))
-names(marginal_plots)
-
-```
-
-This list shows what mixture variable marginal results were found for.
-  
-```{r NIEH marginal plot example, fig.height = 3, fig.width = 8}
-marginal_plots$X1
-```
-
-```{r plot interaction results, fig.height = 3, fig.width = 8}
-mixture_plots <- plot_mixture_results(v_intxn_results = NIEH_1_results$`V-Specific Mix Results`)
-mixture_plots$X2X5
-```
 

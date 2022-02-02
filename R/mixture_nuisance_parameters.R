@@ -47,14 +47,16 @@ est_mix_nuisance_params <- function(At, Av, W, no_mix_rules, Q1_stack, family, r
           data = At_mix,
           covariates = W,
           outcome = "A_mix",
-          outcome_type = "binomial"
+          outcome_type = "binomial",
+          folds = 2
         )
 
         task_Av <- sl3::make_sl3_Task(
           data = Av_mix,
           covariates = W,
           outcome = "A_mix",
-          outcome_type = "binomial"
+          outcome_type = "binomial",
+          folds = 2
         )
 
         discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new()

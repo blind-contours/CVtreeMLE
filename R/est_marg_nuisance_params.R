@@ -89,7 +89,8 @@ est_marg_nuisance_params <- function(At,
           data = At_data,
           covariates = W,
           outcome = "A",
-          outcome_type = "binomial"
+          outcome_type = "binomial",
+          folds = 2
         )
 
         task_Av <- sl3::make_sl3_Task(

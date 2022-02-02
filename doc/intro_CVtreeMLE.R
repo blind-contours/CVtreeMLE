@@ -6,9 +6,8 @@ knitr::opts_chunk$set(
 
 ## ----setup--------------------------------------------------------------------
 library(data.table)
-library(devtools)
 library(CVtreeMLE)
-devtools::load_all('~/sl3')
+library(sl3)
 library(kableExtra)
 library(qgcomp)
 library(dplyr)
@@ -16,7 +15,7 @@ library(dplyr)
 set.seed(11249)
 
 ## ----simulation inputs--------------------------------------------------------
-n_obs <- 500 # number of observations we want to simulate
+n_obs <- 200 # number of observations we want to simulate
 splits <- c(0.8, 2.5, 3.6) # split points for each mixture
 mins <- c(0, 0, 0) # minimum values for each mixture
 maxs <- c(3, 4, 5) # maximum value for each mixture
@@ -48,17 +47,16 @@ sim_data <- simulate_mixture_cube(
 )
 
 head(sim_data) %>%
-  kableExtra::kbl(caption = "Simulated Data") %>%
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+  kbl(caption = "Simulated Data") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
 
 ## ----setup first stack learners-----------------------------------------------
 lrnr_glm <- Lrnr_glm$new()
 lrnr_bayesglm <- Lrnr_bayesglm$new()
 lrnr_gam <- Lrnr_gam$new()
-lrnr_ranger <- Lrnr_ranger$new()
 
 # put all the learners together (this is just one way to do it)
-learners <- c(lrnr_glm, lrnr_bayesglm, lrnr_gam, lrnr_ranger)
+learners <- c(lrnr_glm, lrnr_bayesglm, lrnr_gam)
 
 Q1_stack <- make_learner(Stack, learners)
 
@@ -88,7 +86,7 @@ sim_results <- CVtreeMLE(data = sim_data,
                          A = c(paste("M", seq(3), sep = "")),
                          back_iter_SL = Q1_stack,
                          tree_SL = discrete_tree_sl, 
-                         n_folds = 3,
+                         n_folds = 2,
                          family = "gaussian",
                          H.AW_trunc_lvl = 10,
                          parallel = TRUE,
@@ -100,8 +98,8 @@ proc.time() - ptm
 ## ----model RMSE---------------------------------------------------------------
 RMSE_results <- sim_results$`Model RMSEs`
 RMSE_results %>%
-kableExtra::kbl(caption = "Model Fit Results") %>%
-kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+kbl(caption = "Model Fit Results") %>%
+kable_classic(full_width = F, html_font = "Cambria")
 
 ## ----additive quantile g-comp-------------------------------------------------
  qgcomp_additive_model <- qgcomp(y~M1+M2+M3+W+W2, expnms=c("M1", "M2", "M3"), data=sim_data)
@@ -114,81 +112,26 @@ sqrt(mean((predict(qgcomp_multi_model$fit) - sim_data$y)^2))
 ## ----mixture results----------------------------------------------------------
 pooled_mixture_results <- sim_results$`Pooled TMLE Mixture Results`
 pooled_mixture_results %>%
-  kableExtra::kbl(caption = "Pooled TMLE Mixture Results") %>%
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+kbl(caption = "Pooled TMLE Mixture Results") %>%
+kable_classic(full_width = F, html_font = "Cambria")
 
 ## ----fold specific results----------------------------------------------------
 mixture_v_results <- sim_results$`V-Specific Mix Results`
 mixture_v_results$M1M2M3 %>%
-  kableExtra::kbl(caption = "V-Fold Mixture Results") %>%
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+kbl(caption = "V-Fold Mixture Results") %>%
+kable_classic(full_width = F, html_font = "Cambria")
 
 ## ----plot sim_mixture_results, fig.height = 3, fig.width = 8------------------
-mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific Mix Results`)
+mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific Mix Results`,hjust = 0.8)
 mixture_plots$M1M2M3
 
 ## ----marginal results---------------------------------------------------------
 pooled_marginal_results <- sim_results$`Pooled TMLE Marginal Results`
 pooled_marginal_results %>%
-  kableExtra::kbl(caption = "Pooled Marginal Results") %>%
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+kbl(caption = "Pooled Marginal Results") %>%
+kable_classic(full_width = F, html_font = "Cambria")
 
 ## ----plot sim marginal results, fig.height = 3, fig.width = 8-----------------
-marginal_plots <- plot_marginal_results(v_marginal_results =  sim_results$`V-Specific Marg Results`, mix_comps = c(paste("M", seq(3), sep = "")))
-marginal_plots$M1
-
-## ----metals example-----------------------------------------------------------
-data("NIEHS_data_1", package="CVtreeMLE")
-
-## ----run NIEHS----------------------------------------------------------------
-ptm <- proc.time()
-NIEHS_data_1 <- as.data.frame(NIEHS_data_1)
-NIEH_1_results <- CVtreeMLE(data = NIEHS_data_1,
-                            W = "Z",
-                            Y = "Y",
-                            A = c("X1", "X2", "X3", "X4", "X5", "X6", "X7"),
-                            back_iter_SL = Q1_stack,
-                            tree_SL = discrete_tree_sl, 
-                            n_folds = 2,
-                            family = "gaussian",
-                            H.AW_trunc_lvl = 10,
-                            parallel = TRUE,
-                            num_cores = 2,
-                            max_iter = 5,
-                            verbose = FALSE)
-proc.time() - ptm
-
-## ----NIEHS RMSE---------------------------------------------------------------
-NIEH_1_RMSE <- NIEH_1_results$`Model RMSEs`
-NIEH_1_RMSE %>%
-  kableExtra::kbl(caption = "NIEH Data 1 Model Fit Results") %>%
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
-
-## ----quant_sum NIEHS----------------------------------------------------------
-NIEHS_data_1_model <- qgcomp(Y~., expnms=c("X1", "X2", "X3", "X4", "X5", "X6", "X7"), data=NIEHS_data_1)
-sqrt(mean((predict(NIEHS_data_1_model$fit) - NIEHS_data_1$Y)^2))
-
-## ----NIEH mixture results-----------------------------------------------------
-NIEH_1_intxn_results <- NIEH_1_results$`Pooled TMLE Mixture Results`
-NIEH_1_intxn_results %>%
-  kableExtra::kbl(caption = "NIEH Mixture Results") %>%
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
-
-## ----NIEH v-fold mixture results----------------------------------------------
-NIEH_v_intxn_results <- NIEH_1_results$`V-Specific Mix Results`
-NIEH_v_intxn_results[[1]] %>%
-  kableExtra::kbl(caption = "v-fold NIEH Mixture Results") %>%
-  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
-
-## ----plot marginal results----------------------------------------------------
-marginal_plots <- plot_marginal_results(v_marginal_results = NIEH_1_results$`V-Specific Marg Results`, mix_comps =  c("X1", "X2", "X3", "X4", "X5", "X6", "X7"))
-names(marginal_plots)
-
-
-## ----NIEH marginal plot example, fig.height = 3, fig.width = 8----------------
-marginal_plots$X1
-
-## ----plot interaction results, fig.height = 3, fig.width = 8------------------
-mixture_plots <- plot_mixture_results(v_intxn_results = NIEH_1_results$`V-Specific Mix Results`)
-mixture_plots$X2X5
+marginal_plots <- plot_marginal_results(v_marginal_results =  sim_results$`V-Specific Marg Results`, mix_comps = c(paste("M", seq(3), sep = "")),hjust = 0.8 )
+marginal_plots$M2
 

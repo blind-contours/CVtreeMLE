@@ -280,7 +280,7 @@ head(mixture_v_results) %>%
 We can plot our v-fold mixture results findings using the `plot_mixture_results` function. This will return a list of plots with names corresponding to the interactions found.
 
 ```{r plot sim mixture results}
-mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific Mix Results`, move_right = 1)
+mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific Mix Results`, hjust = 1)
 mixture_plots$M1M2M3
 ```
 
