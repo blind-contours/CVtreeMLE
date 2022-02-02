@@ -83,7 +83,7 @@ For the latest features, install the most recent _stable version_  of `CVtreeMLE
 from GitHub via [`remotes`](https://CRAN.R-project.org/package=remotes):
 
 ```{r gh-master-installation, eval = FALSE}
-remotes::install_github("blind-contours/CVtreeMLE@master")
+remotes::install_github("blind-contours/CVtreeMLE@main")
 ```
 
 To contribute, install the _development version_ of `CVtreeMLE` from GitHub via
@@ -114,24 +114,38 @@ Use the `simulate_mixture_cube` function to generate simulated data that represe
 
 
 ![](man/figures/The_Cube.png)
-The above figure illustrates the data we will generate using this function. Here, individuals exposed to $M_1$ at values less than 1.0, $M_2$ at levels more than 2.0, and $M_3$ at levels at or greater than 2.5 have an outcome of 6, compared to individuals not exposed to this combination of thresholds who have an expected outcome of 0 - thus our ATE is 6. Two covariates $W$ confound this relationship. Let's simulate this scenario.
+The above figure illustrates what we mean by a *mixture cube*. We will simulate data for the cube in blue but other mixture combinations are possible. Here, individuals exposed to $M_1$ at values less than 1.0, $M_2$ at levels more than 2.0, and $M_3$ at levels at or greater than 2.5 have an outcome of 6, compared to individuals not exposed to this combination of thresholds who have an expected outcome of 0 - thus our true mixture ATE is 6. Two covariates $W$ confound this relationship. Let's simulate this scenario.
 
 ## Simulate Data
 
 ```{r simulation inputs}
-n_obs <- 500 # number of observations we want to simulate
-splits <- c(0.99, 2.0, 2.5) # split points for each mixture
-mins <- c(0, 0, 0) # minimum values for each mixture
-maxs <- c(3, 4, 5) # maximum value for each mixture
-mu <- c(0, 0, 0) # mu for each mixture
-sigma <- matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3) # variance/covariance of mixture variables
-w1_betas <- c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04) # subspace probability relationship with covariate W1
-w2_betas <- c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04) # subspace probability relationship with covariate W2
-mix_subspace_betas <- c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09) # probability of mixture subspace (for multinomial outcome generation)
-subspace_assoc_strength_betas <- c(0, 0, 0, 0, 0, 0, 6, 0) # mixture subspace impact on outcome Y, here the subspace where M1 is lower and M2 and M3 are higher based on values in splits
-marginal_impact_betas <- c(0, 0, 0) # marginal impact of mixture component on Y
-eps_sd <- 0.01 # random error
-binary <- FALSE # if outcome is binary
+# number of observations we want to simulate
+n_obs <- 500 
+# split points for each mixture
+splits <- c(0.99, 2.0, 2.5) 
+# minimum values for each mixture
+mins <- c(0, 0, 0) 
+ # maximum value for each mixture
+maxs <- c(3, 4, 5)
+ # mu for each mixture
+mu <- c(0, 0, 0)
+# variance/covariance of mixture variables
+sigma <- matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3) 
+# subspace probability relationship with covariate W1
+w1_betas <- c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04) 
+# subspace probability relationship with covariate W2
+w2_betas <- c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04) 
+ # probability of mixture subspace (for multinomial outcome generation)
+mix_subspace_betas <- c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09)
+# mixture subspace impact on outcome Y, here the subspace where M1 is lower and 
+# M2 and M3 are higher based on values in splits
+subspace_assoc_strength_betas <- c(0, 0, 0, 0, 0, 0, 6, 0) 
+# marginal impact of mixture component on Y
+marginal_impact_betas <- c(0, 0, 0) 
+# random error
+eps_sd <- 0.01 
+# if outcome is binary
+binary <- FALSE
 ```
 
 Above, the `subspace_assoc_strength_betas` parameter is used to indicate
@@ -171,7 +185,7 @@ head(sim_data) %>%
 ```
 ## Set up Estimators used in Super Learners 
 
-Here, we set up our Super Learner using `SL3` for the iterative backfitting procedure and for our $Q$ and $g$ mechanisms. These learners will fit $Y|W$ offset by $Y|A$ as we fit decision trees to the exposure variables both jointly and individially. Once rules are established, this Super Learner will also estimate the the propensity of being exposed to the determined rule as well as estimating the outcome model.
+Here, we set up our Super Learner using `SL3` for the iterative backfitting procedure and for our $Q$ and $g$ mechanisms. These learners will fit $Y|W$ offset by $Y|A$ as we fit decision trees to the exposure variables both jointly and individually Once rules are established, this Super Learner will also estimate the the propensity of being exposed to the determined rule as well as estimating the outcome model.
 
 ```{r setup first stack learners}
 lrnr_glm <- Lrnr_glm$new()
@@ -253,7 +267,7 @@ head(mixture_results) %>%
 ```
 *Note - results in explanations below may change slightly based on runs: 
 
-Above, the mixture ATE for this rule is 2.92 (2.73 - 3.10), which covers our true ATE used to generate the data which was 3. The mixture ATE is interpreted as: the average counterfactual mean outcome if all individuals were exposed to the rule shown in `Mixture Interaction Rules` compared to if all individuals were unexposed is 2.92. That is, those individuals who are exposed to this rule have an outcome that is 2.92 higher compared to those that are not exposed to this rule. The standard error, confidence intervals and p-values are derived from the influence curve of this estimator as described above. 
+Above, the estimated mixture ATE for this rule is 5.92 (5.73 - 6.10), which covers our true mixture ATE used to generate the data which was 6. The estimated mixture ATE is interpreted as: the average counterfactual mean outcome if all individuals were exposed to the rule shown in `Mixture Interaction Rules` compared to if all individuals were unexposed is 5.92. That is, those individuals who are exposed to this rule have an outcome that is 5.92 higher compared to those that are not exposed to this rule. The standard error, confidence intervals and p-values are derived from the influence curve of this estimator.
 
 
 ```{r fold specific results}
@@ -266,56 +280,15 @@ head(mixture_v_results) %>%
 We can plot our v-fold mixture results findings using the `plot_mixture_results` function. This will return a list of plots with names corresponding to the interactions found.
 
 ```{r plot sim mixture results}
-mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific Mix Results`)
+mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific Mix Results`, move_right = 1)
 mixture_plots$M1M2M3
 ```
 
 
 This plot shows the ATE specific for each fold and for the weighted-mean results over the fold with corresponding pooled variance. The rule is the pooled rule which includes all observations that were indicated by the fold specific rules. 
 
-```{r pooled marginal results}
-marginal_results <- sim_results$`Pooled TMLE Marginal Results`
-head(marginal_results) %>%
-  kbl(caption = "Mixture Results") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
-```
 
-This plot shows the data-adaptively identified quantile comparisons for each variable. Here `M1_2 - M1_1` shows the second quantile for variable $M1$ minus the first quantile for $M1$. As expected, this difference is positive and the other two are negative given how we simulated our data. 
-
-
-Similarly we can investigate and plot the v-fold specific estimates: 
-
-```{r plot sim marginal results}
-marginal_plots <- plot_marginal_results(v_marginal_results =  sim_results$`V-Specific Marg Results`, mix_comps = c(paste("M", seq(3), sep = "")))
-marginal_plots$M1
-```
-
-
-Same as the mixtures plot, the marginal plot shows the ATE for an individual variable in the mixture with corresponding ATE and variance estimates. The top rule is the pooled rule for the reference category, the rule(s) in the boxes are the pooled rules for each quantile that was found for the variable of interest. 
-
-
-## Mixture and Marginal Results
-
-Let's first look at the mixture results for the model that had the lowest RMSE:
-
-```{r mixture results}
-mixture_results <- sim_results$`Mixture Results`
-head(mixture_results) %>%
-  kbl(caption = "Mixture Results") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
-```
-In this table, Mixture ATE is the counterfactual mean difference if everyone was exposed to this rule compared to if nobody was exposed to this rule. Mixture interaction rule is the final rule created that covers all individuals across the fold specific mixture rules. Coverage is what proportion of individuals are covered by this rule and is an indicator of rule stability.  
-
-These are the rules found for each individual variable in the vector of exposures while controlling for other exposures and covariates. 
-
-```{r marginal results}
-marginal_results <- sim_results$`Marginal Results`
-head(marginal_results) %>%
-  kbl(caption = "Marginal Results") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
-```
-
-Across the folds, the expected outcome given the cumulative sum of marginal exposures is also estimated. That is, answering a question such as "What is the exposure specific mean for each additional exposure level".
+`CVtreeMLE` also data-adaptively identifies cut-points in the marginal space. Additional details for this and other features are given in the vignette. 
 
 
 ---

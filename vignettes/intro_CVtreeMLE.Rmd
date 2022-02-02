@@ -31,34 +31,34 @@ We define our sample-split data-adaptive statistical target parameter as the ave
 
 ## Iterative Backfitting of Decision Trees
 
-Consider our outcome $Y$ is generated through the sum of two functions $h(A)$ and $g(W)$ ($Y = h(A) + g(W)$). Notice that, here we assume no interactions between $h(A) and g(W)$, an assumption we will test later. Here, $h(A)$ is an ensemble of decision tree algorithms applied to the vector of exposures $A$. Decision trees and their ensembles are popular methods for the machine learning tasks of classification and regression and are widely used since they are easy to interpret, handle many types of outcomes, and do not require feature scaling or dimensional reduction. Decision trees are particularly good at capturing non-linearities and feature interactions which is of specific interest in mixed exposures.
+Consider our outcome $Y$ is generated through the sum of two functions $f(A)$ and $h(W)$ ($Y = h(A) + g(W)$). Notice that, here we assume no interactions between $f(A) and h(W)$, an assumption we will test later. Here, $f(A)$ is an ensemble of decision tree algorithms applied to the vector of exposures $A$. Decision trees and their ensembles are popular methods for the machine learning tasks of classification and regression and are widely used since they are easy to interpret, handle many types of outcomes, and do not require feature scaling or dimensional reduction. Decision trees are particularly good at capturing non-linearities and feature interactions which is of specific interest in mixed exposures.
 
 In most research scenarios, the analyst is also interested in deriving statistical inference after fitting a single decision tree algorithm, that is, the analyst is interested in a p-value for the difference in mean outcomes between the nodes that delineate certain regions in the joint space. Inference on this difference in means has involved conditioning on parent nodes in the branch that led to this split in the tree. There are two main issues with this approach of deriving statistical inference in decision tree models. The first is that the same data is used to both identify partitioning nodes and make statistical inference on these nodes that were not known *a priori*. Obviously, this approach leads to biased estimates due to overfitting as one is "double dipping" by using the full data to both identify values in the exposures used as splits in the decision tree and make statistical inference given these split values.  The second issue is the need to flexibly control for covariates $W$ in an unrestricted, non-parametric fashion, while simultaneously fitting a decision tree model to a vector of exposures $A$. This is because, in the context of mixed exposures, the analyst is interested in interpretable thresholds of chemical exposures with robust statistical inference after flexibly adjusting for covariates (not making additive assumptions and allowing for many types of interactions in the covariate space).  
 
 Altogether, to meet this goal requires a new statistical approach in tree fitting on $A$ that flexibly controls for covariates $W$ and ensures that the target parameter we derive from the tree is asymptotically effiient - we need a methodology that derives causal inference from decision trees.  To do this we start with a simple iterative backfitting algorithm. The additive model described is a semi-parametric regression model of the form: 
 
 \begin{equation}
-Y_i =  h(A_{i}) + g(W_{i}) +  \epsilon_i
+Y_i =  f(A_{i}) + h(W_{i}) +  \epsilon_i
 \end{equation}
 
 Where $A_i$ is a vector of exposure values for individual $i$ and $W_i$ is a vector of covariate values for individual $i$. The backfitting procedure is done in the following way: 
 
-* **Initialize** $g(W)$ by fitting a discrete Super Learner for $Y|W$ 
+* **Initialize** $h(W)$ by fitting a discrete Super Learner for $Y|W$ 
   + **Predict** $Y|W$ to get $Y^*$ 
-* **Initialize** $h(A)$ by fitting a discrete Super Learner of model-based recursive partitioning algorithms for $Y|A$ 
+* **Initialize** $f(A)$ by fitting a discrete Super Learner of model-based recursive partitioning algorithms for $Y|A$ 
   + **Predict** $Y|A$ to get $Y^{**}$ 
 
 * **Do** until convergence: 
-  + *Fit* $g(W)$ offset by $Y^{**}$
-  + *Predict* $Y$ using $g(W)$ with no offset to get new $Y^*$
-  + *Predict* $Y$ using $g(W)$ with offset ($g(A,W)$)
-  + *Fit* $h(A)$ offset by $Y^{*}$
-  + *Predict* $Y$ using $h(A)$ with no offset to get new $Y^{**}$ 
-  + *Predict* $Y$ using $h(A)$ with offset ($h(A,W)$)
+  + *Fit* $h(W)$ offset by $Y^{**}$
+  + *Predict* $Y$ using $h(W)$ with no offset to get new $Y^*$
+  + *Predict* $Y$ using $h(W)$ with offset ($h(A,W)$)
+  + *Fit* $f(A)$ offset by $Y^{*}$
+  + *Predict* $Y$ using $f(A)$ with no offset to get new $Y^{**}$ 
+  + *Predict* $Y$ using $f(A)$ with offset ($f(A,W)$)
   
-_Where_ convergence is defined as no change in the difference between $g(A,W)$ and $h(A,W)$ between iterations based on a threshold (by default this value is defined as $\delta$ = 0.001). In this way, we can say that the two models have converged to the same model.  
+_Where_ convergence is defined as no change in the difference between $h(A,W)$ and $f(A,W)$ between iterations based on a threshold (by default this value is defined as $\delta$ = 0.001). In this way, we can say that the two models have converged to the same model.  
   
-This algorithm is applied to $A$ as a mixture to generate a decision tree that includes multiple different exposures in $A$ while adjusting for $W$ non-parametrically. Likewise, the backfitting algorithm is applied to each individual component of $A$, $A_i$, while controlling for other mixture variables $A_{\ne i}$ and $W$. In this way, univariate thresholds are determined for each mixture variable individually. This backfitting procedure allows us to estimate $Y = h(A) + g(W)$ such that we are able to fit our decision tree models $h(a)$ while adjusting for the covariate model $g(W)$. Convergence is defined as an absolute difference between $g(A,W)$ and $h(A,W)$ 
+This algorithm is applied to $A$ as a mixture to generate a decision tree that includes multiple different exposures in $A$ while adjusting for $W$ non-parametrically Likewise, the backfitting algorithm is applied to each individual component of $A$, $A_i$, while controlling for other mixture variables $A_{\ne i}$ and $W$. In this way, univariate thresholds are determined for each mixture variable individually. This backfitting procedure allows us to estimate $Y = f(A) + h(W)$ such that we are able to fit our decision tree models $f(A)$ while adjusting for the covariate model $h(W)$. Convergence is defined as an absolute difference between $f(A,W)$ and $h(A,W)$ 
 
 ## Mixture Rule Ensemble Fitting
 
