@@ -25,7 +25,7 @@ affiliations:
   - name: Department of Biostatistics, University of California, Berkeley
     index: 2
 date: 05 January 2022
-bibliography: refs.bib
+bibliography: paper.bib
 ---
 
 # Summary
