@@ -235,12 +235,7 @@ sim_results <- CVtreeMLE(data = sim_data,
                          back_iter_SL = Q1_stack,
                          tree_SL = discrete_tree_sl, 
                          n_folds = 2,
-                         family = "gaussian",
-                         H.AW_trunc_lvl = 10,
-                         parallel = TRUE,
-                         num_cores = 8,
-                         max_iter = 5,
-                         verbose = TRUE)
+                         family = "gaussian")
 
 proc.time() - ptm 
 

@@ -18,8 +18,8 @@ state and is being actively
 developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![MIT
 license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4070042.svg)](https://doi.org/10.5281/zenodo.4070042)
-[![DOI](https://joss.theoj.org/papers/10.21105/joss.02447/status.svg)](https://doi.org/10.21105/joss.02447)
+<!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4070042.svg)](https://doi.org/10.5281/zenodo.4070042) -->
+<!-- [![DOI](https://joss.theoj.org/papers/10.21105/joss.02447/status.svg)](https://doi.org/10.21105/joss.02447) -->
 <!-- badges: end -->
 
 > Efficient Estimation of the Causal Effects of Joint Exposure using
@@ -424,16 +424,11 @@ sim_results <- CVtreeMLE(data = sim_data,
                          back_iter_SL = Q1_stack,
                          tree_SL = discrete_tree_sl, 
                          n_folds = 2,
-                         family = "gaussian",
-                         H.AW_trunc_lvl = 10,
-                         parallel = TRUE,
-                         num_cores = 8,
-                         max_iter = 5,
-                         verbose = TRUE)
+                         family = "gaussian")
 
 proc.time() - ptm 
 #>    user  system elapsed 
-#> 374.725  15.906 208.697
+#> 407.755  18.335 226.039
 ```
 
 Let’s first look at the RMSE for the iterative back-fitting models.
@@ -469,7 +464,7 @@ RMSE
 M1
 </td>
 <td style="text-align:right;">
-0.0656893
+0.0650222
 </td>
 </tr>
 <tr>
@@ -477,7 +472,7 @@ M1
 M2
 </td>
 <td style="text-align:right;">
-0.0643526
+0.0644338
 </td>
 </tr>
 <tr>
@@ -485,7 +480,7 @@ M2
 M3
 </td>
 <td style="text-align:right;">
-0.0636764
+0.0644142
 </td>
 </tr>
 <tr>
@@ -493,7 +488,7 @@ M3
 M1M2M3
 </td>
 <td style="text-align:right;">
-0.0217018
+0.0210670
 </td>
 </tr>
 </tbody>
@@ -551,16 +546,16 @@ Fraction Covered
 <tbody>
 <tr>
 <td style="text-align:right;">
-5.983
+5.843
 </td>
 <td style="text-align:right;">
-0.019
+0.02
 </td>
 <td style="text-align:right;">
-5.945
+5.804
 </td>
 <td style="text-align:right;">
-6.02
+5.883
 </td>
 <td style="text-align:right;">
 0
@@ -572,14 +567,14 @@ Fraction Covered
 M1M2M3
 </td>
 <td style="text-align:right;">
-0.379
+NA
 </td>
 <td style="text-align:left;">
 M1 &gt; 0.021 & M1 &lt; 0.953 & M2 &gt; 2.011 & M2 &lt; 3.994 & M3 &gt;
-2.512 & M3 &lt; 4.98
+2.484 & M3 &lt; 4.98
 </td>
 <td style="text-align:right;">
-0.95
+0.9508197
 </td>
 </tr>
 </tbody>
@@ -652,28 +647,28 @@ Variables
 1
 </td>
 <td style="text-align:left;">
-5.76
+5.491
 </td>
 <td style="text-align:left;">
-0.083
+0.08
 </td>
 <td style="text-align:left;">
-5.597
+5.334
 </td>
 <td style="text-align:left;">
-5.923
-</td>
-<td style="text-align:left;">
-0
+5.647
 </td>
 <td style="text-align:left;">
 0
 </td>
 <td style="text-align:left;">
-0.412
+0
 </td>
 <td style="text-align:left;">
-M3 &gt; 2.533 & M2 &gt; 2.001 & M1 &lt;= 0.953
+0.196
+</td>
+<td style="text-align:left;">
+M2 &gt; 2.001 & M3 &gt; 2.484 & M1 &lt;= 0.953
 </td>
 <td style="text-align:left;">
 M1M2M3
@@ -705,7 +700,7 @@ M1M2M3
 0.416
 </td>
 <td style="text-align:left;">
-M1 &lt;= 0.934 & M2 &gt; 2.007 & M3 &gt; 2.478
+M2 &gt; 1.966 & M1 &lt;= 0.934 & M3 &gt; 2.478
 </td>
 <td style="text-align:left;">
 M1M2M3
@@ -716,29 +711,29 @@ M1M2M3
 Pooled
 </td>
 <td style="text-align:left;">
-5.823
+5.792
 </td>
 <td style="text-align:left;">
-0.088
+0.085
 </td>
 <td style="text-align:left;">
-5.651
+5.6247
 </td>
 <td style="text-align:left;">
-5.9956
-</td>
-<td style="text-align:left;">
-0
+5.9583
 </td>
 <td style="text-align:left;">
 0
 </td>
 <td style="text-align:left;">
-0.416
+0
+</td>
+<td style="text-align:left;">
+0.39
 </td>
 <td style="text-align:left;">
 M1 &gt; 0.021 & M1 &lt; 0.953 & M2 &gt; 2.011 & M2 &lt; 3.994 & M3 &gt;
-2.512 & M3 &lt; 4.98
+2.484 & M3 &lt; 4.98
 </td>
 <td style="text-align:left;">
 M1M2M3
