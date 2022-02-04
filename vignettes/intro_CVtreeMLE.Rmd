@@ -263,7 +263,7 @@ Let's start by simulating data in a similar way as we did in the `README.md` tut
 
 ```{r simulation inputs}
  # number of observations we want to simulate
-n_obs <- 200
+n_obs <- 300
 # split points for each mixture
 splits <- c(0.8, 2.5, 3.6) 
 # minimum values for each mixture
@@ -382,12 +382,7 @@ sim_results <- CVtreeMLE(data = sim_data,
                          back_iter_SL = Q1_stack,
                          tree_SL = discrete_tree_sl, 
                          n_folds = 2,
-                         family = "gaussian",
-                         H.AW_trunc_lvl = 10,
-                         parallel = TRUE,
-                         num_cores = 2,
-                         max_iter = 5,
-                         verbose = TRUE)
+                         family = "gaussian")
 proc.time() - ptm
 ```
 

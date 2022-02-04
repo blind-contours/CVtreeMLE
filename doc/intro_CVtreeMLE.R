@@ -15,19 +15,32 @@ library(dplyr)
 set.seed(11249)
 
 ## ----simulation inputs--------------------------------------------------------
-n_obs <- 200 # number of observations we want to simulate
-splits <- c(0.8, 2.5, 3.6) # split points for each mixture
-mins <- c(0, 0, 0) # minimum values for each mixture
-maxs <- c(3, 4, 5) # maximum value for each mixture
-mu <- c(0, 0, 0) # mu for each mixture
-sigma <- matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3) # variance/covariance of mixture variables
-w1_betas <- c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04) # subspace probability relationship with covariate W1
-w2_betas <- c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04) # subspace probability relationship with covariate W2
-mix_subspace_betas <- c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09) # probability of mixture subspace (for multinomial outcome generation)
-subspace_assoc_strength_betas <- c(0, 3, 0, 0, 0, 0, 0, 0) # mixture subspace impact on outcome Y, here the subspace where M1 is lower and M2 and M3 are higher based on values in splits
-marginal_impact_betas <- c(0, 0, 0) # marginal impact of mixture component on Y
-eps_sd <- 0.01 # random error
-binary <- FALSE # if outcome is binary
+ # number of observations we want to simulate
+n_obs <- 300
+# split points for each mixture
+splits <- c(0.8, 2.5, 3.6) 
+# minimum values for each mixture
+mins <- c(0, 0, 0)
+# maximum value for each mixture
+maxs <- c(3, 4, 5) 
+# mu for each mixture
+mu <- c(0, 0, 0)
+# variance/covariance of mixture variables
+sigma <- matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3) 
+# subspace probability relationship with covariate W1
+w1_betas <- c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04)
+# subspace probability relationship with covariate W2
+w2_betas <- c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04)
+# probability of mixture subspace (for multinomial outcome generation)
+mix_subspace_betas <- c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09)
+# mixture subspace impact on outcome Y, here the subspace where M1 is lower and M2 and M3 are higher based on values in splits
+subspace_assoc_strength_betas <- c(0, 3, 0, 0, 0, 0, 0, 0)
+# marginal impact of mixture component on Y
+marginal_impact_betas <- c(0, 0, 0) 
+# random error
+eps_sd <- 0.01 
+# if outcome is binary
+binary <- FALSE
 
 ## ----simulate data, warning=FALSE---------------------------------------------
 sim_data <- simulate_mixture_cube(
@@ -87,12 +100,7 @@ sim_results <- CVtreeMLE(data = sim_data,
                          back_iter_SL = Q1_stack,
                          tree_SL = discrete_tree_sl, 
                          n_folds = 2,
-                         family = "gaussian",
-                         H.AW_trunc_lvl = 10,
-                         parallel = TRUE,
-                         num_cores = 2,
-                         max_iter = 5,
-                         verbose = TRUE)
+                         family = "gaussian")
 proc.time() - ptm
 
 ## ----model RMSE---------------------------------------------------------------

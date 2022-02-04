@@ -76,11 +76,11 @@ CVtreeMLE <- function(W,
                       tree_SL,
                       n_folds,
                       family,
-                      H.AW_trunc_lvl,
-                      parallel,
+                      H.AW_trunc_lvl = 10,
+                      parallel = TRUE,
                       num_cores,
-                      max_iter,
-                      verbose) {
+                      max_iter = 5,
+                      verbose = FALSE) {
 
   ######################
   # Argument checks.
@@ -114,6 +114,10 @@ CVtreeMLE <- function(W,
 
   if (!family %in% c("binomial", "gaussian")) {
     stop('Family must be either "binomial" or "gaussian".')
+  }
+
+  if (class(data) != "data.frame") {
+    data <- as.data.frame(data)
   }
 
   ######################
