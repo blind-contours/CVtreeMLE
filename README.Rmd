@@ -245,7 +245,7 @@ Let's first look at the RMSE for the iterative back-fitting models. Because our 
 
 ```{r model RMSE}
 RMSE_results <- sim_results$`Model RMSEs`
-head(RMSE_results) %>%
+RMSE_results %>%
   kbl(caption = "Model Fit Results") %>%
   kable_classic(full_width = F, html_font = "Cambria")
 ```
@@ -256,7 +256,7 @@ We can look at the pooled TMLE results for this model:
 
 ```{r pooled mixture results}
 mixture_results <- sim_results$`Pooled TMLE Mixture Results`
-head(mixture_results) %>%
+mixture_results %>%
   kbl(caption = "Mixture Results") %>%
   kable_classic(full_width = F, html_font = "Cambria")
 ```
@@ -267,7 +267,7 @@ Above, the estimated mixture ATE for this rule is 5.92 (5.73 - 6.10), which cove
 
 ```{r fold specific results}
 mixture_v_results <- sim_results$`V-Specific Mix Results`
-head(mixture_v_results) %>%
+mixture_v_results %>%
   kbl(caption = "V-Fold Mixture Results") %>%
   kable_classic(full_width = F, html_font = "Cambria")
 ```

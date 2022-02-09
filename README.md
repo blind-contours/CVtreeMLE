@@ -18,6 +18,7 @@ state and is being actively
 developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![MIT
 license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
+[![status](https://joss.theoj.org/papers/e3f631afd3bbcd60ed5d965ce26a39b0/status.svg)](https://joss.theoj.org/papers/e3f631afd3bbcd60ed5d965ce26a39b0)
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4070042.svg)](https://doi.org/10.5281/zenodo.4070042) -->
 <!-- [![DOI](https://joss.theoj.org/papers/10.21105/joss.02447/status.svg)](https://doi.org/10.21105/joss.02447) -->
 <!-- badges: end -->
