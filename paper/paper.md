@@ -56,8 +56,7 @@ package has been extensively documented in the package's `README` and a vignette
 
 # Acknowledgments
 
-David McCoy's contributions to this work were supported in part by a grant from
-the National Institutes of Health: [T32#####](####).
+David McCoy's contributions to this work were supported in part by Core E of the NIEHS Superfund Center at Berkeley funded by NIH grant P42ES004705.
 
 # References
 
