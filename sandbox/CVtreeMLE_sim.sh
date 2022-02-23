@@ -16,7 +16,7 @@
 #SBATCH --time 48:00:00
 #
 ## Command(s) to run (example):
-module load r/3.6.3
+module load r/4.0.3
 
 ### for foreach+doSNOW ###
 R CMD BATCH --no-save 03_run_simulation.R CV_treeMLE_sim.Rout
