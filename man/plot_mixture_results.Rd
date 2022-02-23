@@ -4,7 +4,7 @@
 \alias{plot_mixture_results}
 \title{Create dot-whisker plots for the mixture results found}
 \usage{
-plot_mixture_results(v_intxn_results)
+plot_mixture_results(v_intxn_results, hjust)
 }
 \arguments{
 \item{v_intxn_results}{Table of the interaction results for a mixture}

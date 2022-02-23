@@ -13,11 +13,11 @@ CVtreeMLE(
   tree_SL,
   n_folds,
   family,
-  H.AW_trunc_lvl,
-  parallel,
+  H.AW_trunc_lvl = 10,
+  parallel = TRUE,
   num_cores,
-  max_iter,
-  verbose
+  max_iter = 5,
+  verbose = FALSE
 )
 }
 \arguments{

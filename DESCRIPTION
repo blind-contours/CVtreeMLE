@@ -35,7 +35,6 @@ Imports:
     utils,
     MASS,
     here,
-    qgcomp,
     ggplot2,
     fastDummies
 Suggests:

@@ -4,7 +4,7 @@
 \alias{plot_marginal_results}
 \title{Create dot-whisker plots for the margina results found}
 \usage{
-plot_marginal_results(v_marginal_results, mix_comps)
+plot_marginal_results(v_marginal_results, mix_comps, hjust)
 }
 \arguments{
 \item{v_marginal_results}{Table of the marginal results for mixture components}
