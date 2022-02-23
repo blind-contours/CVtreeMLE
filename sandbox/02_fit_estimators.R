@@ -4,11 +4,11 @@
 ###############################################################################
 fit_estimators <- function(data, true_rule) {
   lrnr_glm <- Lrnr_glm$new()
-  lrnr_bayesglm <- Lrnr_bayesglm$new()
+  ranger_lrnr <- Lrnr_ranger$new()
   lrnr_gam <- Lrnr_gam$new()
 
   # put all the learners together (this is just one way to do it)
-  learners <- c(lrnr_glm, lrnr_bayesglm, lrnr_gam)
+  learners <- c(lrnr_glm, ranger_lrnr, lrnr_gam)
 
   Q1_stack <- make_learner(Stack, learners)
 
