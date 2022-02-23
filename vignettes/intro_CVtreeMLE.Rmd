@@ -250,7 +250,6 @@ library(data.table)
 library(CVtreeMLE)
 library(sl3)
 library(kableExtra)
-library(qgcomp)
 library(dplyr)
 
 set.seed(11249)
@@ -400,20 +399,6 @@ kable_classic(full_width = F, html_font = "Cambria")
 
 The our mixture decision tree model has the lowest RMSE.
 
-A popular method in mixtures currently is the quantile-sum g-computation method (keil citation). Let's compare our model fit for this simulated data to that of quantile-sum g-computation.
-
-```{r additive quantile g-comp}
- qgcomp_additive_model <- qgcomp(y~M1+M2+M3+W+W2, expnms=c("M1", "M2", "M3"), data=sim_data)
- sqrt(mean((predict(qgcomp_additive_model$fit) - sim_data$y)^2))
-```
- 
- 
-```{r multi quantile g-comp}
-qgcomp_multi_model <- qgcomp(y~M1*M2*M3+W+W2, expnms=c("M1", "M2", "M3"), data=sim_data)
-sqrt(mean((predict(qgcomp_multi_model$fit) - sim_data$y)^2))
-```
-
-As we can see, our results return a much smaller RMSE, which means our models fit this simulated data better. 
 
 We can look at the pooled TMLE results for this model: 
 
