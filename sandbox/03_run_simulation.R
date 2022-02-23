@@ -40,9 +40,7 @@ P_0_data <- generate_P_0(truth = truth, n = 100000)
 # perform simulation across sample sizes
 sim_results <- lapply(n_obs, function(sample_size) {
   # get results in parallel
-  results <- foreach(this_iter = seq_len(n_sim),
-                     .options.multicore = list(preschedule = FALSE),
-                     .errorhandling = "remove") %do% {
+  results <- foreach(this_iter = seq_len(n_sim)) %do% {
     gc()
     data_sim <-  P_0_data[sample(nrow(P_0_data), sample_size), ]
     est_out <- fit_estimators(data = data_sim, true_rule)
