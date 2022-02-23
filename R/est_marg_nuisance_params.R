@@ -100,7 +100,7 @@ est_marg_nuisance_params <- function(At,
           outcome_type = "binomial"
         )
 
-        discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new()
+        discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(sl3::loss_loglik_binomial)
 
         discrete_sl <- sl3::Lrnr_sl$new(
           learners = Q1_stack,
@@ -149,6 +149,13 @@ est_marg_nuisance_params <- function(At,
           covariates = c(W, "A"),
           outcome = "y_scaled",
           outcome_type = family
+        )
+
+        discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(sl3::loss_squared_error)
+
+        discrete_sl <- sl3::Lrnr_sl$new(
+          learners = Q1_stack,
+          metalearner = discrete_sl_metalrn,
         )
 
         sl_fit <- discrete_sl$train(task_At)

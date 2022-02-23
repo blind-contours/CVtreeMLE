@@ -104,7 +104,7 @@ compute_meta_marg_results <- function(v_fold_marginal_results, data, mix_comps, 
     list_names[[i]] <- unique(results_df$comparison)
 
     results <- as.data.frame(rbind(results_df, average_results))
-    results$fold <- c(seq(n_folds), "Pooled")
+    results$fold <- c(seq(nrow(results) - 1), "Pooled")
 
     v_fold_marginal_w_pooled[[i]] <- results
   }

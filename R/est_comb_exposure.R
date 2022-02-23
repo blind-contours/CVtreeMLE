@@ -55,7 +55,7 @@ est_comb_exposure <- function(At, Av, Y = "y_scaled", W, marg_rule_train, marg_r
       outcome_type = family
     )
 
-    discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new()
+    discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(sl3::loss_squared_error)
 
     discrete_sl <- sl3::Lrnr_sl$new(
       learners = Q1_stack,

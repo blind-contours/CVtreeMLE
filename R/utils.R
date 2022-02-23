@@ -107,9 +107,9 @@ filter_marginal_rules <- function(data, n_folds) {
 
   data <- data[data$rules != "No Rules Found", ]
 
-  data <- data %>%
-    dplyr::group_by(.data$target_m, .data$quantile) %>%
-    dplyr::filter(dplyr::n() >= n_folds)
+  # data <- data %>%
+  #   dplyr::group_by(.data$target_m, .data$quantile) %>%
+  #   dplyr::filter(dplyr::n() >= n_folds)
 
   data$var_quant_group <- paste(data$target_m, data$quantile, sep = "_")
   return(data)

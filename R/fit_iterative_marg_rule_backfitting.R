@@ -54,7 +54,7 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
       outcome_type = "continuous"
     )
 
-    discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new()
+    discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(sl3::loss_squared_error)
 
     discrete_sl <- sl3::Lrnr_sl$new(
       learners = Q1_stack,

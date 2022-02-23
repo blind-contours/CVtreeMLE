@@ -29,7 +29,7 @@ fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, max_
     outcome = "y_scaled", outcome_type = "continuous"
   )
 
-  discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new()
+  discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(sl3::loss_squared_error)
 
   discrete_sl <- sl3::Lrnr_sl$new(
     learners = Q1_stack,

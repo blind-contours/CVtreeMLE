@@ -184,7 +184,7 @@ CVtreeMLE <- function(W,
 
   # filter based on variables included in the tree and direction, keep only those that are consistent across all folds
 
-  fold_mixture_rules <- filter_mixture_rules(fold_mixture_rules, n_folds)
+  # fold_mixture_rules <- filter_mixture_rules(fold_mixture_rules, n_folds)
   fold_mixture_rules$description <- round_rules(fold_mixture_rules$description)
 
   mixture_RMSE <- calc_mixture_rule_RMSEs(fold_mixture_rules)

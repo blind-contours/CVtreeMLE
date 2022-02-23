@@ -70,11 +70,11 @@ find_common_mixture_rules <- function(group_list,
       }
 
       fold_rules_df <- do.call(cbind, fold_rules_eval)
-      colnames(fold_rules_df) <- paste("fold_", seq(n_folds))
+      colnames(fold_rules_df) <- paste("fold_", seq(nrow(group)))
 
       fold_rules_df$sum <- rowSums(fold_rules_df)
 
-      fold_rules_df$all_folds <- as.numeric(fold_rules_df$sum == n_folds)
+      fold_rules_df$all_folds <- as.numeric(fold_rules_df$sum == nrow(group))
       fold_rules_df <- cbind(fold_rules_df, mixture_data)
 
       total_count <- table(fold_rules_df$sum > 0)[[2]]

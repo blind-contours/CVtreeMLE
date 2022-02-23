@@ -21,8 +21,9 @@ calc_ATE_estimates <- function(data, ATE_var, outcome, p_adjust_n, v_fold = FALS
   if (v_fold == TRUE) {
     data[, "Thetas"] <- Thetas
   } else {
-    for (i in seq(Thetas)) {
-      data[data$folds == i, "Thetas"] <- Thetas[i][[1]]
+    for (i in 1:length(Thetas)) {
+      fold <- names(Thetas)[i]
+      data[data$folds == fold, "Thetas"] <- Thetas[i][[1]]
     }
   }
 
@@ -35,7 +36,8 @@ calc_ATE_estimates <- function(data, ATE_var, outcome, p_adjust_n, v_fold = FALS
     data[, "IC"] <- ICs
   } else {
     for (i in seq(ICs)) {
-      data[data$folds == i, "IC"] <- ICs[i]
+      fold <- names(Thetas)[i]
+      data[data$folds == fold, "IC"] <- ICs[fold]
     }
   }
 

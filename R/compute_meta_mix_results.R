@@ -112,7 +112,7 @@ compute_meta_mix_results <- function(v_fold_mixture_results, mix_comps, n_folds,
     colnames(average_results) <- colnames(results_df)
 
     results <- as.data.frame(rbind(results_df, average_results))
-    rownames(results) <- c(seq(n_folds), "Pooled")
+    rownames(results) <- c(seq(nrow(results) - 1 ), "Pooled")
     intxn_names_list[[i]] <- unique(results$Variables)
 
     v_fold_mixture_w_pooled[[i]] <- results

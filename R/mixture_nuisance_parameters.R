@@ -59,7 +59,7 @@ est_mix_nuisance_params <- function(At, Av, W, no_mix_rules, Q1_stack, family, r
           folds = 2
         )
 
-        discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new()
+        discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(sl3::loss_loglik_binomial)
 
         discrete_sl <- sl3::Lrnr_sl$new(
           learners = Q1_stack,
@@ -105,6 +105,13 @@ est_mix_nuisance_params <- function(At, Av, W, no_mix_rules, Q1_stack, family, r
           covariates = c(W, "A_mix"),
           outcome = "y_scaled",
           outcome_type = family
+        )
+
+        discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(sl3::loss_squared_error)
+
+        discrete_sl <- sl3::Lrnr_sl$new(
+          learners = Q1_stack,
+          metalearner = discrete_sl_metalrn,
         )
 
         sl_fit <- discrete_sl$train(task_At)
