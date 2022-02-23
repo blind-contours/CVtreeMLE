@@ -21,9 +21,6 @@ library(dplyr)
 
 devtools::load_all(here())
 
-registerDoFuture()
-plan(multiprocess)
-
 # simulation parameters
 set.seed(7259)
 n_sim <- 2 # number of simulations
