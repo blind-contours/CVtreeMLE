@@ -19,8 +19,11 @@
 
 #' @export
 
-fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, max_iter, verbose) {
-  future::plan(future::sequential, gc = TRUE)
+fit_iterative_mix_rule_backfitting <- function(At, A, W, Y, Q1_stack, fold, max_iter, verbose, parallel_cv) {
+
+  if(parallel_cv == TRUE) {
+    future::plan(future::sequential, gc = TRUE)
+  }
 
   pre_boot_list <- list()
 

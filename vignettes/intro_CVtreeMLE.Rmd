@@ -334,11 +334,11 @@ Here, we set up our Super Learner using `SL3` for the iterative backfitting proc
 
 ```{r setup first stack learners}
 lrnr_glm <- Lrnr_glm$new()
-lrnr_bayesglm <- Lrnr_bayesglm$new()
+lrnr_ranger <- Lrnr_ranger$new()
 lrnr_gam <- Lrnr_gam$new()
 
 # put all the learners together (this is just one way to do it)
-learners <- c(lrnr_glm, lrnr_bayesglm, lrnr_gam)
+learners <- c(lrnr_glm, lrnr_ranger, lrnr_gam)
 
 Q1_stack <- make_learner(Stack, learners)
 ```
@@ -382,7 +382,8 @@ sim_results <- CVtreeMLE(data = sim_data,
                          tree_SL = discrete_tree_sl, 
                          n_folds = 5,
                          family = "gaussian",
-                         num_cores = 8)
+                         num_cores = 8,
+                         parallel = FALSE)
 proc.time() - ptm
 ```
 

@@ -1,7 +1,4 @@
 
-###############################################################################
-# fit estimators
-###############################################################################
 fit_estimators <- function(data, true_rule) {
   lrnr_glm <- Lrnr_glm$new()
   ranger_lrnr <- Lrnr_ranger$new()
@@ -27,7 +24,8 @@ fit_estimators <- function(data, true_rule) {
     metalearner = discrete_sl_metalrn
   )
 
-  sim_results <- CVtreeMLE(data = data,
+
+  sim_results2 <- CVtreeMLE(data = data,
                            W = c("W", "W2"),
                            Y = "y",
                            A = c(paste("M", seq(3), sep = "")),

@@ -21,8 +21,10 @@
 #'
 #' @export
 
-est_comb_exposure <- function(At, Av, Y = "y_scaled", W, marg_rule_train, marg_rule_valid, no_marg_rules, Q1_stack, family) {
-  future::plan(future::sequential, gc = TRUE)
+est_comb_exposure <- function(At, Av, Y = "y_scaled", W, marg_rule_train, marg_rule_valid, no_marg_rules, Q1_stack, family, parallel_cv) {
+  if(parallel_cv == TRUE){
+    future::plan(future::sequential, gc = TRUE)
+  }
 
   if (no_marg_rules == FALSE) {
     At_mc <- At

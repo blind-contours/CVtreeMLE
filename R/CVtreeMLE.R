@@ -13,6 +13,7 @@
 #' @param max_iter Max number of iterations of iterative backfitting algorithm
 #' @param verbose If true, creates a sink file where detailed information and diagnostics of the run process are given.
 #' @param parallel Use parallel processing if a backend is registered; enabled by default.
+#' @param parallel_cv Use parallel processing on CV procedure vs. parallel processing on Super Learner model fitting
 #' @param num_cores If using parallel, the number of cores to parallelize over
 
 #' @return Results object. TODO: add more detail here.
@@ -78,6 +79,7 @@ CVtreeMLE <- function(W,
                       family,
                       H.AW_trunc_lvl = 10,
                       parallel = TRUE,
+                      parallel_cv = TRUE,
                       num_cores,
                       max_iter = 5,
                       verbose = FALSE) {
@@ -158,27 +160,55 @@ CVtreeMLE <- function(W,
 
   ###################### Fit Iterative Backwards Rule Ensembles to the Mixture Components Across Fold Data ########################################
 
-  fold_mixture_rules <- foreach::foreach(fold_k = unique(data$folds), .combine = "rbind", .multicombine = TRUE) %dopar% {
-    ## get training and validation samples
+  if (parallel_cv == TRUE) {
 
-    At <- data[data$folds != fold_k, ]
-    Av <- data[data$folds == fold_k, ]
+    fold_mixture_rules <- foreach::foreach(fold_k = unique(data$folds), .combine = "rbind", .multicombine = TRUE) %dopar% {
+      ## get training and validation samples
 
-    rules <-
-      fit_iterative_mix_rule_backfitting(
-        At = At,
-        A = A,
-        W = W,
-        Y = Y,
-        Q1_stack = back_iter_SL,
-        fold = fold_k,
-        max_iter,
-        verbose
-      )
+      At <- data[data$folds != fold_k, ]
+      Av <- data[data$folds == fold_k, ]
 
-    rules
+      rules <-
+        fit_iterative_mix_rule_backfitting(
+          At = At,
+          A = A,
+          W = W,
+          Y = Y,
+          Q1_stack = back_iter_SL,
+          fold = fold_k,
+          max_iter,
+          verbose,
+          parallel_cv
+        )
+
+      rules
+    }
+
+  }else{
+
+    fold_mixture_rules <- foreach::foreach(fold_k = unique(data$folds), .combine = "rbind", .multicombine = TRUE) %do% {
+      ## get training and validation samples
+
+      At <- data[data$folds != fold_k, ]
+      Av <- data[data$folds == fold_k, ]
+
+      rules <-
+        fit_iterative_mix_rule_backfitting(
+          At = At,
+          A = A,
+          W = W,
+          Y = Y,
+          Q1_stack = back_iter_SL,
+          fold = fold_k,
+          max_iter,
+          verbose,
+          parallel_cv
+        )
+
+      rules
+    }
+
   }
-
   # remove the rows where no rules were found
   fold_mixture_rules <- fold_mixture_rules[fold_mixture_rules$description != "No Rules Found", ]
 
@@ -198,26 +228,53 @@ CVtreeMLE <- function(W,
 
   ###################### Fit Iterative Backwards Rule Ensembles to the Marginal Mixture Components Across Fold Data ########################################
 
-  fold_marginal_rules <- foreach::foreach(fold_k = unique(data$folds), .combine = "rbind", .multicombine = TRUE) %dopar% {
-    ## get training and validation samples
+  if (parallel_cv == TRUE) {
 
-    At <- data[data$folds != fold_k, ]
-    Av <- data[data$folds == fold_k, ]
+    fold_marginal_rules <- foreach::foreach(fold_k = unique(data$folds), .combine = "rbind", .multicombine = TRUE) %dopar% {
+      ## get training and validation samples
 
-
-    marg_decisions <- fit_iterative_marg_rule_backfitting(
-      mix_comps = A,
-      At = At,
-      W = W,
-      Q1_stack = back_iter_SL,
-      tree_SL = tree_SL,
-      fold = fold_k,
-      max_iter,
-      verbose
-    )
+      At <- data[data$folds != fold_k, ]
+      Av <- data[data$folds == fold_k, ]
 
 
-    marg_decisions
+      marg_decisions <- fit_iterative_marg_rule_backfitting(
+        mix_comps = A,
+        At = At,
+        W = W,
+        Q1_stack = back_iter_SL,
+        tree_SL = tree_SL,
+        fold = fold_k,
+        max_iter,
+        verbose,
+        parallel_cv
+      )
+
+
+      marg_decisions
+    }
+  }else{
+
+    fold_marginal_rules <- foreach::foreach(fold_k = unique(data$folds), .combine = "rbind", .multicombine = TRUE) %do% {
+      ## get training and validation samples
+
+      At <- data[data$folds != fold_k, ]
+      Av <- data[data$folds == fold_k, ]
+
+
+      marg_decisions <- fit_iterative_marg_rule_backfitting(
+        mix_comps = A,
+        At = At,
+        W = W,
+        Q1_stack = back_iter_SL,
+        tree_SL = tree_SL,
+        fold = fold_k,
+        max_iter,
+        verbose,
+        parallel_cv
+      )
+
+      marg_decisions
+    }
   }
 
   fold_marginal_rules <- filter_marginal_rules(fold_marginal_rules, n_folds)
@@ -238,145 +295,297 @@ CVtreeMLE <- function(W,
     return("No Mixture or Marginal Rules Found")
   }
 
-  results <- foreach::foreach(fold_k = unique(data$folds), .combine = "c", .multicombine = TRUE) %dopar% {
-    At <- data[data$folds != fold_k, ]
-    Av <- data[data$folds == fold_k, ]
+  if (parallel_cv == TRUE) {
 
-    rules <- filter_rules(fold_mixture_rules, fold_k = fold_k)
-    marg_decisions <- filter_rules(fold_marginal_rules, fold_k = fold_k)
+    results <- foreach::foreach(fold_k = unique(data$folds), .combine = "c", .multicombine = TRUE) %dopar% {
 
-    if (dim(rules)[1] == 0) {
-      no_mix_rules <- TRUE
-    } else {
-      no_mix_rules <- FALSE
-    }
+      At <- data[data$folds != fold_k, ]
+      Av <- data[data$folds == fold_k, ]
 
-    if (dim(marg_decisions)[1] == 0) {
-      no_marg_rules <- TRUE
-    } else {
-      no_marg_rules <- FALSE
-    }
+      rules <- filter_rules(fold_mixture_rules, fold_k = fold_k)
+      marg_decisions <- filter_rules(fold_marginal_rules, fold_k = fold_k)
 
-    fold_results_mix_rules[[fold_k]] <- rules
+      if (dim(rules)[1] == 0) {
+        no_mix_rules <- TRUE
+      } else {
+        no_mix_rules <- FALSE
+      }
 
+      if (dim(marg_decisions)[1] == 0) {
+        no_marg_rules <- TRUE
+      } else {
+        no_marg_rules <- FALSE
+      }
 
-    ################## BEGIN FITTING DECISION TREES TO EACH MARGINAL COMPONENT OF THE MIXTURE ###############
-
-    ######################### NUISANCE PARAMETER FITTING ON TRAINING ####################################
-
-    mix_nuisance_params <- est_mix_nuisance_params(
-      At,
-      Av,
-      W,
-      no_mix_rules,
-      Q1_stack = back_iter_SL,
-      family,
-      rules,
-      H.AW_trunc_lvl
-    )
-
-    mix_interaction_data <- mix_nuisance_params$data
-
-    mix_fold_data[[fold_k]] <- mix_interaction_data
-
-    ################ MARGINAL ESTIMATES FROM RULE IN TRAINING SET #####################################
-
-    marg_nuisance_params <- est_marg_nuisance_params(At,
-      Av,
-      W,
-      Q1_stack = back_iter_SL,
-      family,
-      A,
-      no_marg_rules,
-      marg_decisions,
-      H.AW_trunc_lvl
-    )
+      fold_results_mix_rules[[fold_k]] <- rules
 
 
-    fold_results_marginal_data[[fold_k]] <- marg_nuisance_params
-    fold_results_marg_rules[[fold_k]] <- marg_decisions
+      ################## BEGIN FITTING DECISION TREES TO EACH MARGINAL COMPONENT OF THE MIXTURE ###############
 
-    marginal_data <- marg_nuisance_params
+      ######################### NUISANCE PARAMETER FITTING ON TRAINING ####################################
 
-    ################## CALCULATE THE EXPECTED OUTCOME FOR EACH ADDED MARGINAL MIXTURE RULE EXPOSURE ################
-
-    At_c <- At
-    Av_c <- Av
-
-    At_c <-
-      evaluate_marginal_rules(
-        data = At_c,
-        marg_decisions = marg_decisions,
-        no_marg_rules,
-        mix_comps = A
+      mix_nuisance_params <- est_mix_nuisance_params(
+        At,
+        Av,
+        W,
+        no_mix_rules,
+        Q1_stack = back_iter_SL,
+        family,
+        rules,
+        H.AW_trunc_lvl,
+        parallel_cv
       )
 
-    Av_c <-
-      evaluate_marginal_rules(
-        data = Av_c,
-        marg_decisions = marg_decisions,
+      mix_interaction_data <- mix_nuisance_params$data
+
+      mix_fold_data[[fold_k]] <- mix_interaction_data
+
+      ################ MARGINAL ESTIMATES FROM RULE IN TRAINING SET #####################################
+
+      marg_nuisance_params <- est_marg_nuisance_params(At,
+        Av,
+        W,
+        Q1_stack = back_iter_SL,
+        family,
+        A,
         no_marg_rules,
-        mix_comps = A
+        marg_decisions,
+        H.AW_trunc_lvl,
+        parallel_cv
       )
 
-    marg_rule_train <- At_c$marginals
-    marg_rule_valid <- Av_c$marginals
 
-    At_c <- At_c$data
-    Av_c <- Av_c$data
+      fold_results_marginal_data[[fold_k]] <- marg_nuisance_params
+      fold_results_marg_rules[[fold_k]] <- marg_decisions
 
-    # cum_sum_results <- est_cum_sum_exposure(At_c,
-    #                                         Av_c,
-    #                                         W,
-    #                                         SL.library,
-    #                                         no_marg_rules,
-    #                                         H.AW_trunc_lvl)
+      marginal_data <- marg_nuisance_params
 
-    # fold_results_marginal_additive_data[[fold_k]] <- cum_sum_results
+      ################## CALCULATE THE EXPECTED OUTCOME FOR EACH ADDED MARGINAL MIXTURE RULE EXPOSURE ################
 
-    ################## CALCULATE THE EXPECTED OUTCOME FOR EACH COMBINATION OF MARGINAL MIXTURE RULE EXPOSURE ################
+      At_c <- At
+      Av_c <- Av
 
-    comb_results <- est_comb_exposure(At, Av, Y, W, marg_rule_train, marg_rule_valid, no_marg_rules, Q1_stack = back_iter_SL, family = family)
+      At_c <-
+        evaluate_marginal_rules(
+          data = At_c,
+          marg_decisions = marg_decisions,
+          no_marg_rules,
+          mix_comps = A
+        )
 
-    fold_results_marginal_combo_data[[fold_k]] <- comb_results$data
-    fold_results_marginal_Sls[[fold_k]] <- comb_results$learner
+      Av_c <-
+        evaluate_marginal_rules(
+          data = Av_c,
+          marg_decisions = marg_decisions,
+          no_marg_rules,
+          mix_comps = A
+        )
 
-    ################## CALCULATE THE EXPECTED OUTCOME FOR EACH COMBINATION OF THE MIXTURE INTERACTION RULES  ################
+      marg_rule_train <- At_c$marginals
+      marg_rule_valid <- Av_c$marginals
 
-    # mixed_comb_results <- est_comb_mixture_rules(At, Av, W, Y, rules, no_mix_rules, Q1_stack)
+      At_c <- At_c$data
+      Av_c <- Av_c$data
 
-    # fold_results_mix_combo_data[[fold_k]] <- mixed_comb_results$data
-    # fold_results_mix_Sls[[fold_k]] <- mixed_comb_results$learner
+      # cum_sum_results <- est_cum_sum_exposure(At_c,
+      #                                         Av_c,
+      #                                         W,
+      #                                         SL.library,
+      #                                         no_marg_rules,
+      #                                         H.AW_trunc_lvl)
 
-    results_list <- list(
-      fold_results_mix_rules,
-      mix_fold_data,
-      mix_fold_directions,
-      fold_results_marg_rules,
-      fold_results_marg_directions,
-      fold_results_marginal_data,
-      # fold_results_marginal_additive_data,
-      fold_results_marginal_combo_data,
-      fold_results_marginal_Sls
-      # fold_results_mix_combo_data,
-      # fold_results_mix_Sls
-    )
+      # fold_results_marginal_additive_data[[fold_k]] <- cum_sum_results
 
-    names(results_list) <- c(
-      paste("mix rules", fold_k),
-      paste("mix data", fold_k),
-      paste("mix directions", fold_k),
-      paste("marg rules", fold_k),
-      paste("marg directions", fold_k),
-      paste("marg data", fold_k),
-      # paste("additive data", fold_k),
-      paste("marg combo data", fold_k),
-      paste("marginal SLs", fold_k)
-      # paste("mix combo data", fold_k),
-      # paste("mix SLs", fold_k)
-    )
+      ################## CALCULATE THE EXPECTED OUTCOME FOR EACH COMBINATION OF MARGINAL MIXTURE RULE EXPOSURE ################
 
-    results_list
+      comb_results <- est_comb_exposure(At, Av, Y, W, marg_rule_train, marg_rule_valid, no_marg_rules, Q1_stack = back_iter_SL, family = family, parallel_cv)
+
+      fold_results_marginal_combo_data[[fold_k]] <- comb_results$data
+      fold_results_marginal_Sls[[fold_k]] <- comb_results$learner
+
+      ################## CALCULATE THE EXPECTED OUTCOME FOR EACH COMBINATION OF THE MIXTURE INTERACTION RULES  ################
+
+      # mixed_comb_results <- est_comb_mixture_rules(At, Av, W, Y, rules, no_mix_rules, Q1_stack)
+
+      # fold_results_mix_combo_data[[fold_k]] <- mixed_comb_results$data
+      # fold_results_mix_Sls[[fold_k]] <- mixed_comb_results$learner
+
+      results_list <- list(
+        fold_results_mix_rules,
+        mix_fold_data,
+        mix_fold_directions,
+        fold_results_marg_rules,
+        fold_results_marg_directions,
+        fold_results_marginal_data,
+        # fold_results_marginal_additive_data,
+        fold_results_marginal_combo_data,
+        fold_results_marginal_Sls
+        # fold_results_mix_combo_data,
+        # fold_results_mix_Sls
+      )
+
+      names(results_list) <- c(
+        paste("mix rules", fold_k),
+        paste("mix data", fold_k),
+        paste("mix directions", fold_k),
+        paste("marg rules", fold_k),
+        paste("marg directions", fold_k),
+        paste("marg data", fold_k),
+        # paste("additive data", fold_k),
+        paste("marg combo data", fold_k),
+        paste("marginal SLs", fold_k)
+        # paste("mix combo data", fold_k),
+        # paste("mix SLs", fold_k)
+      )
+
+      results_list
+    }
+  }else{
+
+    results <- foreach::foreach(fold_k = unique(data$folds), .combine = "c", .multicombine = TRUE) %do% {
+
+      At <- data[data$folds != fold_k, ]
+      Av <- data[data$folds == fold_k, ]
+
+      rules <- filter_rules(fold_mixture_rules, fold_k = fold_k)
+      marg_decisions <- filter_rules(fold_marginal_rules, fold_k = fold_k)
+
+      if (dim(rules)[1] == 0) {
+        no_mix_rules <- TRUE
+      } else {
+        no_mix_rules <- FALSE
+      }
+
+      if (dim(marg_decisions)[1] == 0) {
+        no_marg_rules <- TRUE
+      } else {
+        no_marg_rules <- FALSE
+      }
+
+      fold_results_mix_rules[[fold_k]] <- rules
+
+
+      ################## BEGIN FITTING DECISION TREES TO EACH MARGINAL COMPONENT OF THE MIXTURE ###############
+
+      ######################### NUISANCE PARAMETER FITTING ON TRAINING ####################################
+
+      mix_nuisance_params <- est_mix_nuisance_params(
+        At,
+        Av,
+        W,
+        no_mix_rules,
+        Q1_stack = back_iter_SL,
+        family,
+        rules,
+        H.AW_trunc_lvl,
+        parallel_cv
+      )
+
+      mix_interaction_data <- mix_nuisance_params$data
+
+      mix_fold_data[[fold_k]] <- mix_interaction_data
+
+      ################ MARGINAL ESTIMATES FROM RULE IN TRAINING SET #####################################
+
+      marg_nuisance_params <- est_marg_nuisance_params(At,
+                                                       Av,
+                                                       W,
+                                                       Q1_stack = back_iter_SL,
+                                                       family,
+                                                       A,
+                                                       no_marg_rules,
+                                                       marg_decisions,
+                                                       H.AW_trunc_lvl,
+                                                       parallel_cv
+      )
+
+
+      fold_results_marginal_data[[fold_k]] <- marg_nuisance_params
+      fold_results_marg_rules[[fold_k]] <- marg_decisions
+
+      marginal_data <- marg_nuisance_params
+
+      ################## CALCULATE THE EXPECTED OUTCOME FOR EACH ADDED MARGINAL MIXTURE RULE EXPOSURE ################
+
+      At_c <- At
+      Av_c <- Av
+
+      At_c <-
+        evaluate_marginal_rules(
+          data = At_c,
+          marg_decisions = marg_decisions,
+          no_marg_rules,
+          mix_comps = A
+        )
+
+      Av_c <-
+        evaluate_marginal_rules(
+          data = Av_c,
+          marg_decisions = marg_decisions,
+          no_marg_rules,
+          mix_comps = A
+        )
+
+      marg_rule_train <- At_c$marginals
+      marg_rule_valid <- Av_c$marginals
+
+      At_c <- At_c$data
+      Av_c <- Av_c$data
+
+      # cum_sum_results <- est_cum_sum_exposure(At_c,
+      #                                         Av_c,
+      #                                         W,
+      #                                         SL.library,
+      #                                         no_marg_rules,
+      #                                         H.AW_trunc_lvl)
+
+      # fold_results_marginal_additive_data[[fold_k]] <- cum_sum_results
+
+      ################## CALCULATE THE EXPECTED OUTCOME FOR EACH COMBINATION OF MARGINAL MIXTURE RULE EXPOSURE ################
+
+      comb_results <- est_comb_exposure(At, Av, Y, W, marg_rule_train, marg_rule_valid, no_marg_rules, Q1_stack = back_iter_SL, family = family, parallel_cv)
+
+      fold_results_marginal_combo_data[[fold_k]] <- comb_results$data
+      fold_results_marginal_Sls[[fold_k]] <- comb_results$learner
+
+      ################## CALCULATE THE EXPECTED OUTCOME FOR EACH COMBINATION OF THE MIXTURE INTERACTION RULES  ################
+
+      # mixed_comb_results <- est_comb_mixture_rules(At, Av, W, Y, rules, no_mix_rules, Q1_stack)
+
+      # fold_results_mix_combo_data[[fold_k]] <- mixed_comb_results$data
+      # fold_results_mix_Sls[[fold_k]] <- mixed_comb_results$learner
+
+      results_list <- list(
+        fold_results_mix_rules,
+        mix_fold_data,
+        mix_fold_directions,
+        fold_results_marg_rules,
+        fold_results_marg_directions,
+        fold_results_marginal_data,
+        # fold_results_marginal_additive_data,
+        fold_results_marginal_combo_data,
+        fold_results_marginal_Sls
+        # fold_results_mix_combo_data,
+        # fold_results_mix_Sls
+      )
+
+      names(results_list) <- c(
+        paste("mix rules", fold_k),
+        paste("mix data", fold_k),
+        paste("mix directions", fold_k),
+        paste("marg rules", fold_k),
+        paste("marg directions", fold_k),
+        paste("marg data", fold_k),
+        # paste("additive data", fold_k),
+        paste("marg combo data", fold_k),
+        paste("marginal SLs", fold_k)
+        # paste("mix combo data", fold_k),
+        # paste("mix SLs", fold_k)
+      )
+
+      results_list
+    }
+
   }
 
   ##################################### AGGREGATE DATA ACROSS FOLDS ######################################
@@ -453,7 +662,6 @@ CVtreeMLE <- function(W,
   v_fold_marginal_results <- v_fold_marginal_results$marginal_results
 
   v_fold_marginal_results_w_pooled <- compute_meta_marg_results(v_fold_marginal_results = v_fold_marginal_results, mix_comps = A, data = data, n_folds = n_folds)
-
 
 
   #################################################

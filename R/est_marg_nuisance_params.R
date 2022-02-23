@@ -30,8 +30,12 @@ est_marg_nuisance_params <- function(At,
                                      A,
                                      no_marg_rules,
                                      marg_decisions,
-                                     H.AW_trunc_lvl) {
-  future::plan(future::sequential, gc = TRUE)
+                                     H.AW_trunc_lvl,
+                                     parallel_cv) {
+
+  if(parallel_cv == TRUE){
+    future::plan(future::sequential, gc = TRUE)
+  }
 
   marginal_data <- list()
 

@@ -21,8 +21,11 @@
 #'
 #' @export
 
-est_mix_nuisance_params <- function(At, Av, W, no_mix_rules, Q1_stack, family, rules, H.AW_trunc_lvl) {
-  future::plan(future::sequential, gc = TRUE)
+est_mix_nuisance_params <- function(At, Av, W, no_mix_rules, Q1_stack, family, rules, H.AW_trunc_lvl, parallel_cv) {
+
+  if(parallel_cv == TRUE){
+    future::plan(future::sequential, gc = TRUE)
+  }
 
   At_mix <- At
   Av_mix <- Av

@@ -27,8 +27,12 @@ fit_iterative_marg_rule_backfitting <- function(mix_comps,
                                                 tree_SL,
                                                 fold,
                                                 max_iter,
-                                                verbose) {
-  future::plan(future::sequential, gc = TRUE)
+                                                verbose,
+                                                parallel_cv) {
+
+  if (parallel_cv == TRUE) {
+    future::plan(future::sequential, gc = TRUE)
+  }
 
   n <- dim(At)[1]
   marg_decisions <- list()
