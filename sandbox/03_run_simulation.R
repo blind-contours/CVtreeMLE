@@ -33,6 +33,7 @@ truth <- c(1, 1, 1, 1, 1, 1, 6, 7)
 true_rule <- "M2 > 2.5 & M3 > 3.6"
 
 source(here("sandbox", "01_setup_data.R"))
+source(here("sandbox", "02_fit_estimators.R"))
 
 P_0_data <- generate_P_0(truth = truth, n = 100000)
 
