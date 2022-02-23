@@ -32,6 +32,8 @@ n_obs <- (cumsum(rep(sqrt(40), 6))^2)[-1] # sample sizes at root-n scale
 truth <- c(1, 1, 1, 1, 1, 1, 6, 7)
 true_rule <- "M2 > 2.5 & M3 > 3.6"
 
+source(here("sandbox", "01_setup_data.R"))
+
 P_0_data <- generate_P_0(truth = truth, n = 100000)
 
 # perform simulation across sample sizes
