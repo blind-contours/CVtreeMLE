@@ -92,7 +92,7 @@ remotes::install_github("tlverse/sl3@devel")
 ```
 
 For the latest features, install the most recent *stable version* of
-`CVtreeMLE` from GitHub via:
+`CVtreeMLE` from GitHub via [`remotes`](https://CRAN.R-project.org/package=remotes):
 
 ``` r
 remotes::install_github("blind-contours/CVtreeMLE@main")
