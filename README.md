@@ -81,27 +81,18 @@ ATE for these rules.
 
 ## Installation
 
-For standard use, we recommend installing the package from
-[CRAN](https://CRAN.R-project.org/package=CVtreeMLE) via
-
-``` r
-install.packages("CVtreeMLE")
-```
-
-*Note:* If `CVtreeMLE` is installed from
-[CRAN](https://CRAN.R-project.org/package=CVtreeMLE), the `sl3`, an
+*Note:* Because `CVtreeMLE` package (currently) depends on the `sl3`, an
 enhancing dependency that allows ensemble machine learning to be used
-for nuisance parameter estimation, won’t be included. We highly
-recommend additionally installing `sl3` from GitHub via
-[`remotes`](https://CRAN.R-project.org/package=remotes):
+for nuisance parameter estimation and `sl3` is not on CRAN the `CVtreeMLE` is not available on CRAN. 
+
+`CVtreeMLE` uses newly added decision tree estimators added to `sl3` so please download `sl3` from:
 
 ``` r
 remotes::install_github("tlverse/sl3@devel")
 ```
 
 For the latest features, install the most recent *stable version* of
-`CVtreeMLE` from GitHub via
-[`remotes`](https://CRAN.R-project.org/package=remotes):
+`CVtreeMLE` from GitHub via:
 
 ``` r
 remotes::install_github("blind-contours/CVtreeMLE@main")
