@@ -1,3 +1,22 @@
+@article{Athey2016,
+abstract = {In this paper we propose methods for estimating heterogeneity in causal effects in experimental and observational studies and for conducting hypothesis tests about the magnitude of differences in treatment effects across subsets of the population. We provide a data-driven approach to partition the data into subpopulations that differ in the magnitude of their treatment effects. The approach enables the construction of valid confidence intervals for treatment effects, even with many covariates relative to the sample size, and without "sparsity" assumptions. We propose an "honest" approach to estimation, whereby one sample is used to construct the partition and another to estimate treatment effects for each subpopulation. Our approach builds on regression tree methods, modified to optimize for goodness of fit in treatment effects and to account for honest estimation. Our model selection criterion anticipates that bias will be eliminated by honest estimation and also accounts for the effect of making additional splits on the variance of treatment effect estimates within each subpopulation. We address the challenge that the "ground truth" for a causal effect is not observed for any individual unit, so that standard approaches to cross-validation must be modified. Through a simulation study, we show that for our preferred method honest estimation results in nominal coverage for 90% confidence intervals, whereas coverage ranges between 74% and 84% for nonhonest approaches. Honest estimation requires estimating the model with a smaller sample size; the cost in terms of mean squared error of treatment effects for our preferred method ranges between 7-22%.},
+archivePrefix = {arXiv},
+arxivId = {1504.01132},
+author = {Athey, Susan and Imbens, Guido},
+doi = {10.1073/pnas.1510489113},
+eprint = {1504.01132},
+file = {:Users/davidmccoy/Downloads/pnas.1510489113.pdf:pdf},
+issn = {10916490},
+journal = {Proceedings of the National Academy of Sciences of the United States of America},
+keywords = {Causal inference,Cross-validation,Heterogeneous treatment effects,Potential outcomes,Supervised machine learning},
+number = {27},
+pages = {7353--7360},
+pmid = {27382149},
+title = {{Recursive partitioning for heterogeneous causal effects}},
+volume = {113},
+year = {2016}
+}
+
 @article{Hubbard2016,
 abstract = {Consider one observes n i.i.d. copies of a random variable with a probability distribution that is known to be an element of a particular statistical model. In order to define our statistical target we partition the sample in V equal size sub-samples, and use this partitioning to define V splits in an estimation sample (one of the V subsamples) and corresponding complementary parameter-generating sample. For each of the V parameter-generating samples, we apply an algorithm that maps the sample to a statistical target parameter. We define our sample-split data adaptive statistical target parameter as the average of these V-sample specific target parameters. We present an estimator (and corresponding central limit theorem) of this type of data adaptive target parameter. This general methodology for generating data adaptive target parameters is demonstrated with a number of practical examples that highlight new opportunities for statistical learning from data. This new framework provides a rigorous statistical methodology for both exploratory and confirmatory analysis within the same data. Given that more research is becoming "data-driven", the theory developed within this paper provides a new impetus for a greater involvement of statistical inference into problems that are being increasingly addressed by clever, yet ad hoc pattern finding methods. To suggest such potential, and to verify the predictions of the theory, extensive simulation studies, along with a data analysis based on adaptively determined intervention rules are shown and give insight into how to structure such an approach. The results show that the data adaptive target parameter approach provides a general framework and resulting methodology for data-driven science.},
 author = {Hubbard, Alan E. and Kherad-Pajouh, Sara and {Van Der Laan}, Mark J.},
@@ -9,7 +28,7 @@ keywords = {Asymptotic linearity,clustering,cross-validation,data mining,influen
 number = {1},
 pages = {3--19},
 pmid = {27227715},
-title = {{Statistical Inference for Data Adaptive Target Parameters}},
+title = {{Statistical inference for data adaptive target parameters}},
 volume = {12},
 year = {2016}
 }
@@ -165,8 +184,7 @@ year = {2010}
 }
 
 @manual{coyle2020sl3,
-  title = {{sl3}: Modern Pipelines for Machine Learning and {Super
-    Learning}},
+  title = {{sl3}: Modern super learning with pipelines},
   author = {Coyle, Jeremy R and Hejazi, Nima S and Malenica, Ivana and
     Sofrygin, Oleg},
   year = {2020},
