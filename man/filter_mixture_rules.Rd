@@ -2,7 +2,8 @@
 % Please edit documentation in R/utils.R
 \name{filter_mixture_rules}
 \alias{filter_mixture_rules}
-\title{Filter mixture rules across the folds for only those that have the same variables and directions across all folds}
+\title{Filter mixture rules across the folds for only those that have the
+same variables and directions across all folds}
 \usage{
 filter_mixture_rules(data, n_folds)
 }
@@ -12,5 +13,6 @@ filter_mixture_rules(data, n_folds)
 \item{n_folds}{Number of folds in the CV}
 }
 \description{
-Filter mixture rules across the folds for only those that have the same variables and directions across all folds
+Filter mixture rules across the folds for only those that have the
+same variables and directions across all folds
 }

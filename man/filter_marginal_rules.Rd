@@ -2,7 +2,8 @@
 % Please edit documentation in R/utils.R
 \name{filter_marginal_rules}
 \alias{filter_marginal_rules}
-\title{Filter marginal rules across the folds for only those that have the same variables}
+\title{Filter marginal rules across the folds for only those that
+have the same variables}
 \usage{
 filter_marginal_rules(data, n_folds)
 }
@@ -12,5 +13,6 @@ filter_marginal_rules(data, n_folds)
 \item{n_folds}{Number of folds in the CV}
 }
 \description{
-Filter marginal rules across the folds for only those that have the same variables
+Filter marginal rules across the folds for only those that
+have the same variables
 }

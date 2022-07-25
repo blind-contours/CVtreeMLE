@@ -1,15 +1,20 @@
-#' Simply function that looks at variables used in the pre model for matches with the mixture variables and pulls them out to check for consistent sets of rules found over the iterative backfitting procedure
+#' @title  Pull rules out of results table of pre results
+#' @details Simply function that looks at variables used in the pre model
+#' for matches
+#'  with the mixture variables and pulls them out to check for consistent
+#'  sets of rules found over the iterative backfitting procedure
 #' @param x Row of a dataframe that contains output from the pre fit
-#' @param A Vector of characters indicating column names for the mixture variables
+#' @param a Vector of characters indicating column names for the mixture
+#' variables
 #' @return Vector of matches of mixture variables
 #' @export
 
-pull_out_rule_vars <- function(x, A) {
+pull_out_rule_vars <- function(x, a) {
   x <- x[3]
   if (x != "1") {
     x_split <- strsplit(x, " ")[[1]]
-    hits <- x_split[grep(paste(A, collapse = "|"), x_split)]
-    hits <- sort(hits)
+    hits <- x_split[grep(paste(a, collapse = "|"), x_split)]
+    hits <- sort(unique(hits))
     if (length(hits) == 1) {
       hits <- 0
     } else {
@@ -25,7 +30,6 @@ pull_out_rule_vars <- function(x, A) {
 ###################################################################
 #' @title Round rules found for easier reading
 #' @param rules Vector or rules
-
 #' @importFrom rlang .data
 round_rules <- function(rules) {
   rounded_rules <- list()
@@ -34,7 +38,8 @@ round_rules <- function(rules) {
     rule_split <- split_rules[[i]]
     for (j in seq(rule_split)) {
       element <- rule_split[[j]]
-      if (grepl("-*\\d+\\.*\\d*", element) == TRUE & grepl("[[:alpha:]]", element) == FALSE) {
+      if (grepl("-*\\d+\\.*\\d*", element) == TRUE &&
+          grepl("[[:alpha:]]", element) == FALSE) {
         element_round <- round(as.numeric(element), 3)
         rule_split[[j]] <- element_round
       }
@@ -49,10 +54,12 @@ round_rules <- function(rules) {
 
 ###################################################################
 #' @title Filter data based on fold
+#' @details  Filter data to only the training fold of interest during CV
 #' @param data Input data
 #' @param fold_k Current fold
-
 #' @importFrom rlang .data
+#'
+#' @export
 filter_rules <- function(data, fold_k) {
   data <- data %>%
     dplyr::filter(.data$fold == fold_k)
@@ -62,8 +69,9 @@ filter_rules <- function(data, fold_k) {
 ###################################################################
 #' @title Group by fold
 #' @param data Input data
-
 #' @importFrom rlang .data
+#'
+#' @export
 groupby_fold <- function(data) {
   data <- data %>%
     dplyr::group_by(.data$fold)
@@ -71,11 +79,13 @@ groupby_fold <- function(data) {
 }
 
 ###################################################################
-#' @title Filter mixture rules across the folds for only those that have the same variables and directions across all folds
+#' @title Filter mixture rules across the folds for only those that have the
+#' same variables and directions across all folds
 #' @param data Input data
 #' @param n_folds Number of folds in the CV
-
 #' @importFrom rlang .data
+#'
+#' @export
 filter_mixture_rules <- function(data, n_folds) {
   data <- data %>%
     dplyr::group_by(.data$test, .data$direction) %>%
@@ -87,7 +97,9 @@ filter_mixture_rules <- function(data, n_folds) {
 #' @title Calculate the mean RMSE in each interaction group
 #' @param data Input data
 #' @importFrom rlang .data
-calc_mixture_rule_RMSEs <- function(data) {
+#'
+#' @export
+calc_mixture_rule_rmses <- function(data) {
   data <- data %>%
     dplyr::group_by(.data$test) %>%
     dplyr::summarize(RMSE = mean(.data$RMSE, na.rm = TRUE))
@@ -96,20 +108,18 @@ calc_mixture_rule_RMSEs <- function(data) {
   return(data)
 }
 ###################################################################
-#' @title Filter marginal rules across the folds for only those that have the same variables
+#' @title Filter marginal rules across the folds for only those that
+#' have the same variables
 #' @param data Input data
 #' @param n_folds Number of folds in the CV
-
 #' @importFrom rlang .data
+#'
+#' @export
 filter_marginal_rules <- function(data, n_folds) {
   data <- as.data.frame(data)
   data$fold <- as.numeric(data$fold)
 
   data <- data[data$rules != "No Rules Found", ]
-
-  # data <- data %>%
-  #   dplyr::group_by(.data$target_m, .data$quantile) %>%
-  #   dplyr::filter(dplyr::n() >= n_folds)
 
   data$var_quant_group <- paste(data$target_m, data$quantile, sep = "_")
   return(data)
@@ -119,7 +129,9 @@ filter_marginal_rules <- function(data, n_folds) {
 #' @title Calculate the mean RMSE in each marginal group
 #' @param data Input data
 #' @importFrom rlang .data
-calc_marginal_rule_RMSEs <- function(data) {
+#'
+#' @export
+calc_marginal_rule_rmses <- function(data) {
   data <- data %>%
     dplyr::group_by(.data$target_m) %>%
     dplyr::summarize(RMSE = mean(.data$RMSE, na.rm = TRUE))
@@ -132,8 +144,9 @@ calc_marginal_rule_RMSEs <- function(data) {
 ###################################################################
 #' @title Group by fold
 #' @param data Input data
-
 #' @importFrom rlang .data
+#'
+#' @export
 groupby_fold <- function(data) {
   data <- data %>%
     dplyr::group_by(.data$fold)
@@ -143,8 +156,9 @@ groupby_fold <- function(data) {
 ###################################################################
 #' @title Group split by marginal variable
 #' @param data Input data
-
 #' @importFrom rlang .data
+#'
+#' @export
 marginal_group_split <- function(data) {
   data <- data %>% dplyr::group_by(.data$target_m)
   data <- dplyr::group_split(data)
@@ -154,8 +168,9 @@ marginal_group_split <- function(data) {
 ###################################################################
 #' @title v-fold marginal group split
 #' @param data Input data
-
 #' @importFrom rlang .data
+#'
+#' @export
 v_fold_marginal_qgroup_split <- function(data) {
   data <- data %>% dplyr::group_by(.data$comparison)
   data <- dplyr::group_split(data)
@@ -165,10 +180,11 @@ v_fold_marginal_qgroup_split <- function(data) {
 ###################################################################
 #' @title v-fold group split
 #' @param data Input data
-
 #' @importFrom rlang .data
+#'
+#' @export
 v_fold_mixture_group_split <- function(data) {
-  data <- data %>% dplyr::group_by(.data$Variables)
+  data <- data %>% dplyr::group_by(.data$variables)
   data <- dplyr::group_split(data)
   return(data)
 }
@@ -180,14 +196,15 @@ v_fold_mixture_group_split <- function(data) {
 #' @param ... additional arguments
 #' @return List of rules
 #' @import partykit
-
+#'
+#' @export
 # Copied from internal partykit function
-list.rules.party <- function(x, i = NULL, ...) {
+list_rules_party <- function(x, i = NULL, ...) {
   if (is.null(i)) {
     i <- partykit::nodeids(x, terminal = TRUE)
   }
   if (length(i) > 1) {
-    ret <- sapply(i, list.rules.party, x = x)
+    ret <- sapply(i, list_rules_party, x = x)
     names(ret) <- if (is.character(i)) {
       i
     } else {
@@ -204,17 +221,15 @@ list.rules.party <- function(x, i = NULL, ...) {
   dat <- partykit::data_party(x, i)
   if (!is.null(x$fitted)) {
     findx <- which("(fitted)" == names(dat))[1]
-    fit <- dat[, findx:ncol(dat), drop = FALSE]
     dat <- dat[, -(findx:ncol(dat)), drop = FALSE]
     if (ncol(dat) == 0) {
       dat <- x$data
     }
   } else {
-    fit <- NULL
     dat <- x$data
   }
   rule <- c()
-  recFun <- function(node) {
+  rec_fun <- function(node) {
     if (partykit::id_node(node) == i) {
       return(NULL)
     }
@@ -235,7 +250,7 @@ list.rules.party <- function(x, i = NULL, ...) {
       ), "\")", sep = "")
     } else {
       if (is.null(index)) {
-        index <- 1:length(kid)
+        index <- seq_along(kid)
       }
       breaks <- cbind(c(-Inf, partykit::breaks_split(split)), c(
         partykit::breaks_split(split),
@@ -257,8 +272,9 @@ list.rules.party <- function(x, i = NULL, ...) {
       srule <- paste(srule, collapse = " & ")
     }
     rule <<- c(rule, srule)
-    return(recFun(node[[whichkid]]))
+    return(rec_fun(node[[whichkid]]))
   }
-  node <- recFun(partykit::node_party(x))
+  node <- rec_fun(partykit::node_party(x))
   paste(rule, collapse = " & ")
+
 }

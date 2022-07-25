@@ -2,18 +2,20 @@
 % Please edit documentation in R/calc_marginal_ate.R
 \name{calc_marginal_ate}
 \alias{calc_marginal_ate}
-\title{Calculate the ATE for each rule found for individual mixture components.}
+\title{Calculate the ATE for each rule found for individual mixture
+components.}
 \usage{
-calc_marginal_ate(marginal_data, mix_comps, marginal_rules, Y, n_folds)
+calc_marginal_ate(marginal_data, mix_comps, marginal_rules, y, n_folds)
 }
 \arguments{
-\item{marginal_data}{List of dataframes of nuisance parameter data for each mixture}
+\item{marginal_data}{List of dataframes of nuisance parameter data for
+each mixture}
 
 \item{mix_comps}{Vector of characters indicating the mixture components}
 
 \item{marginal_rules}{List of dataframes for rules found across the folds}
 
-\item{Y}{Vector indicating the Y}
+\item{y}{Vector indicating the Y}
 
 \item{n_folds}{Number of folds used in cross-validation}
 }
@@ -21,8 +23,12 @@ calc_marginal_ate(marginal_data, mix_comps, marginal_rules, Y, n_folds)
 Rules object. TODO: add more detail here.
 }
 \description{
-Aggregate marginal rules for each mixture variable found across the folds. For each rule
-extract the relevant nuisance parameter data calculated in the folds. Given the validation data estimates across
-the folds, for each tree do a TMLE update step to target the average treatment effect. Update the initial counterfactuals,
-calculate the influence curve and using the influence curve calculate variance estimates and p-values.
+Aggregate marginal rules for each mixture variable found
+across the folds. For each rule
+extract the relevant nuisance parameter data calculated in the folds. Given
+the validation data estimates across
+the folds, for each tree do a TMLE update step to target the average
+treatment effect. Update the initial counterfactuals,
+calculate the influence curve and using the influence curve calculate
+variance estimates and p-values.
 }

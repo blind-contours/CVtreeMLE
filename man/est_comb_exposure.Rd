@@ -2,45 +2,60 @@
 % Please edit documentation in R/est_comb_exposure.R
 \name{est_comb_exposure}
 \alias{est_comb_exposure}
-\title{Estimate the expected outcome for the combination of marginal thresholds identified in the fold.}
+\title{Estimate the expected outcome for the combination of marginal
+thresholds identified in the fold.}
 \usage{
 est_comb_exposure(
-  At,
-  Av,
-  Y = "y_scaled",
-  W,
+  at,
+  av,
+  y = "y_scaled",
+  w,
   marg_rule_train,
   marg_rule_valid,
   no_marg_rules,
-  Q1_stack,
-  family
+  aw_stack,
+  family,
+  parallel_cv,
+  seed
 )
 }
 \arguments{
-\item{At}{Training data}
+\item{at}{Training data}
 
-\item{Av}{Validation data}
+\item{av}{Validation data}
 
-\item{Y}{Outcome variable}
+\item{y}{Outcome variable}
 
-\item{W}{Vector of characters denoting covariates}
+\item{w}{Vector of characters denoting covariates}
 
-\item{marg_rule_train}{Dataframe of binary vectors for marginal rules identified in the training fold}
+\item{marg_rule_train}{Data frame of binary vectors for marginal rules
+identified in the training fold}
 
-\item{marg_rule_valid}{Dataframe of binary vectors for marginal rules identified in the validation fold}
+\item{marg_rule_valid}{Data frame of binary vectors for marginal rules
+identified in the validation fold}
 
-\item{no_marg_rules}{TRUE/FALSE if no marginal rules were found across all folds}
+\item{no_marg_rules}{TRUE/FALSE if no marginal rules were found across all}
 
-\item{Q1_stack}{Super Learner library for fitting Q (outcome mechanism) and g (treatment mechanism)}
+\item{aw_stack}{Super Learner library for fitting Q (outcome mechanism) and
+g (treatment mechanism)}
 
 \item{family}{Outcome type family}
+
+\item{parallel_cv}{TRUE/FALSE if parallel CV is used}
+
+\item{seed}{Seed number
+folds}
 }
 \value{
 Rules object. TODO: add more detail here.
 }
 \description{
-Estimate the expected outcome given exposure to the combination of marginal exposures. This is different
-compared to the cumulative sum; whereas with the cumulative sum, the exposure is the additive effect of each
-marginal rule found in the fold, here each marginal rule is included in a Super Learner as a binary vector and
-therefore this can pick up possible nonlinearity between the combination of binary exposures.
+Estimate the expected outcome given exposure to the combination
+of marginal exposures. This is different
+compared to the cumulative sum; whereas with the cumulative sum, the exposure
+is the additive effect of each
+marginal rule found in the fold, here each marginal rule is included in a
+Super Learner as a binary vector and
+therefore this can pick up possible nonlinearity between the combination of
+binary exposures.
 }

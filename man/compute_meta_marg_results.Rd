@@ -2,12 +2,14 @@
 % Please edit documentation in R/compute_meta_marg_results.R
 \name{compute_meta_marg_results}
 \alias{compute_meta_marg_results}
-\title{Compute v-fold specific estimates and do a meta-analysis type pooled average ATE for each individual marginal rule.}
+\title{Compute v-fold specific estimates and do a meta-analysis type pooled
+average ATE for each individual marginal rule.}
 \usage{
 compute_meta_marg_results(v_fold_marginal_results, data, mix_comps, n_folds)
 }
 \arguments{
-\item{v_fold_marginal_results}{List of dataframes for v-fold specific estimates of the fold-specific rule results for marginals}
+\item{v_fold_marginal_results}{List of dataframes for v-fold specific
+estimates of the fold-specific rule results for marginals}
 
 \item{data}{Input dataframe on which to evaluate the rules}
 
@@ -19,5 +21,7 @@ compute_meta_marg_results(v_fold_marginal_results, data, mix_comps, n_folds)
 Rules object. TODO: add more detail here.
 }
 \description{
-For each fold, estimates the ATE for a fold specific mixture rule. Also estimates a meta-analysis type average ATE and pooled variance. Creates a union rule that covers all the folds in the rules.
+For each fold, estimates the ATE for a fold specific mixture
+rule. Also estimates a meta-analysis type average ATE and pooled variance.
+Creates a union rule that covers all the folds in the rules.
 }

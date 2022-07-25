@@ -1,20 +1,20 @@
 library(CVtreeMLE)
 
-ATE <- 6
+ate <- 6
 
-n_obs <- 500 # number of observations we want to simulate
-splits <- c(0.99, 2.0, 2.5) # split points for each mixture
-mins <- c(0, 0, 0) # minimum values for each mixture
-maxs <- c(3, 4, 5) # maximum value for each mixture
-mu <- c(0, 0, 0) # mu for each mixture
-sigma <- matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3) # variance/covariance of mixture variables
-w1_betas <- c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04) # subspace probability relationship with covariate W1
-w2_betas <- c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04) # subspace probability relationship with covariate W2
-mix_subspace_betas <- c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09) # probability of mixture subspace (for multinomial outcome generation)
-subspace_assoc_strength_betas <- c(0, 0, 0, 0, 0, 0, ATE, 0) # mixture subspace impact on outcome Y, here the subspace where M1 is lower and M2 and M3 are higher based on values in splits
-marginal_impact_betas <- c(0, 0, 0) # marginal impact of mixture component on Y
-eps_sd <- 0.01 # random error
-binary <- FALSE # if outcome is binary
+n_obs <- 500
+splits <- c(0.99, 2.0, 2.5)
+mins <- c(0, 0, 0)
+maxs <- c(3, 4, 5)
+mu <- c(0, 0, 0)
+sigma <- matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3)
+w1_betas <- c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04)
+w2_betas <- c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04)
+mix_subspace_betas <- c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09)
+subspace_assoc_strength_betas <- c(0, 0, 0, 0, 0, 0, ate, 0)
+marginal_impact_betas <- c(0, 0, 0)
+eps_sd <- 0.01
+binary <- FALSE
 
 
 sim_data <- simulate_mixture_cube(
@@ -35,26 +35,24 @@ sim_data <- simulate_mixture_cube(
 
 expected_y <- subset(x = sim_data, M1 < 0.99 & M2 > 2.0 & M3 > 2.5, select = y)
 
-
-# not going to be exactly equal because of confounding and random error so tolerance is set high
-expect_equal(mean(expected_y$y), ATE, tolerance = 0.07)
+expect_equal(mean(expected_y$y), ate, tolerance = 0.07)
 
 
-ATE <- -2
+ate <- -2
 
-n_obs <- 1000 # number of observations we want to simulate
-splits <- c(0.4, 2.2, 4) # split points for each mixture
-mins <- c(0, 0, 0) # minimum values for each mixture
-maxs <- c(3, 4, 5) # maximum value for each mixture
-mu <- c(0, 0, 0) # mu for each mixture
-sigma <- matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3) # variance/covariance of mixture variables
-w1_betas <- c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04) # subspace probability relationship with covariate W1
-w2_betas <- c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04) # subspace probability relationship with covariate W2
-mix_subspace_betas <- c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09) # probability of mixture subspace (for multinomial outcome generation)
-subspace_assoc_strength_betas <- c(0, ATE, 0, 0, 0, 0, 0, 0) # mixture subspace impact on outcome Y, here the subspace where M1 is lower and M2 and M3 are higher based on values in splits
-marginal_impact_betas <- c(0, 0, 0) # marginal impact of mixture component on Y
-eps_sd <- 0.01 # random error
-binary <- FALSE # if outcome is binary
+n_obs <- 1000
+splits <- c(0.4, 2.2, 4)
+mins <- c(0, 0, 0)
+maxs <- c(3, 4, 5)
+mu <- c(0, 0, 0)
+sigma <- matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3)
+w1_betas <- c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04)
+w2_betas <- c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04)
+mix_subspace_betas <- c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09)
+subspace_assoc_strength_betas <- c(0, ate, 0, 0, 0, 0, 0, 0)
+marginal_impact_betas <- c(0, 0, 0)
+eps_sd <- 0.01
+binary <- FALSE
 
 
 sim_data <- simulate_mixture_cube(
@@ -82,8 +80,8 @@ sim_data <- simulate_mixture_cube(
 # 7.  M2 and M3 are higher and M1 is lower
 # 8.  All mixtures are higher than thresholds
 
-expected_y <- subset(x = sim_data, M1 >= 0.99 & M2 <= 2.0 & M3 <= 2.5, select = y)
+expected_y <- subset(x = sim_data, M1 >= 0.99 & M2 <= 2.0 & M3 <= 2.5,
+                     select = y)
 
 
-# not going to be exactly equal because of confounding and random error so tolerance is set high
-expect_equal(mean(expected_y$y), ATE, tolerance = 0.07)
+expect_equal(mean(expected_y$y), ate, tolerance = 0.07)

@@ -2,36 +2,28 @@
 % Please edit documentation in R/calc_v_fold_mixture_ate.R
 \name{calc_v_fold_mixtures_ate}
 \alias{calc_v_fold_mixtures_ate}
-\title{Aggregate mixture rules found across the folds that have the same variables and directions. For each rule
-extract the relevant nuisance parameter data calculated in the folds. Given the validation data estimates across
-the folds, for each tree do a TMLE update step to target the average treatment effect. Update the initial counterfactuals,
-calculate the influence curve and using the influence curve calculate variance estimates and p-values.}
+\title{Calculate the ATE for V-fold specific rules}
 \usage{
-calc_v_fold_mixtures_ate(
-  input_mix_rules,
-  input_mix_data,
-  outcome,
-  n_folds,
-  no_mixture_rules
-)
+calc_v_fold_mixtures_ate(input_mix_rules, input_mix_data, outcome, n_folds)
 }
 \arguments{
-\item{input_mix_rules}{List of dataframes of rules found for a mixture across the folds}
+\item{input_mix_rules}{List of dataframes of rules found for a mixture
+across the folds}
 
-\item{input_mix_data}{Nuisance parameter data for mixture rules found across the folds}
+\item{input_mix_data}{Nuisance parameter data for mixture rules found
+across the folds}
 
 \item{outcome}{Character indicating the outcome variable}
 
 \item{n_folds}{Number of folds used in cross-validation}
-
-\item{no_mixture_rules}{TRUE/FALSE if no mixture rules were found across the folds}
 }
 \value{
 Rules object. TODO: add more detail here.
 }
 \description{
-Aggregate mixture rules found across the folds that have the same variables and directions. For each rule
-extract the relevant nuisance parameter data calculated in the folds. Given the validation data estimates across
-the folds, for each tree do a TMLE update step to target the average treatment effect. Update the initial counterfactuals,
-calculate the influence curve and using the influence curve calculate variance estimates and p-values.
+For each rule in each fold extract the relevant nuisance
+parameter data calculated in the folds. Given the validation data estimates
+for each rule do a TMLE update step to target the average treatment effect.
+Update the initial counterfactuals,calculate the influence curve
+and using the influence curve calculate variance estimates and p-values.
 }

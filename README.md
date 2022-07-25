@@ -1,7 +1,9 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# `CVtreeMLE` <img src="man/figures/CVtreeMLE_sticker.png" height="300" align="right"/>
+# `CVtreeMLE` &lt;img src=“man/figures/CVtreeMLE\_sticker.png”
+
+# height=“300” align=“right”/&gt;
 
 <!-- badges: start -->
 
@@ -18,7 +20,6 @@ state and is being actively
 developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![MIT
 license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
-[![status](https://joss.theoj.org/papers/e3f631afd3bbcd60ed5d965ce26a39b0/status.svg)](https://joss.theoj.org/papers/e3f631afd3bbcd60ed5d965ce26a39b0)
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4070042.svg)](https://doi.org/10.5281/zenodo.4070042) -->
 <!-- [![DOI](https://joss.theoj.org/papers/10.21105/joss.02447/status.svg)](https://doi.org/10.21105/joss.02447) -->
 <!-- badges: end -->
@@ -42,22 +43,26 @@ a mixed exposure compared to if all individuals were not exposed. Here,
 the levels of a joint exposure are data-adaptively identified based on
 decision trees applied to a set of exposure variables while flexibly
 controlling for covariates non-parametrically. For more information on
-data- adaptive parameters see (Hubbard, Kherad-Pajouh, and Van Der Laan
-2016). `CVtreeMLE` uses data-adaptive parameters by implementing V-fold
+data-adaptive parameters see (Hubbard, Kherad-Pajouh, and Van Der Laan
+2016).
+
+`CVtreeMLE` uses data-adaptive parameters by implementing V-fold
 cross-validation (CV), that is, in 10-fold CV, the data is split 10
 times (folds), where 90% of the data is used to determine rules in a
-mixture, and the *g* and *Q* estimators needed for the ATE. These rules
-and estimators created in training data are applied to the validation
-data in order to calculate the final ATE target parameter. In order to
-optimize the optimum bias-variance trade-off for our causal parameter of
-interest we use cross-validated targeted minimum loss based estimation
-(CV-TMLE). `CVtreeMLE` builds off of the CV-TMLE general theorem of
-cross-validated minimum loss based estimation Zheng and Laan (2010)
-which allows the full utilization of loss based super learning to obtain
-the initial estimators needed for our target parameter without risk of
-overfitting. Thus, `CVtreeMLE` makes possible the non-parametric
+mixture, and the *g* (probability of being exposued estimator, P(A\|W))
+and *Q* (outcome estimator E(Y\|A,W)) estimators needed for the ATE.
+These rules and estimators created in training data are applied to the
+validation data in order to calculate the final ATE target parameter.
+
+In order to optimize the optimum bias-variance trade-off for our causal
+parameter of interest we use cross-validated targeted minimum loss based
+estimation (CV-TMLE). `CVtreeMLE` builds off of the CV-TMLE general
+theorem of cross-validated minimum loss based estimation Zheng and Laan
+(2010) which allows the full utilization of loss based super learning to
+obtain the initial estimators needed for our target parameter without
+risk of overfitting. Thus, `CVtreeMLE` makes possible the non-parametric
 estimation of the causal effects of a mixed exposure that both results
-in interpretable results which are useful for public policy and is
+in interpretable results which are useful for public policy and are
 asymptotically efficient.
 
 `CVtreeMLE` integrates with the
@@ -65,52 +70,50 @@ asymptotically efficient.
 allow for ensemble machine learning to be leveraged in the estimation
 procedure. `sl3` is used to create ensemble machine learning estimators
 for the *Q* and *g* mechanisms for the average treatment effect (ATE)
-target parameter and is also used in the iterative backfitting procedure
-In the iterative backfitting procedure, for an enselbe of decision trees
-are fit on the full mixture modeled together, the [`pre`
+target parameter and is also used in the iterative backfitting
+procedure. In the iterative backfitting procedure, for an enselbe of
+decision trees are fit on the full mixture modeled together, the [`pre`
 package](https://github.com/marjoleinF/pre)(Fokkema 2020) is used to fit
 rule ensembles. In backfitting procedure to find quantiles in each
-mixture component individually, an Super Learner of decision trees
+mixture component individually, a Super Learner of decision trees
 generated from the [`partykit`
 package](http://partykit.r-forge.r-project.org/partykit/)\[partykit2015\]
 is created. In each case, the goal is to find the best fitting decision
 tree from which we extract decision tree rules, we then calculate the
 ATE for these rules.
 
+Below we simulate data for a “mixture cube” and show basic results from
+`CVtreeMLE` compared to ground-truth. For more details, please see the
+vignette.
+
 ------------------------------------------------------------------------
 
 ## Installation
 
-*Note:* Because `CVtreeMLE` package (currently) depends on the `sl3`, an
+*Note:* Because `CVtreeMLE` package (currently) depends on `sl3`, an
 enhancing dependency that allows ensemble machine learning to be used
-for nuisance parameter estimation and `sl3` is not on CRAN the `CVtreeMLE` is not available on CRAN. 
+for nuisance parameter estimation and `sl3` is not on CRAN the
+`CVtreeMLE` package is not available on CRAN and must be downloaded
+here.
 
-`CVtreeMLE` uses newly added decision tree estimators added to `sl3` so please download `sl3` from:
-
-``` r
-remotes::install_github("tlverse/sl3@devel")
-```
-
-For the latest features, install the most recent *stable version* of
-`CVtreeMLE` from GitHub via [`remotes`](https://CRAN.R-project.org/package=remotes):
+For the latest features, install the most recent *stable version*  
+of `CVtreeMLE`from GitHub via
+[`remotes`](https://CRAN.R-project.org/package=remotes):
 
 ``` r
 remotes::install_github("blind-contours/CVtreeMLE@main")
 ```
 
-To contribute, install the *development version* of `CVtreeMLE` from
-GitHub via [`remotes`](https://CRAN.R-project.org/package=remotes):
+`CVtreeMLE` uses newly added decision tree estimators added to `sl3` so
+please download sl3 from:
 
 ``` r
-remotes::install_github("blind-contours/CVtreeMLE@devel")
+remotes::install_github("tlverse/sl3@devel")
 ```
 
 ------------------------------------------------------------------------
 
 ## Example
-
-To illustrate how `CVtreeMLE` may be used to ascertain the effect of a
-joint exposure, consider the following example:
 
 First load the package and other packages needed
 
@@ -123,89 +126,42 @@ library(ggplot2)
 set.seed(429153)
 ```
 
-Use the `simulate_mixture_cube` function to generate simulated data that
-represents ground-truth. Here, we create three continuous mixture
-variables, *A*, that are correlated and baseline covariates, *W*, that
-are potential confounders. Our outcome will be generated such that
-individuals with a specific set of exposures have a different outcome
-compared to individuals who are not exposed to this combination of
-exposure levels.
+To illustrate how `CVtreeMLE` may be used to ascertain the effect of a
+joint exposure, consider three exposures. We can represent these
+exposures as a cube, this is depicted below:
 
-![](man/figures/The_Cube.png) The above figure illustrates what we mean
-by a *mixture cube*. We will simulate data for the cube in blue but
-other mixture combinations are possible. Here, individuals exposed to
-*M*<sub>1</sub> at values less than 1.0, *M*<sub>2</sub> at levels more
-than 2.0, and *M*<sub>3</sub> at levels at or greater than 2.5 have an
-outcome of 6, compared to individuals not exposed to this combination of
-thresholds who have an expected outcome of 0 - thus our true mixture ATE
-is 6. Two covariates *W* confound this relationship. Let’s simulate this
-scenario.
+![](man/figures/The_Cube.png)
+
+This figure shows two regions we may be interested in within the mixture
+space. On the left, the orange region is where *M*<sub>1</sub> is less
+than 1, *M*<sub>2</sub> is greater than 2 and *M*<sub>3</sub> is less
+than 2.5. If we were to generate this data, we’d expect `CVtreeMLE` to
+find these thresholds in the mixture space. Likewise, in blue this shows
+the region where *M*<sub>1</sub> is less than 1, *M*<sub>2</sub> is
+greater than 2 and *M*<sub>3</sub> is greater than 2.5. We want to
+simulate an outcome that is highest in this region and where the size of
+the region is based on covariates.
+
+To do this, use the `simulate_mixture_cube` function to generate
+simulated data that represents ground-truth. Here, we create three
+continuous mixture variables, *A*, that are correlated and baseline
+covariates, *W*, that are potential confounders. Our outcome will be
+generated such that individuals with a specific set of exposures have a
+different outcome compared to individuals who are not exposed to this
+combination of exposure levels.
 
 ## Simulate Data
 
 ``` r
-# number of observations we want to simulate
-n_obs <- 500 
-# split points for each mixture
-splits <- c(0.99, 2.0, 2.5) 
-# minimum values for each mixture
-mins <- c(0, 0, 0) 
- # maximum value for each mixture
-maxs <- c(3, 4, 5)
- # mu for each mixture
-mu <- c(0, 0, 0)
-# variance/covariance of mixture variables
-sigma <- matrix(c(1, 0.5, 0.8, 0.5, 1, 0.7, 0.8, 0.7, 1), nrow = 3, ncol = 3) 
-# subspace probability relationship with covariate W1
-w1_betas <- c(0.0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04) 
-# subspace probability relationship with covariate W2
-w2_betas <- c(0.0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04) 
- # probability of mixture subspace (for multinomial outcome generation)
-mix_subspace_betas <- c(0.00, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09)
-# mixture subspace impact on outcome Y, here the subspace where M1 is lower and 
-# M2 and M3 are higher based on values in splits
-subspace_assoc_strength_betas <- c(0, 0, 0, 0, 0, 0, 6, 0) 
-# marginal impact of mixture component on Y
-marginal_impact_betas <- c(0, 0, 0) 
-# random error
-eps_sd <- 0.01 
-# if outcome is binary
-binary <- FALSE
-```
-
-Above, the `subspace_assoc_strength_betas` parameter is used to indicate
-the subspace we want to use and the expected outcome in that subspace.
-The indices correspond to an area in the cube:
-
-1.  All mixtures lower than specified thresholds
-2.  M1 is higher but M2 and M3 are lower
-3.  M2 is higher but M1 and M3 are lower
-4.  M1 and M2 are higher and M3 is lower
-5.  M3 is higher and M1 and M2 are lower
-6.  M1 and M3 are higher and M2 is lower
-7.  M2 and M3 are higher and M1 is lower
-8.  All mixtures are higher than thresholds
-
-``` r
-sim_data <- simulate_mixture_cube(
-  n_obs = n_obs, 
-  splits = splits,
-  mins = mins,
-  maxs = maxs,
-  mu = mu,
-  sigma = sigma,
-  w1_betas = w1_betas,
-  w2_betas = w2_betas,
-  mix_subspace_betas = mix_subspace_betas,
-  subspace_assoc_strength_betas = subspace_assoc_strength_betas,
-  marginal_impact_betas = marginal_impact_betas,
-  eps_sd = eps_sd,
-  binary = binary
-)
-
+sim_data <- simulate_mixture_cube(n_obs = 500,
+                                  splits = c(0.99, 2.0, 2.5),
+                                  mins = c(0, 0, 0),
+                                  maxs = c(3, 4, 5),
+                                  subspace_assoc_strength_betas = c(0, 0, 0, 0,
+                                                                    0, 0, 6, 0))
 head(sim_data) %>%
   kbl(caption = "Simulated Data") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
+  kable_classic(full_width = FALSE, html_font = "Cambria")
 ```
 
 <table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
@@ -215,10 +171,10 @@ Simulated Data
 <thead>
 <tr>
 <th style="text-align:right;">
-W
+w
 </th>
 <th style="text-align:right;">
-W2
+w2
 </th>
 <th style="text-align:right;">
 M1
@@ -358,48 +314,27 @@ y
 </tbody>
 </table>
 
-## Set up Estimators used in Super Learners
+Using the `simulate_mixture_cube` we generate 500 observations that are
+exposed to three variables with min values being 0 for all and max
+values being 3,4, and 5. In each variable we define split points 0.99,
+2.0, and 2.5. Given the eight regions in the cube, the
+`subspace_assoc_strength_betas` parameter is where we put the outcome in
+a specific region.
 
-Here, we set up our Super Learner using `SL3` for the iterative
-backfitting procedure and for our *Q* and *g* mechanisms. These learners
-will fit *Y*\|*W* offset by *Y*\|*A* as we fit decision trees to the
-exposure variables both jointly and individually Once rules are
-established, this Super Learner will also estimate the the propensity of
-being exposed to the determined rule as well as estimating the outcome
-model.
+The indices correspond to an area in the cube:
 
-``` r
-lrnr_glm <- Lrnr_glm$new()
-lrnr_bayesglm <- Lrnr_bayesglm$new()
-lrnr_gam <- Lrnr_gam$new()
-lrnr_lasso <- Lrnr_glmnet$new(alpha = 1)
-lrnr_earth <- Lrnr_earth$new()
-lrnr_ranger <- Lrnr_ranger$new()
-# put all the learners together (this is just one way to do it)
-learners <- c(lrnr_glm, lrnr_bayesglm, lrnr_gam, lrnr_ranger)
+1.  All mixtures lower than specified thresholds
+2.  M1 is higher but M2 and M3 are lower
+3.  M2 is higher but M1 and M3 are lower
+4.  M1 and M2 are higher and M3 is lower
+5.  M3 is higher and M1 and M2 are lower
+6.  M1 and M3 are higher and M2 is lower
+7.  M2 and M3 are higher and M1 is lower
+8.  All mixtures are higher than thresholds
 
-Q1_stack <- make_learner(Stack, learners)
-```
-
-Here, we set up a Super Learner of decision trees. We use a new learner
-developed for this package in the `sl3` ecosystem, `Lrnr_glmtree`.
-
-``` r
-lrnr_glmtree_001 <- Lrnr_glmtree$new(alpha = 0.5, maxdepth = 3)
-lrnr_glmtree_002 <- Lrnr_glmtree$new(alpha = 0.6,  maxdepth = 4)
-lrnr_glmtree_003 <- Lrnr_glmtree$new(alpha = 0.7, maxdepth = 2)
-lrnr_glmtree_004 <- Lrnr_glmtree$new(alpha = 0.8, maxdepth = 1)
-
-learners <- c( lrnr_glmtree_001, lrnr_glmtree_002, lrnr_glmtree_003, lrnr_glmtree_004)
-discrete_sl_metalrn <- Lrnr_cv_selector$new()
-
-tree_stack <- make_learner(Stack, learners)
-
-discrete_tree_sl <- Lrnr_sl$new(
-  learners = tree_stack,
-  metalearner = discrete_sl_metalrn
-)
-```
+So here - we put 6 at index 7 which means the outcome is 6 when M2 and
+M3 are higher and M1 is lower than their respective split points. The
+outcome is 0 in all other regions.
 
 ## Run `CVtreeMLE`
 
@@ -407,94 +342,43 @@ We will now pass the simulated data, learners, and variable names for
 each node in *O* = *W*, *A*, *Y* to the `CVtreeMLE` function:
 
 ``` r
+set.seed(2333)
+
 ptm <- proc.time()
 
 sim_results <- CVtreeMLE(data = sim_data,
-                         W = c("W", "W2"),
-                         Y = "y",
-                         A = c(paste("M", seq(3), sep = "")),
-                         back_iter_SL = Q1_stack,
-                         tree_SL = discrete_tree_sl, 
-                         n_folds = 2,
-                         family = "gaussian")
+                         w = c("w", "w2"),
+                         a = c(paste("M", seq(3), sep = "")),
+                         y = "y",
+                         n_folds = 3,
+                         family = "gaussian",
+                         num_cores = 5)
+#> Warning in supportsMulticoreAndRStudio(...): [ONE-TIME WARNING] Forked
+#> processing ('multicore') is not supported when running R from RStudio
+#> because it is considered unstable. For more details, how to control forked
+#> processing or not, and how to silence this warning in future R sessions, see ?
+#> parallelly::supportsMulticore
 
-proc.time() - ptm 
+proc.time() - ptm
 #>    user  system elapsed 
-#> 407.755  18.335 226.039
+#> 885.269  28.896 914.100
 ```
 
-Let’s first look at the RMSE for the iterative back-fitting models.
-Because our rules are determined in these models, from which our target
-parameter is derived it’s important that our models fit well. Given our
-simulated data, we would expect the mixture model to have the lowest
-RMSE.
+Note that above, there are default estimators for all parameters if they
+are not passed to the function. Here we just use the out of the box
+estimators that are defined in `utils_create_sls.R`
 
-``` r
-RMSE_results <- sim_results$`Model RMSEs`
-head(RMSE_results) %>%
-  kbl(caption = "Model Fit Results") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
-```
+## Results
 
-<table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
-<caption>
-Model Fit Results
-</caption>
-<thead>
-<tr>
-<th style="text-align:left;">
-Var(s)
-</th>
-<th style="text-align:right;">
-RMSE
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-M1
-</td>
-<td style="text-align:right;">
-0.0650222
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-M2
-</td>
-<td style="text-align:right;">
-0.0644338
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-M3
-</td>
-<td style="text-align:right;">
-0.0644142
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-M1M2M3
-</td>
-<td style="text-align:right;">
-0.0210670
-</td>
-</tr>
-</tbody>
-</table>
-
-Our mixture decision tree model has the lowest RMSE.
-
-We can look at the pooled TMLE results for this model:
+We can look at the pooled TMLE results for this model. Let’s see if
+`CVtreeMLE` identified the current rule in all our folds:
 
 ``` r
 mixture_results <- sim_results$`Pooled TMLE Mixture Results`
-head(mixture_results) %>%
+mixture_results %>%
+  dplyr::filter(Proportion_Folds == 1.0) %>%
   kbl(caption = "Mixture Results") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
+  kable_classic(full_width = FALSE, html_font = "Cambria")
 ```
 
 <table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
@@ -528,26 +412,26 @@ Vars
 RMSE
 </th>
 <th style="text-align:left;">
-Mixture Interaction Rules
+Union\_Rule
 </th>
 <th style="text-align:right;">
-Fraction Covered
+Proportion\_Folds
 </th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align:right;">
-5.843
+5.993
 </td>
 <td style="text-align:right;">
-0.02
+0.094
 </td>
 <td style="text-align:right;">
-5.804
+5.809
 </td>
 <td style="text-align:right;">
-5.883
+6.176
 </td>
 <td style="text-align:right;">
 0
@@ -559,203 +443,251 @@ Fraction Covered
 M1M2M3
 </td>
 <td style="text-align:right;">
-NA
+0.378
 </td>
 <td style="text-align:left;">
 M1 &gt; 0.021 & M1 &lt; 0.953 & M2 &gt; 2.011 & M2 &lt; 3.994 & M3 &gt;
 2.484 & M3 &lt; 4.98
 </td>
 <td style="text-align:right;">
-0.9508197
+1
 </td>
 </tr>
 </tbody>
 </table>
 
-\*Note - results in explanations below may change slightly based on
-runs:
-
-Above, the estimated mixture ATE for this rule is 5.92 (5.73 - 6.10),
+Above, the estimated mixture ATE for this rule is 5.96 (5.6 - 6.4),
 which covers our true mixture ATE used to generate the data which was 6.
 The estimated mixture ATE is interpreted as: the average counterfactual
 mean outcome if all individuals were exposed to the rule shown in
-`Mixture Interaction Rules` compared to if all individuals were
-unexposed is 5.92. That is, those individuals who are exposed to this
-rule have an outcome that is 5.92 higher compared to those that are not
-exposed to this rule. The standard error, confidence intervals and
-p-values are derived from the influence curve of this estimator.
+`Union Rule` compared to if all individuals were unexposed is 5.96. That
+is, those individuals who are exposed to this rule have an outcome that
+is 5.96 higher compared to those that are not exposed to this rule. The
+standard error, confidence intervals and p-values are derived from the
+influence curve of this estimator.
 
 ``` r
 mixture_v_results <- sim_results$`V-Specific Mix Results`
-head(mixture_v_results) %>%
-  kbl(caption = "V-Fold Mixture Results") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
+mixture_v_results$M1M2M3
+#>     ate    se lower_ci upper_ci p_val p_val_adj  rmse
+#> 1 5.723 0.026   5.6720   5.7730     0         0 0.335
+#> 2 5.681 0.279   5.1340   6.2280     0         0 0.471
+#> 3 5.509 0.075   5.3620   5.6560     0         0 0.513
+#> 4 5.700 0.290   5.1314   6.2684     0         0 0.355
+#>                                                                     mix_rule
+#> 1                                      M1 <= 0.967 & M3 > 2.502 & M2 > 1.944
+#> 2                                      M2 > 1.986 & M1 <= 0.953 & M3 > 2.478
+#> 3                                      M3 > 2.502 & M2 > 1.944 & M1 <= 0.934
+#> 4 M1 > 0.021 & M1 < 0.953 & M2 > 2.011 & M2 < 3.994 & M3 > 2.484 & M3 < 4.98
+#>     fold variables
+#> 1      1    M1M2M3
+#> 2      2    M1M2M3
+#> 3      3    M1M2M3
+#> 4 Pooled    M1M2M3
 ```
-
-<table class="kable_wrapper lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
-<caption>
-V-Fold Mixture Results
-</caption>
-<tbody>
-<tr>
-<td>
-<table>
-<thead>
-<tr>
-<th style="text-align:left;">
-</th>
-<th style="text-align:left;">
-Mixture ATE
-</th>
-<th style="text-align:left;">
-Standard Error
-</th>
-<th style="text-align:left;">
-Lower CI
-</th>
-<th style="text-align:left;">
-Upper CI
-</th>
-<th style="text-align:left;">
-P-value
-</th>
-<th style="text-align:left;">
-P-value Adj
-</th>
-<th style="text-align:left;">
-RMSE
-</th>
-<th style="text-align:left;">
-Mixture Interaction Rules
-</th>
-<th style="text-align:left;">
-Variables
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-1
-</td>
-<td style="text-align:left;">
-5.491
-</td>
-<td style="text-align:left;">
-0.08
-</td>
-<td style="text-align:left;">
-5.334
-</td>
-<td style="text-align:left;">
-5.647
-</td>
-<td style="text-align:left;">
-0
-</td>
-<td style="text-align:left;">
-0
-</td>
-<td style="text-align:left;">
-0.196
-</td>
-<td style="text-align:left;">
-M2 &gt; 2.001 & M3 &gt; 2.484 & M1 &lt;= 0.953
-</td>
-<td style="text-align:left;">
-M1M2M3
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-2
-</td>
-<td style="text-align:left;">
-5.831
-</td>
-<td style="text-align:left;">
-0.029
-</td>
-<td style="text-align:left;">
-5.774
-</td>
-<td style="text-align:left;">
-5.888
-</td>
-<td style="text-align:left;">
-0
-</td>
-<td style="text-align:left;">
-0
-</td>
-<td style="text-align:left;">
-0.416
-</td>
-<td style="text-align:left;">
-M2 &gt; 1.966 & M1 &lt;= 0.934 & M3 &gt; 2.478
-</td>
-<td style="text-align:left;">
-M1M2M3
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Pooled
-</td>
-<td style="text-align:left;">
-5.792
-</td>
-<td style="text-align:left;">
-0.085
-</td>
-<td style="text-align:left;">
-5.6247
-</td>
-<td style="text-align:left;">
-5.9583
-</td>
-<td style="text-align:left;">
-0
-</td>
-<td style="text-align:left;">
-0
-</td>
-<td style="text-align:left;">
-0.39
-</td>
-<td style="text-align:left;">
-M1 &gt; 0.021 & M1 &lt; 0.953 & M2 &gt; 2.011 & M2 &lt; 3.994 & M3 &gt;
-2.484 & M3 &lt; 4.98
-</td>
-<td style="text-align:left;">
-M1M2M3
-</td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-</tbody>
-</table>
 
 We can plot our v-fold mixture results findings using the
 `plot_mixture_results` function. This will return a list of plots with
 names corresponding to the interactions found.
 
 ``` r
-mixture_plots <- plot_mixture_results(v_intxn_results = sim_results$`V-Specific Mix Results`, hjust = 1)
+mixture_plots <- plot_mixture_results(v_intxn_results =
+                                        sim_results$`V-Specific Mix Results`,
+                                      hjust = 1.05)
 mixture_plots$M1M2M3
 ```
 
 ![](man/figures/README-plot%20sim%20mixture%20results-1.png)<!-- -->
-
 This plot shows the ATE specific for each fold and for the weighted-mean
 results over the fold with corresponding pooled variance. The rule is
 the pooled rule which includes all observations that were indicated by
 the fold specific rules.
 
 `CVtreeMLE` also data-adaptively identifies cut-points in the marginal
-space. Additional details for this and other features are given in the
+space. These around found here:
+
+``` r
+marginal_results <- sim_results$`Pooled TMLE Marginal Results`
+marginal_results %>%
+  dplyr::filter(`Proportion in Fold` == 1.0) %>%
+  kbl(caption = "Marginal Results") %>%
+  kable_classic(full_width = FALSE, html_font = "Cambria")
+```
+
+<table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Marginal Results
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+Marginal ATE
+</th>
+<th style="text-align:right;">
+Standard Error
+</th>
+<th style="text-align:right;">
+Lower CI
+</th>
+<th style="text-align:right;">
+Upper CI
+</th>
+<th style="text-align:right;">
+P-value
+</th>
+<th style="text-align:right;">
+P-value Adj
+</th>
+<th style="text-align:right;">
+rmse
+</th>
+<th style="text-align:left;">
+Variable Quantile
+</th>
+<th style="text-align:left;">
+Marginal Rules
+</th>
+<th style="text-align:left;">
+Min
+</th>
+<th style="text-align:left;">
+Max
+</th>
+<th style="text-align:left;">
+Proportion in Fold
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+M1\_2-M1\_1
+</td>
+<td style="text-align:right;">
+-0.602
+</td>
+<td style="text-align:right;">
+0.266
+</td>
+<td style="text-align:right;">
+-1.123
+</td>
+<td style="text-align:right;">
+-0.081
+</td>
+<td style="text-align:right;">
+0.023523
+</td>
+<td style="text-align:right;">
+0.211704
+</td>
+<td style="text-align:right;">
+1.998
+</td>
+<td style="text-align:left;">
+M1\_2
+</td>
+<td style="text-align:left;">
+M1 &gt; 0.12637 & M1 &lt; 2.98811
+</td>
+<td style="text-align:left;">
+0.001
+</td>
+<td style="text-align:left;">
+2.988
+</td>
+<td style="text-align:left;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+M2\_2-M2\_1
+</td>
+<td style="text-align:right;">
+1.356
+</td>
+<td style="text-align:right;">
+0.231
+</td>
+<td style="text-align:right;">
+0.904
+</td>
+<td style="text-align:right;">
+1.808
+</td>
+<td style="text-align:right;">
+0.000000
+</td>
+<td style="text-align:right;">
+0.000000
+</td>
+<td style="text-align:right;">
+1.946
+</td>
+<td style="text-align:left;">
+M2\_2
+</td>
+<td style="text-align:left;">
+M2 &gt; 2.0011 & M2 &lt; 3.99468
+</td>
+<td style="text-align:left;">
+0
+</td>
+<td style="text-align:left;">
+3.995
+</td>
+<td style="text-align:left;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+M3\_2-M3\_1
+</td>
+<td style="text-align:right;">
+-0.281
+</td>
+<td style="text-align:right;">
+0.461
+</td>
+<td style="text-align:right;">
+-1.185
+</td>
+<td style="text-align:right;">
+0.624
+</td>
+<td style="text-align:right;">
+0.542837
+</td>
+<td style="text-align:right;">
+1.000000
+</td>
+<td style="text-align:right;">
+0.710
+</td>
+<td style="text-align:left;">
+M3\_2
+</td>
+<td style="text-align:left;">
+M3 &gt; 1.66904 & M3 &lt; 4.98025
+</td>
+<td style="text-align:left;">
+0.003
+</td>
+<td style="text-align:left;">
+4.98
+</td>
+<td style="text-align:left;">
+1
+</td>
+</tr>
+</tbody>
+</table>
+
+Additional details for this and other features are given in the
 vignette.
 
 ------------------------------------------------------------------------
@@ -765,7 +697,7 @@ vignette.
 If you encounter any bugs or have any specific feature requests, please
 [file an issue](https://github.com/blind-contours/CVtreeMLE/issues).
 Further details on filing issues are provided in our [contribution
-guidelines](https://github.com/blind-contours/CVtreeMLE/blob/master/CONTRIBUTING.md).
+guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/master/CONTRIBUTING.md).
 
 ------------------------------------------------------------------------
 
@@ -773,7 +705,7 @@ guidelines](https://github.com/blind-contours/CVtreeMLE/blob/master/CONTRIBUTING
 
 Contributions are very welcome. Interested contributors should consult
 our [contribution
-guidelines](https://github.com/blind-contours/CVtreeMLE/blob/master/CONTRIBUTING.md)
+guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/master/CONTRIBUTING.md)
 prior to submitting a pull request.
 
 ------------------------------------------------------------------------
@@ -782,24 +714,20 @@ prior to submitting a pull request.
 
 After using the `CVtreeMLE` R package, please cite the following:
 
-      @article{mccoyd2022CVtreeMLE-joss,
-        author = {McCoy, David B; Hubbard, Alan; Van der Laan Mark},
-        title = {{CVtreeMLE}: Efficient Estimation of Mixed Exposures using Data Adaptive Decision Trees and Cross-Validated Targeted Maximum Likelihood Estimation in {R}}
-        year  = {2022},
-        doi = {TBD},
-        url = {TBD},
-        journal = {Journal of Open Source Software},
-        publisher = {The Open Journal}
-      }
+(**article?**){mccoyd2022CVtreeMLE-joss, author = {McCoy, David B;
+Hubbard, Alan; Van der Laan Mark}, title = {{CVtreeMLE}: Efficient
+Estimation of Mixed Exposures using Data Adaptive Decision Trees and
+Cross-Validated Targeted Maximum Likelihood Estimation in {R}} year =
+{2022}, doi = {TBD}, url = {TBD}, journal = {Journal of Open Source
+Software}, publisher = {The Open Journal} }
 
-      @software{mccoyd2022CVtreeMLE-rpkg,
-        author = {McCoy, David B; Hubbard, Alan; Van der Laan Mark},
-        title = {{CVtreeMLE}: Efficient Estimation of Mixed Exposures using Data Adaptive Decision Trees and Cross-Validated Targeted Maximum Likelihood Estimation in {R}},
-        year  = {2022},
-        doi = {TBD},
-        url = {https://CRAN.R-project.org/package=CVtreeMLE},
-        note = {R package version 0.3.4}
-      }
+(**software?**){mccoyd2022CVtreeMLE-rpkg, author = {McCoy, David B;
+Hubbard, Alan; Van der Laan Mark}, title = {{CVtreeMLE}: Efficient
+Estimation of Mixed Exposures using Data Adaptive Decision Trees and
+Cross-Validated Targeted Maximum Likelihood Estimation in {R}}, year =
+{2022}, doi = {TBD}, url =
+{<https://CRAN.R-project.org/package=CVtreeMLE>}, note = {R package
+version 0.3.4} }
 
 ------------------------------------------------------------------------
 
@@ -837,13 +765,13 @@ where I was a biomedical big data fellow.
 
 ## License
 
-© 2017-2022 [David B. McCoy](https://davidmccoy.org)
+© 2017-2021 [David B. McCoy](https://davidmccoy.org)
 
 The contents of this repository are distributed under the MIT license.
 See below for details:
 
     MIT License
-    Copyright (c) 2017-2022 David B. McCoy
+    Copyright (c) 2017-2021 David B. McCoy
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
     in the Software without restriction, including without limitation the rights

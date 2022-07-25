@@ -2,56 +2,132 @@
 % Please edit documentation in R/CVtreeMLE.R
 \name{CVtreeMLE}
 \alias{CVtreeMLE}
-\title{Estimate the joint impact of a mixed exposure using cross-validated targeted learning and decision trees}
+\title{Fitting ensemble decision trees with targeted maximum likelihood
+estimation}
 \usage{
 CVtreeMLE(
-  W,
-  A,
-  Y,
+  w,
+  a,
+  y,
   data,
-  back_iter_SL,
-  tree_SL,
+  w_stack = NULL,
+  aw_stack = NULL,
+  a_stack = NULL,
   n_folds,
+  seed = set.seed(),
   family,
-  H.AW_trunc_lvl = 10,
+  h_aw_trunc_lvl = 10,
   parallel = TRUE,
-  num_cores,
+  parallel_cv = TRUE,
+  parallel_type = "multi_session",
+  num_cores = 2,
   max_iter = 5,
   verbose = FALSE
 )
 }
 \arguments{
-\item{W}{A vector of characters indicating which variables in the data to use as covariates.}
+\item{w}{A vector of characters indicating which variables in the data to use
+as covariates.}
 
-\item{A}{A vector of characters indicating which variables in the data to use as exposures.}
+\item{a}{A vector of characters indicating which variables in the data to use
+as exposures.}
 
-\item{Y}{A character indicating which variable in the data to use as the outcome.}
+\item{y}{A character indicating which variable in the data to use as the
+outcome.}
 
 \item{data}{Data frame of (W,A,Y) variables of interest.}
 
-\item{back_iter_SL}{Super learner used for the backfitting algorithm and for the Q and g mechanisms}
+\item{w_stack}{Stack of estimators used in the SL during the iterative
+backfitting for \code{Y|W}, this should be an SL3 stack}
 
-\item{tree_SL}{Stack of estimators used in the SL during the iterative backfitting for \code{Y|W}, this should be an SL3 object}
+\item{aw_stack}{Stack of estimators used in the SL for the Q and g
+mechanisms.}
+
+\item{a_stack}{Stack of estimators used in the SL during the iterative
+backfitting for \code{Y|A}, this should be an SL3 object}
 
 \item{n_folds}{Number of cross-validation folds.}
 
+\item{seed}{Pass in a seed number for consistency of results}
+
 \item{family}{Family ('binomial' or 'gaussian').}
 
-\item{H.AW_trunc_lvl}{Truncation level for the clever covariate.}
+\item{h_aw_trunc_lvl}{Truncation level for the clever covariate.}
 
-\item{parallel}{Use parallel processing if a backend is registered; enabled by default.}
+\item{parallel}{Use parallel processing if a backend is registered; enabled
+by default.}
+
+\item{parallel_cv}{Use parallel processing on CV procedure vs. parallel
+processing on Super Learner model fitting}
+
+\item{parallel_type}{default is \code{multi_session}, if parallel is true
+which type of parallelization to do \code{multi_session} or \code{multicore}}
 
 \item{num_cores}{If using parallel, the number of cores to parallelize over}
 
 \item{max_iter}{Max number of iterations of iterative backfitting algorithm}
 
-\item{verbose}{If true, creates a sink file where detailed information and diagnostics of the run process are given.}
+\item{verbose}{If true, creates a sink file where detailed information and
+diagnostics of the run process are given.}
 }
 \value{
-Results object. TODO: add more detail here.
+Object of class \code{CVtreeMLE}, containing a list of table results
+for: marginal ATEs, mixture ATEs, RMSE of marginal model fits, RMSE of
+mixture model fits, marginal rules, mixture rules and SL model fits for the
+marginal combinations.
 }
 \description{
-Estimate the joint impact of a mixed exposure using cross-validated targeted learning and decision trees
+Fit ensemble decision trees on a mixed exposure while
+controlling for covariates using iterative backfitting of two Super Learners.
+If partitioning nodes are identified, use these partitions as a rule-based
+exposure. The CV-TMLE framework is used to create training and estimation
+samples. Trees are fit to the training and the average treatment effect (ATE)
+of the rule-based exposure is estimated in the validation folds. Any type of
+mixed exposure (continuous, binary, multinomial) is accepted. The ATE for
+multiple mixture components (interactions) are given as well as marginal
+effects if data-adaptively identified.
+}
+\details{
+The function performs the following functions.
+\enumerate{
+\item Imputes missing values with the mean and creates dummy indicator
+variables for imputed variables.
+\item Separate out covariates into factors and continuous (ordered).
+\item Create a variable which indicates the fold number assigned to each
+observation.
+\item Fit iterative backfitting algorithm onto the mixed exposure
+which applies ensemble decision trees to the mixed exposure and an
+unrestricted Super Learner on the covariates. Algorithms are fit, offset by
+their compliment until there is virtually no difference between the model
+fits. Extract partition nodes found for the mixture. This is done on each
+training fold data.
+\item Fit iterative backfitting algorithm onto each individual mixture
+component which applies ensemble decision trees to the mixed exposure and an
+unrestricted Super Learner on the covariates. Algorithms are fit, offset by
+their compliment until there is virtually no difference between the model
+fits. Extract partition nodes found for the mixture. This is done on each
+training fold data.
+\item Estimate nuisance parameters (Q and g estimates) for mixture
+interaction rule
+\item Estimate nuisance parameters (Q and g estimates) for marginal
+rules
+\item Estimate the Q outcome mechanism over all the marginal rules for
+later user input for targeted ATE for different marginal combinations based
+on data-adaptively identified thresholds.
+\item Use the mixture rules and data and do a TMLE fluctuation step to
+target the ATE for the given rule across all the folds. Calculate
+proportion of folds the rule is found.
+\item Use the marginal rules and data and do a TMLE fluctuation step to
+target the ATE for the given rule across all the folds. Calculate
+proportion of folds the rule is found.
+\item Calculate V-fold specific TMLE estimates of the rules.
+\item For the mixture rules, calculate a union rule or the rule that covers
+all the observations across the folds that the respective variable set in
+the rule.
+\item For the marginal rules, calculate a union rule or the rule that covers
+all the observations across the folds that the respective variable set in
+the rule.
+}
 }
 \section{Authors}{
 
@@ -97,3 +173,20 @@ inference for observational and experimental data}. Springer Science &
 Business Media.
 }
 
+\examples{
+n <- 800
+p <- 4
+x <- matrix(rnorm(n * p), n, p)
+colnames(x) <- c("A1", "A2", "W1", "W2")
+y_prob <- plogis(3 * sin(x[, 1]) + sin(x[, 2]), sin(x[, 4]))
+Y <- rbinom(n = n, size = 1, prob = y_prob)
+data <- as.data.frame(cbind(x,Y))
+
+CVtreeMLE_fit <- CVtreeMLE(data = data,
+                          w = c("W1", "W2"),
+                          a = c("A1", "A2"),
+                          y = "Y",
+                          family = "binomial",
+                          parallel = FALSE,
+                          n_folds = 2)
+}

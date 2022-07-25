@@ -1,45 +1,62 @@
-#' @title Calculate the v-fold specifice ATE for each rule found for individual mixture components.
-#' @description Aggregate marginal rules for each mixture variable found across the folds. For each rule
-#' extract the relevant nuisance parameter data calculated in the folds. Given the validation data estimates across
-#' the folds, for each tree do a TMLE update step to target the average treatment effect. Update the initial counterfactuals,
-#' calculate the influence curve and using the influence curve calculate variance estimates and p-values.
+#' @title Calculate the v-fold specifice ATE for each rule found for individual
+#' mixture components.
+#' @description Aggregate marginal rules for each mixture variable found across
+#' the folds. For each rule
+#' extract the relevant nuisance parameter data calculated in the folds. Given
+#' the validation data estimates across
+#' the folds, for each tree do a TMLE update step to target the average
+#' treatment effect. Update the initial counterfactuals,
+#' calculate the influence curve and using the influence curve calculate
+#' variance estimates and p-values.
 #'
-#' @param marginal_data List of dataframes of nuisance parameter data for each mixture
+#' @param marginal_data List of dataframes of nuisance parameter
+#' data for each mixture
 #' @param mix_comps Vector of characters indicating the mixture components
-#' @param Y Vector indicating the Y
+#' @param y Vector indicating the Y
 #' @param n_folds Number of folds used in cross-validation
-#' @param marginal_rules List of dataframes of marginal rules found across the folds
+#' @param marginal_rules List of dataframes of marginal rules found across
+#' the folds
 
 #' @importFrom data.table rbindlist
 #' @importFrom dplyr group_by bind_rows
 
 #' @return Rules object. TODO: add more detail here.
-#' @importFrom stats as.formula glm p.adjust plogis predict qlogis qnorm qunif rnorm runif
+#' @importFrom stats as.formula glm p.adjust plogis predict qlogis qnorm qunif
+#' @importFrom stats rnorm runif
 #' @importFrom rlang :=
 #'
 #' @export
 
-calc_v_fold_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y, n_folds) {
-  marg_data <- list()
+calc_v_fold_marginal_ate <- function(marginal_data,
+                                     mix_comps,
+                                     marginal_rules,
+                                     y,
+                                     n_folds) {
 
-  x <- unlist(marginal_data, recursive = FALSE)
-  x <- unlist(x, recursive = FALSE)
-  x <- x[!sapply(x, is.null)]
+  marg_data <- unlist(marginal_data, recursive = FALSE)
+  marg_data <- unlist(marg_data, recursive = FALSE)
 
-  y <- unlist(marginal_rules, recursive = FALSE)
-  y <- y[!sapply(y, is.null)]
+  marg_data <- marg_data[!sapply(marg_data, is.null)]
+
+  marg_data <- marg_data[sapply(marg_data, FUN = function(i) {
+    all(is.na(i$h_aw)) != TRUE
+  })]
+
+  marg_rules <- unlist(marginal_rules, recursive = FALSE)
+  marg_rules <- marg_rules[!sapply(marg_rules, is.null)]
+  marg_rules <- marg_rules[sapply(marg_rules, FUN = function(i) {
+    dim(i)[1] != 0
+  })]
 
   comp_labels <- list()
   rule_comp_cols <- list()
   rule_ref_cols <- list()
 
   index <- 0
-  for (i in seq(y)) {
-    fold_rules_groups <- marginal_group_split(y[[i]])
+  for (i in seq(marg_rules)) {
+    fold_rules_groups <- marginal_group_split(marg_rules[[i]])
 
     for (j in seq(fold_rules_groups)) {
-      # var_comps <- list()
-      # rule_comps <- list()
       rules <- fold_rules_groups[[j]]
       reference <- rules[rules$quantile == 1, ]
       reference_quant <- reference$var_quant_group
@@ -48,11 +65,10 @@ calc_v_fold_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y
       for (k in seq(nrow(comparisons))) {
         index <- index + 1
         comp_row <- comparisons[k, ]
-        comp_label <- paste(comp_row$var_quant_group, reference_quant, sep = "-")
+        comp_label <- paste(comp_row$var_quant_group, reference_quant,
+                            sep = "-")
         rule_comparison <- comp_row$rules
         rule_reference <- reference_rule
-
-        # var_comps[k] <- comp_label
         comp_labels[[index]] <- comp_label
         rule_comp_cols[[index]] <- rule_comparison
         rule_ref_cols[[index]] <- rule_reference
@@ -67,7 +83,7 @@ calc_v_fold_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y
   marginal_results <-
     as.data.frame(matrix(
       data = NA,
-      nrow = length(x),
+      nrow = length(marg_data),
       ncol = 7
     ))
 
@@ -86,42 +102,57 @@ calc_v_fold_marginal_ate <- function(marginal_data, mix_comps, marginal_rules, Y
 
   updated_marginal_data <- list()
 
-  ## find which marginal mixture rule was null across the folds to update bonferonni p-value
+  for (i in seq(marg_data)) {
+    marg_mix <- marg_data[[i]]
 
-  no_null_indices <- list()
+    if (all(is.na(marg_mix$h_aw)) == TRUE) {
+      break
+    }
 
-
-  for (i in seq(x)) {
-    marg_mix <- x[[i]]
-
-    flux_results <- fit_least_fav_submodel(H.AW = marg_mix$H.AW, data = marg_mix, QbarAW = marg_mix$QbarAW, Qbar1W = marg_mix$Qbar1W, Qbar0W = marg_mix$Qbar0W)
+    flux_results <- fit_least_fav_submodel(h_aw = marg_mix$h_aw,
+                                           data = marg_mix,
+                                           qbar_aw = marg_mix$qbar_aw,
+                                           qbar_1w = marg_mix$qbar_1w,
+                                           qbar_0w = marg_mix$qbar_0w)
 
     ## back-scale Y
-    QbarAW.star <- scale_to_original(scaled_vals = flux_results$QbarAW.star, max_orig = max(marg_mix[Y]), min_orig = min(marg_mix[Y]))
-    Qbar0W.star <- scale_to_original(scaled_vals = flux_results$Qbar0W.star, max_orig = max(marg_mix[Y]), min_orig = min(marg_mix[Y]))
-    Qbar1W.star <- scale_to_original(scaled_vals = flux_results$Qbar1W.star, max_orig = max(marg_mix[Y]), min_orig = min(marg_mix[Y]))
+    qbar_aw_star <- scale_to_original(scaled_vals = flux_results$qbar_aw_star,
+                                     max_orig = max(marg_mix[y]),
+                                     min_orig = min(marg_mix[y]))
 
-    marg_mix$QbarAW.star <- QbarAW.star
-    marg_mix$Qbar0W.star <- Qbar0W.star
-    marg_mix$Qbar1W.star <- Qbar1W.star
+    qbar_0w_star <- scale_to_original(scaled_vals = flux_results$qbar_0w_star,
+                                     max_orig = max(marg_mix[y]),
+                                     min_orig = min(marg_mix[y]))
 
-    ATE_results <- calc_ATE_estimates(data = marg_mix, ATE_var = "marg.ATE", outcome = Y, p_adjust_n = length(x))
+    qbar_1w_star <- scale_to_original(scaled_vals = flux_results$qbar_1w_star,
+                                     max_orig = max(marg_mix[y]),
+                                     min_orig = min(marg_mix[y]))
 
-    sqrd_resids <- (marg_mix$QbarAW.star - marg_mix[Y])^2
-    RMSE <- sqrt(mean(sqrd_resids[, 1]))
+    marg_mix$qbar_aw_star <- qbar_aw_star
+    marg_mix$qbar_0w_star <- qbar_0w_star
+    marg_mix$qbar_1w_star <- qbar_1w_star
 
-    marginal_results$`Marginal ATE`[i] <- round(ATE_results$ATE, 3)
-    marginal_results$`Standard Error`[i] <- round(ATE_results$SE, 3)
-    marginal_results$`Lower CI`[i] <- round(ATE_results$CI[1], 3)
-    marginal_results$`Upper CI`[i] <- round(ATE_results$CI[2], 3)
-    marginal_results$`P-value`[i] <- round(ATE_results$`p-value`, 6)
-    marginal_results$`P-value Adj`[i] <- round(ATE_results$`adj p-value`, 3)
-    marginal_results$RMSE[i] <- round(RMSE, 3)
+    ate_results <- calc_ate_estimates(data = marg_mix,
+                                      ate_var = "marg_ate",
+                                      outcome = y,
+                                      p_adjust_n = length(marg_data))
 
-    updated_marginal_data[[i]] <- ATE_results$data
+    sqrd_resids <- (marg_mix$qbar_aw_star - marg_mix[y])^2
+    rmse <- sqrt(mean(sqrd_resids[, 1]))
+
+    marginal_results$`Marginal ATE`[i] <- round(ate_results$ate, 3)
+    marginal_results$`Standard Error`[i] <- round(ate_results$se, 3)
+    marginal_results$`Lower CI`[i] <- round(ate_results$ci[1], 3)
+    marginal_results$`Upper CI`[i] <- round(ate_results$ci[2], 3)
+    marginal_results$`P-value`[i] <- round(ate_results$p_value, 6)
+    marginal_results$`P-value Adj`[i] <- round(ate_results$adj_p_value, 3)
+    marginal_results$RMSE[i] <- round(rmse, 3)
+
+    updated_marginal_data[[i]] <- ate_results$data
   }
 
   marginal_results <- cbind(marginal_results, rule_comparisons)
 
-  return(list(marginal_results = marginal_results, data = updated_marginal_data))
+  return(list(marginal_results = marginal_results,
+              data = updated_marginal_data))
 }

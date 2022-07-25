@@ -2,10 +2,7 @@
 % Please edit documentation in R/calc_mixtures_ate.R
 \name{calc_mixtures_ate}
 \alias{calc_mixtures_ate}
-\title{Aggregate mixture rules found across the folds that have the same variables and directions. For each rule
-extract the relevant nuisance parameter data calculated in the folds. Given the validation data estimates across
-the folds, for each tree do a TMLE update step to target the average treatment effect. Update the initial counterfactuals,
-calculate the influence curve and using the influence curve calculate variance estimates and p-values.}
+\title{Calculate the ATE for each mixture rule}
 \usage{
 calc_mixtures_ate(
   input_mix_rules,
@@ -16,22 +13,29 @@ calc_mixtures_ate(
 )
 }
 \arguments{
-\item{input_mix_rules}{List of dataframes of rules found for a mixture across the folds}
+\item{input_mix_rules}{List of dataframes of rules found for a mixture
+across the folds}
 
-\item{input_mix_data}{Nuisance parameter data for mixture rules found across the folds}
+\item{input_mix_data}{Nuisance parameter data for mixture rules found
+across the folds}
 
 \item{outcome}{Character indicating the outcome variable}
 
 \item{n_folds}{Number of folds used in cross-validation}
 
-\item{no_mixture_rules}{TRUE/FALSE whether no mixture rules were found across all the folds}
+\item{no_mixture_rules}{TRUE/FALSE whether no mixture rules were found
+across all the folds}
 }
 \value{
 Rules object. TODO: add more detail here.
 }
 \description{
-Aggregate mixture rules found across the folds that have the same variables and directions. For each rule
-extract the relevant nuisance parameter data calculated in the folds. Given the validation data estimates across
-the folds, for each tree do a TMLE update step to target the average treatment effect. Update the initial counterfactuals,
-calculate the influence curve and using the influence curve calculate variance estimates and p-values.
+Aggregate mixture rules found across the folds that have
+the same variables. For each rule
+extract the relevant nuisance parameter data calculated in the folds.
+Given the validation data estimates across
+the folds, for each tree do a TMLE update step to target the average
+treatment effect. Update the initial counterfactuals,
+calculate the influence curve and using the influence curve calculate
+variance estimates and p-values.
 }

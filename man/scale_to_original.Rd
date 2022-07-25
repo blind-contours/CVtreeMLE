@@ -2,7 +2,7 @@
 % Please edit documentation in R/bound.R
 \name{scale_to_original}
 \alias{scale_to_original}
-\title{Transform values from the unit interval back to their original scale}
+\title{Transform Values From The Unit Interval Back To Their Original Scale}
 \usage{
 scale_to_original(scaled_vals, max_orig, min_orig)
 }
@@ -19,9 +19,10 @@ values on the original scale.}
 \value{
 A \code{numeric} vector of the same length as \code{scaled_vals},
 where the values are re-scaled to lie in their original/natural interval.
+@export
 }
 \description{
-Transform values from the unit interval back to their original scale
+Transform Values From The Unit Interval Back To Their Original Scale
 }
 \details{
 A back-transformation that returns values computed in the unit

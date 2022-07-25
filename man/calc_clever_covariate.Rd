@@ -4,18 +4,21 @@
 \alias{calc_clever_covariate}
 \title{Calculate the Clever Covariate for the TMLE step of the ATE}
 \usage{
-calc_clever_covariate(gHat1W, data, exposure, H.AW_trunc_lvl, type = "reg")
+calc_clever_covariate(ghat_1_w, data, exposure, h_aw_trunc_lvl, type = "reg")
 }
 \arguments{
-\item{gHat1W}{\code{Numeric} vector of values in the unit interval that represent the predicted probabilities of being treated/exposed.}
+\item{ghat_1_w}{\code{Numeric} vector of values in the unit interval that
+represent the predicted probabilities of being treated/exposed.}
 
 \item{data}{Dataframe that includes treatement/exposure}
 
-\item{exposure}{Variable name in \code{data} that the clever covariate is calculated for}
+\item{exposure}{Variable name in \code{data} that the clever covariate is
+calculated for}
 
-\item{H.AW_trunc_lvl}{Truncation level of the clever covariate}
+\item{h_aw_trunc_lvl}{Truncation level of the clever covariate}
 
-\item{type}{Type of clever covariate to calculate, \code{reg} is standard difference in inverse weightings, \code{mod} is used for the additive ATE}
+\item{type}{Type of clever covariate to calculate, \code{reg} is standard
+difference in inverse weightings, \code{mod} is used for the additive ATE}
 }
 \value{
 A \code{numeric} vector of the same length as \code{vals}, where
@@ -26,5 +29,6 @@ avoid numerical instability issues.
 Calculate the Clever Covariate for the TMLE step of the ATE
 }
 \details{
-Calculates the clever covariate or difference in inverse propensity scores for treatment used in the TMLE update step
+Calculates the clever covariate or difference in inverse propensity
+scores for treatment used in the TMLE update step
 }

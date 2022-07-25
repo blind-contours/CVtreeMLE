@@ -1,35 +1,60 @@
-find_common_mixture_rules <- function(group_list,
+#' @title Estimate the union rule. This is the rule that covers all observations
+#' across the folds.
+#'
+#' @description This function takes in a list of rules that are grouped by
+#' variable sets. These rules for different variable sets may be slightly
+#' different across the folds so we make a union rule for each variable set.
+#' This entails creating a new rule that is essentially:
+#' (rule fold 1) OR (rule fold 2) OR (rule fold 3) etc. We then evaluate this
+#' rule on the input data to create a binary indicator of the union rule.
+#' Then, for variables used in the rule, find the min in and max in regions
+#' indicated by the rule for each variable. We then put these together with
+#' AND statements to create the union rule.
+#'
+#' @param group_list List of dataframes grouped by rules for variable sets
+#' @param data Full data
+#' @param mix_comps Mixture components of A
+#' @param n_folds Number of folds used in cross-validation
+#' @param no_mixture_rules TRUE/FALSE if no mixture rule was found
+#' @param mixture_results data frame of results found for mixture rules
+#' @importFrom data.table rbindlist
+#' @importFrom dplyr group_by bind_rows
+
+#' @return Rules object. TODO: add more detail here.
+#' @importFrom stats as.formula glm p.adjust
+#' @importFrom stats plogis predict qlogis qnorm qunif rnorm runif
+#' @importFrom rlang :=
+#' @return Dataframe with mixture results including the union rule and
+#' proportion found across the folds
+#'
+#' @export
+
+common_mixture_rules <- function(group_list,
                                       data = data,
                                       mix_comps = mix_comps,
                                       mixture_results,
                                       n_folds,
                                       no_mixture_rules) {
-  if (no_mixture_rules == FALSE) {
-    ## Get final mixture rule across folds
-    all_mixt_vals_contained_vector <- list()
-    all_mixt_vals_contained_summary <- list()
 
     mixture_all_rules <- list()
     mixture_any_rules <- list()
 
     fractions <- list()
+    fold_proportions <- list()
     mixture_data <- subset(data, select = mix_comps)
 
-    all_rules <- list()
     total_rules <- list()
 
     for (i in seq(group_list)) {
-      directions_in_set <- list()
-      combined_rules <- list()
 
       group <- group_list[[i]]
       group <- as.data.frame(group)
 
-      vars <- mix_comps[mix_comps %in% strsplit(group$description[1], split = " ")[[1]]]
+      vars <- mix_comps[mix_comps %in%
+                          strsplit(group$description[1], split = " ")[[1]]]
 
-      ## pooled rule - any meet
-
-      intxn_rule <- paste("(", paste(group$description, collapse = ")|("), ")")
+      intxn_rule <- paste("(",
+                          paste(group$description, collapse = ")|("), ")")
 
       intxn_data <- data %>%
         mutate("intxn_rule" := ifelse(eval(parse(text = intxn_rule)), 1, 0))
@@ -48,7 +73,8 @@ find_common_mixture_rules <- function(group_list,
           summarise(max = max(!!(as.name(var))))
         var_max <- subset(var_max, intxn_rule == 1, select = max)
 
-        augmented_rule <- paste(var, ">", round(var_min, 3), "&", var, "<", round(var_max, 3))
+        augmented_rule <- paste(var, ">", round(var_min, 3), "&", var,
+                                "<", round(var_max, 3))
 
         new_rule <- append(new_rule, augmented_rule)
       }
@@ -57,7 +83,7 @@ find_common_mixture_rules <- function(group_list,
 
       rule_list <- group$description
 
-      # combined_rule <- paste(unlist(combined_rule), collapse = " & ")
+      proportion_in_fold <- length(rule_list) / n_folds
       fold_rules_eval <- list()
 
       for (k in seq(rule_list)) {
@@ -96,7 +122,8 @@ find_common_mixture_rules <- function(group_list,
             summarise(max = max(!!(as.name(var))))
           var_max <- subset(var_max, all_folds == 1, select = max)
 
-          augmented_rule <- paste(var, ">", round(var_min, 3), "&", var, "<", round(var_max, 3))
+          augmented_rule <- paste(var, ">", round(var_min, 3), "&",
+                                  var, "<", round(var_max, 3))
 
           new_rule <- append(new_rule, augmented_rule)
         }
@@ -113,11 +140,13 @@ find_common_mixture_rules <- function(group_list,
         fractions[i] <- NA
         total_rules[i] <- NA
       }
+
+      fold_proportions[i] <- proportion_in_fold
     }
 
-    mixture_results$`Mixture Interaction Rules` <- unlist(mixture_any_rules)
-    mixture_results$`Fraction Covered` <- unlist(fractions)
-  }
+
+    mixture_results$Union_Rule <- unlist(mixture_any_rules)
+    mixture_results$Proportion_Folds <- unlist(fold_proportions)
 
   return(mixture_results)
 }

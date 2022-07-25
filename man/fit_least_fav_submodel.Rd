@@ -4,18 +4,21 @@
 \alias{fit_least_fav_submodel}
 \title{Least Favorable Submodel}
 \usage{
-fit_least_fav_submodel(H.AW, data, QbarAW, Qbar1W, Qbar0W)
+fit_least_fav_submodel(h_aw, data, qbar_aw, qbar_1w, qbar_0w)
 }
 \arguments{
-\item{H.AW}{\code{numeric} vector of values for the clever covariate used in the fluctuation model}
+\item{h_aw}{\code{numeric} vector of values for the clever covariate
+used in the fluctuation model}
 
 \item{data}{dataframe that includes treatement/exposure}
 
-\item{QbarAW}{Initial predictions for Y|A,W - A being observed A}
+\item{qbar_aw}{Initial predictions for Y|A,W - A being observed A}
 
-\item{Qbar1W}{Initial predictions for Y|A = 1,W - A being deterministically set to 1}
+\item{qbar_1w}{Initial predictions for Y|A = 1,W - A being deterministically
+set to 1}
 
-\item{Qbar0W}{Initial predictions for Y|A = 1,W - A being deterministically set to 0}
+\item{qbar_0w}{Initial predictions for Y|A = 1,W - A being deterministically
+set to 0}
 }
 \value{
 A \code{numeric} vector of the same length as \code{vals}, where
@@ -26,5 +29,6 @@ avoid numerical instability issues.
 Least Favorable Submodel
 }
 \details{
-Does flucutation of initial outcome estimates using a least favorable submodel in the TMLE update step
+Does flucutation of initial outcome estimates using a least
+favorable submodel in the TMLE update step
 }

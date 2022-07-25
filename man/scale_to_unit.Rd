@@ -12,7 +12,8 @@ the variable of interest, to be re-scaled to the unit interval.}
 }
 \value{
 A \code{numeric} vector of the same length as \code{vals}, where the
-values are re-scaled to lie in unit interval.
+values are re-scaled to lay in unit interval.
+@export
 }
 \description{
 Transform values by scaling to the unit interval

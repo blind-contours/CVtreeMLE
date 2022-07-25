@@ -2,15 +2,22 @@
 % Please edit documentation in R/utils_impute.R
 \name{impute_NA_vals}
 \alias{impute_NA_vals}
-\title{Impute NA values and create indicator variables}
+\title{Impute Missing Values And Create Indicator Variables}
 \usage{
-impute_NA_vals(data, W)
+impute_NA_vals(data, W, A, Y)
 }
 \arguments{
-\item{data}{Input data}
+\item{data}{Input Data passed into \code{CVtreeMLE}}
 
-\item{W}{Vector of covariates}
+\item{W}{Vector of Covariates}
+
+\item{A}{Vector of Exposures}
+
+\item{Y}{Outcome}
+}
+\value{
+Data With Missing Values Imputed At The Mean And Indicator Variables for Imputed Columns Added To \code{W}
 }
 \description{
-Impute NA values and create indicator variables
+Impute Missing Values And Create Indicator Variables
 }

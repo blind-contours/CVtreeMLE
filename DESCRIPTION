@@ -17,13 +17,11 @@ Imports:
     assertthat,
     cvTools,
     data.table,
-    doParallel,
     dplyr,
     foreach,
     future,
     Hmisc,
     magrittr,
-    parallel,
     partykit,
     pre,
     purrr,
@@ -31,22 +29,20 @@ Imports:
     sl3,
     stats,
     stringr,
-    tidyr,
-    utils,
     MASS,
-    here,
     ggplot2,
-    fastDummies
+    furrr
 Suggests:
     rmarkdown,
     knitr,
     testthat (>= 3.0.0),
+    xml2,
     mlbench,
-    xml2
+    kableExtra
 Remotes: tlverse/sl3@devel
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.1
 VignetteBuilder: knitr
 Config/testthat/edition: 3

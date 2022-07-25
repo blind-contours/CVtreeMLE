@@ -1,9 +1,13 @@
-#' @title Impute NA values and create indicator variables
-#' @param data Input data
-#' @param W Vector of covariates
+#' @title Impute Missing Values And Create Indicator Variables
+#' @param data Input Data passed into `CVtreeMLE`
+#' @param W Vector of Covariates
+#' @param A Vector of Exposures
+#' @param Y Outcome
+#' @return Data With Missing Values Imputed At The Mean And Indicator Variables for Imputed Columns Added To `W`
 
-impute_NA_vals <- function(data, W) {
-  check_NA_in_cols <- sapply(data, function(x) any(is.na(x)))
+
+impute_NA_vals <- function(data, W, A, Y) {
+  check_NA_in_cols <- sapply(data[, c(W, A, Y)], function(x) any(is.na(x)))
   cols <- names(check_NA_in_cols[check_NA_in_cols == TRUE])
 
   if (length(cols) > 0) {

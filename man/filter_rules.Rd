@@ -14,3 +14,6 @@ filter_rules(data, fold_k)
 \description{
 Filter data based on fold
 }
+\details{
+Filter data to only the training fold of interest during CV
+}

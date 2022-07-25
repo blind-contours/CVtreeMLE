@@ -24,16 +24,17 @@ fit_estimators <- function(data, true_rule) {
     metalearner = discrete_sl_metalrn
   )
 
-
-  sim_results2 <- CVtreeMLE(data = data,
+  sim_results <- CVtreeMLE(data = data,
                            W = c("W", "W2"),
                            Y = "y",
                            A = c(paste("M", seq(3), sep = "")),
                            back_iter_SL = Q1_stack,
                            tree_SL = discrete_tree_sl,
                            n_folds = 5,
-                           num_cores = 8,
-                           family = "gaussian")
+                           num_cores = 20,
+                           family = "gaussian",
+                           parallel = TRUE,
+                           parallel_cv = FALSE)
 
   max_ate_index <- which.max(abs(sim_results$`Pooled TMLE Mixture Results`$`Mixture ATE`))
 

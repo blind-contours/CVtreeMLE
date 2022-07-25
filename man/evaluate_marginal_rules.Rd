@@ -11,7 +11,8 @@ evaluate_marginal_rules(data, marg_decisions, no_marg_rules, mix_comps)
 
 \item{marg_decisions}{List of rules determined for each mixture component}
 
-\item{no_marg_rules}{TRUE/FALSE if no marginal rules were found across the efolds}
+\item{no_marg_rules}{TRUE/FALSE if no marginal rules were found across the
+folds}
 
 \item{mix_comps}{Vector of characters denoting mixture components}
 }

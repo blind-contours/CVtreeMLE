@@ -7,9 +7,12 @@
 plot_marginal_results(v_marginal_results, mix_comps, hjust)
 }
 \arguments{
-\item{v_marginal_results}{Table of the marginal results for mixture components}
+\item{v_marginal_results}{Table of the marginal results for mixture
+components}
 
 \item{mix_comps}{Character list of mixture variables}
+
+\item{hjust}{Degree to horizontally adjust the placement of rules on plot}
 }
 \description{
 Create dot-whisker plots for the margina results found

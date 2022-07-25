@@ -67,8 +67,6 @@ summary(data)
 #################################
 # set up learners
 
-Q1_stack <- "Just filler here for test"
-
 
 # we will arbitrarily investigate cell qualities as a mixture and the other variables as covariates
 
@@ -76,18 +74,12 @@ W <- c("W_1", "W_2")
 A <- c("A")
 
 expect_error(CVtreeMLE_results <- CVtreeMLE(
+  w = W,
+  a = A,
+  y = "Y",
   data = data,
-  W = W,
-  Y = "Y",
-  A = A,
-  back_iter_SL = Q1_stack,
   n_folds = 2,
-  family = "gaussian",
-  H.AW_trunc_lvl = 10,
-  max_iter = 10,
-  minsize = 20,
-  parallel = TRUE,
-  verbose = FALSE
+  family = "gaussian"
 ))
 
 W <- c("W_1", "W_2")
