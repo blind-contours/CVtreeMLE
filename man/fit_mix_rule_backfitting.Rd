@@ -37,6 +37,8 @@ learning to fit Y|W}
 \item{verbose}{Run in verbose setting}
 
 \item{parallel_cv}{TRUE/FALSE indicator to parallelize cv}
+
+\item{seed}{Seed number for consistent results}
 }
 \value{
 Rules object. TODO: add more detail here.
@@ -66,5 +68,6 @@ example_output <- fit_mix_rule_backfitting(at = data,
                                             fold = 1,
                                             max_iter = 1,
                                             verbose = FALSE,
-                                            parallel = FALSE)
+                                            parallel = FALSE,
+                                            seed = 6442)
 }

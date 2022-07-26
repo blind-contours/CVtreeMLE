@@ -14,7 +14,7 @@ CVtreeMLE(
   aw_stack = NULL,
   a_stack = NULL,
   n_folds,
-  seed = set.seed(),
+  seed = 6442,
   family,
   h_aw_trunc_lvl = 10,
   parallel = TRUE,

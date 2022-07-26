@@ -76,6 +76,6 @@ example_output <- fit_marg_rule_backfitting(mix_comps = mix_comps,
                                                      max_iter = 1,
                                                      verbose = FALSE,
                                                      parallel_cv = FALSE,
-                                                     seed = set.seed())
+                                                     seed = 6442)
 
 }
