@@ -137,12 +137,13 @@ pooled_mixture_results <- NIEHS_results$`Pooled TMLE Mixture Results`
 
 pooled_mixture_results %>%
   dplyr::filter(Proportion_Folds == 1.0)  %>%
+  dplyr::arrange(desc(`Mixture ATE`)) %>%
   kableExtra::kbl(caption = "Pooled TMLE Mixture Results") %>%
   kableExtra::kable_classic(full_width = F, html_font = "Cambria")
 ```
 
 Above, the pooled mixture ATE for each rule is given. Let's focus on the first 
-row that has $X_2*X_5$. The Mixture ATE shows the ATE, or the expected mean 
+row that has $X_5*X_7$. The Mixture ATE shows the ATE, or the expected mean 
 outcome difference if all individuals were exposed to the mixture rule compared 
 to if no individuals were exposed to the mixture rule. This ATE is calculated
 by pooling the nuisance parameter values across the validation folds and 
@@ -155,22 +156,26 @@ this so-called interaction:
 ```{r fold specific mixture results}
 vfold_mixture_results <- NIEHS_results$`V-Specific Mix Results`
 
-vfold_mixture_results$X2X5 %>%
-  kableExtra::kbl(caption = "X2 and X5 Interaction") %>%
+vfold_mixture_results$X5X7 %>%
+  kableExtra::kbl(caption = "X5 and X7 Interaction") %>%
   kableExtra::kable_classic(full_width = F, html_font = "Cambria")
-
 ```
-Above we see the fold specific results for $X_2 * X_5$. Let's focus on $X_2$ in 
+Above we see the fold specific results for $X_5 * X_7$. Let's focus on $X_5$ in 
 the rules listed under _mix_rule_. Here we see that in fold 1 the threshold
-for $X_2$ is 1.046, in fold 2 it's 1.057 etc. Of these thresholds we select
-the lowest because this value covers observations indicated by higher 
-thresholds. So in our union rule the threshold for $X_2$ is 0.727 because 
-this threshold covers all other observations indicated by slightly higher
-rules in the other folds. The same is true for $X_5$ but we select the 
-highest threshold because the direction is $<=$. This is why in the first table
-the union rule is X1 > 0.727 & X1 < 2.467 & X5 > 0.067 & X5 < 2.526. Overall, 
-the ATE for this rule is 6.5 for the pooled TMLE estimate. We see this is
-higher than if we were to simply take a weighted average.
+for $X_5$ is 1.332, in fold 2 it's 0.374 etc. Of these thresholds we select
+the highest because this value covers observations indicated by lower 
+thresholds. This is because, in the case of $X_5$ the direction is 
+less than or equal to. 
+
+So in our union rule the threshold for $X_5$ is 1.324 because 
+this threshold covers all other observations indicated by slightly lower
+rules in the other folds. The same is true for $X_7$ but we select the 
+lower threshold because the direction is $>=$. This is why in the first table
+the union rule is X5 < 1.324 & X7 > 0.242. This rule covers all observations
+indicated by the fold specific rules used to generate the ATE. 
+
+Overall, the ATE for this rule is 7.5 for the pooled TMLE estimate. 
+We see this is higher than if we were to simply take a weighted average. 
 
 What happens is that the nuisance parameters 
 used to generate the v-fold specific results are instead pooled and a TMLE
@@ -192,11 +197,11 @@ In terms of toxicology, there are the following kinds of interaction
 * X4 and X7 antagonism (unusual kind) (similarly for X5 and X7)
 
 
-As we can see, $X_2 * X_5$ is listed as having competitive antagonism. This is 
+As we can see, $X_5 * X_7$ is listed as having antagonism. This is 
 picked up in `CVtreeMLE` because the thresholds that define the ATE are for 
-regions where $X_1$ is high and $X_5$ is low. Thus the impact is greater in 
-this region because $X_5$ antagonizes the effect of $X_1$. The ground-truth data
-also has interactions for $X_1 * X_2$ which we detect amongst others. Generally,
+regions where $X_7$ is high and $X_5$ is low. Thus the impact is greater in 
+this region because $X_5$ antagonizes the effect of $X_7$. The ground-truth data
+also has interactions for $X_2 * X_7$ which we detect amongst others. Generally,
 `CVtreeMLE` identifies thresholds for these interactions.  
 
 ## Plotting Mixture Results
@@ -206,9 +211,11 @@ function. This will return a list of plots with names corresponding to the
 interactions found.
 
 ```{r plot sim_mixture_results, fig.height = 3, fig.width = 8}
-mixture_plots <- plot_mixture_results(v_intxn_results = NIEHS_results$`V-Specific Mix Results`,hjust = 0.8)
-mixture_plots$X1X5
+mixture_plots <- plot_mixture_results(
+  v_intxn_results = NIEHS_results$`V-Specific Mix Results`,hjust = 0.8)
+mixture_plots$X5X7
 ```
+
 ## Marginal Results
 
 `CVtreeMLE` also estimates marginal thresholds for each exposure if the exposure
@@ -242,6 +249,42 @@ pooled_marginal_refs %>%
   kableExtra::kbl(caption = "Pooled Marginal Reference Regions") %>%
   kableExtra::kable_classic(full_width = F, html_font = "Cambria")
 ```
+Let's examine this a bit more in detail by looking at the results for just
+one variable. 
+
+```{r marginal_results_example}
+pooled_marginal_results %>%
+  dplyr::filter(`Proportion in Fold` == 1)  %>%
+  dplyr::filter(var == "X1")  %>%
+  kableExtra::kbl(caption = "Pooled Marginal Results") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+```
+Above, this means that, in the leaves of the trees generated for $X_1$ at 
+least one partition was found in 100% of the folds. This region is 
+$X_1$ > 0.32 & $X_1$ < 4.7. The outcome in this region is compared to the 
+reference region found across all the folds. Which is: 
+
+```{r marginal refs example}
+pooled_marginal_refs %>%
+  dplyr::filter(`Variable Quantile` == "X1_1") %>%
+  kableExtra::kbl(caption = "Pooled Marginal Reference Regions X1") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+```
+
+We see there is some overlap in these regions and that's to be expected given
+variation across the folds. In this example we can say that, levels in $X_1$ 
+change somewhere between 0.3 and 2. For this reason it's more interpretable
+to look at the v-fold specific results. 
+
+```{r fold marginal results}
+fold_marginal_results<- NIEHS_results$`V-Specific Marg Results`
+
+fold_marginal_results$`X1_2-X1_1` %>%
+  kableExtra::kbl(caption = "V-fold specific results for X1 regions 1 and 2") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
+```
+This gives a better piture of what's going on. Above we see the fold specific
+ATEs for comparing the region above the reference region for $X_1$. 
 
 ## Runtime Performance Guidelines
 
