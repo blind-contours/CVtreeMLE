@@ -15,9 +15,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# `CVtreeMLE` <img src="man/figures/CVtreeMLE_sticker.png" 
-# height="300" align="right"/>
-
+# `CVtreeMLE` <img src="man/figures/CVtreeMLE_sticker.png height="300" align="right"/>
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/blind-contours/CVtreeMLE/workflows/R-CMD-check/badge.svg)](https://github.com/blind-contours/CVtreeMLE/actions)
 [![Coverage Status](https://codecov.io/gh/blind-contours/CVtreeMLE/branch/main/graph/badge.svg?token=HJP5PYQSG4)](https://codecov.io/github/blind-contours/CVtreeMLE?branch=master)
@@ -73,14 +71,14 @@ for public policy and are asymptotically efficient.
 [@coyle2021sl3] to allow for ensemble machine learning to be leveraged 
 in the estimation procedure. `sl3` is used to 
 create ensemble machine learning estimators for the $Q$ and $g$ mechanisms for 
-the average treatment effect (ATE) target parameter and is also used in the 
+the average treatment effect (ATE) target parameter. `sl3`  is also used in the 
 iterative backfitting procedure. In the iterative
-backfitting procedure, for an enselbe of decision trees are fit on the full 
+backfitting procedure,  an ensemble of decision trees are fit on the full 
 mixture modeled 
 together, the [`pre` package](https://github.com/marjoleinF/pre)[@Fokkema2020a]
 is used to fit rule
-ensembles. In backfitting procedure to find quantiles in each mixture component
-individually, a Super Learner of decision trees generated from the [`partykit` package](http://partykit.r-forge.r-project.org/partykit/)[partykit2015] is 
+ensembles. In backfitting procedure to find thresholds in each mixture component
+individually, a Super Learner of decision trees generated from the [`partykit` package](http://partykit.r-forge.r-project.org/partykit/)[partykit2015] are 
 created. In each case, the goal is to find the best fitting decision tree 
 from which we extract decision tree rules, we then calculate the ATE for 
 these rules.
@@ -143,7 +141,7 @@ is highest in this region and where the size of the region is based on
 covariates. 
 
 
-To do this, use the `simulate_mixture_cube` function to generate simulated 
+To do this, use the `simulate_mixture_cube` function to generate simulated    
 data that represents ground-truth. Here, we create three continuous mixture 
 variables, $A$, that are correlated and baseline covariates, $W$, that are 
 potential confounders. Our outcome will be generated such that individuals 
@@ -190,24 +188,31 @@ We will now pass the simulated data, learners, and variable names for each
 node in $O = W,A,Y$ to the `CVtreeMLE` function:
 
 ```{r run simulation}
-set.seed(2333)
-
 ptm <- proc.time()
 
 sim_results <- CVtreeMLE(data = sim_data,
                          w = c("w", "w2"),
                          a = c(paste("M", seq(3), sep = "")),
                          y = "y",
-                         n_folds = 3,
+                         n_folds = 5,
+                         parallel_cv = TRUE,
+                         seed = 2333,
+                         parallel_type = "multi_session",
                          family = "gaussian",
-                         num_cores = 5)
+                         num_cores = 2)
 
 proc.time() - ptm
 ```
 
 Note that above, there are default estimators for all parameters if they are
 not passed to the function. Here we just use the out of the box estimators 
-that are defined in `utils_create_sls.R`
+that are defined in `utils_create_sls.R`. These estimators are chosen to be
+both non-parametric but also not too computationally demanding. Examples 
+of estimators used by default are random forest, xgboost, elastic net, and glms. 
+Users can also pass in their own custom stacks of learners. We also see here 
+that, using 2 cores with these learners on our simulated data with 500 
+observations and 6 variables, our run time is 21 minutes. This can be 
+greatly improved by increasing the num_cores. 
 
 ## Results
 
@@ -228,14 +233,22 @@ estimated mixture ATE is interpreted as: the average counterfactual mean
 outcome if all individuals were exposed to the rule shown in 
 `Union Rule` compared to if all individuals were unexposed is 
 5.96. That is, those individuals who are exposed to this rule have an outcome 
-that is  5.96 higher compared to those that are not exposed to this rule. The 
+that is 5.96 higher compared to those that are not exposed to this rule. The 
 standard error, confidence intervals and p-values are derived from the 
 influence curve of this estimator.
+
+We can also look at the v-fold specific results. For inconsistent rules this
+gives better interpretability with valid statistical inference. Below we show
+the v-fold specific interactions found with fold specific estimates of our
+ATE target parameter and variance estimates from the fold specific IC. 
 
 ```{r fold specific results}
 mixture_v_results <- sim_results$`V-Specific Mix Results`
 mixture_v_results$M1M2M3
 ```
+In v-fold specific results we also give a pooled estimate. This is different 
+than the pooled TMLE estimate. Here we simply take the weighted average of the 
+fold specific ATEs and the harmonic mean of the variances. 
 
 We can plot our v-fold mixture results findings using the `plot_mixture_results` 
 function. This will return a list of plots with names corresponding to the
@@ -252,7 +265,7 @@ results over the fold with corresponding pooled variance. The rule is the
 pooled rule which includes all observations that were indicated by the 
 fold specific rules. 
 
-`CVtreeMLE` also data-adaptively identifies cut-points in the marginal space. 
+`CVtreeMLE` also data-adaptively identifies thresholds in the marginal space. 
 These around found here:
 
 ```{r pooled marginal results}

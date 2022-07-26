@@ -22,8 +22,9 @@ knitr::opts_chunk$set(
 ## Introduction
 
 Data adaptive target parameters constitute a flexible framework for 
-estimating the effects of a data adaptively. There is a literature on the 
-dangers of deriving parameters data-adaptively and the common
+estimating the effects of a data adaptively determined target parameter. 
+There is a literature on the dangers of deriving parameters data-adaptively 
+and the common
 approach for deriving consistent inference for a data-adaptively defined 
 parameter is to use  sample-splitting. In sample-splitting the researcher 
 splits the full data into a training set used to define the parameter, 
@@ -40,7 +41,16 @@ thresholds in exposures that best explain an outcome while flexibly adjusting
 for covariates. The nodes in decision trees are represented as a binary exposure
 for which targeted minimum loss-based (TML) estimates are derived for 
 the counterfactual mean outcome difference if all individual were exposed 
-to the rule compared to if no one was exposed to the mixture. For a technical 
+to the rule compared to if no one was exposed to the mixture.
+
+Two types of results are given for decision trees identified in the mixture 
+and marginal space of the exposure. V-fold specific results give the ATE and
+variance estimates for a fold specific set of rules. The pooled ATE takes the
+average across folds to gain power (reduce variance). We give both so that 
+researchers can look to see how consistent rules are given sample splitting 
+which adds information to the pooled result. 
+
+For a technical 
 presentation, the interested reader is invited to consult @mccoy2022CVtreeMLE 
 or the earlier work of @vdl2011targeted, @vdl2018targeted, and 
 @vdl2022targeted. For more background on data-adaptive target parameters see 
@@ -57,7 +67,7 @@ library(sl3)
 library(kableExtra)
 library(dplyr)
 
-set.seed(11249)
+seed <- 5454432
 ```
 
 
@@ -83,6 +93,7 @@ $X_6$ do not have an impact on the outcome.
 
 One issue is that many machine learning algorithms will fail given only 1 
 variable passed as a feature so let's add some other covariates.
+
 ```{r add covariates, warning=FALSE}
 NIEHS_data$Z2 <- rbinom(nrow(NIEHS_data),
                                         size = 1,
@@ -105,6 +116,8 @@ NIEHS_results <- CVtreeMLE(data = as.data.frame(NIEHS_data),
                          a = c(paste("X", seq(7), sep = "")),
                          y = "Y",
                          n_folds = 5,
+                         seed = seed,
+                         parallel_cv = TRUE,
                          family = "gaussian",
                          num_cores = 6,
                          max_iter = 1)
