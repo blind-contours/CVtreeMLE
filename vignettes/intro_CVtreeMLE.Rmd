@@ -283,7 +283,7 @@ fold_marginal_results$`X1_2-X1_1` %>%
   kableExtra::kbl(caption = "V-fold specific results for X1 regions 1 and 2") %>%
   kableExtra::kable_classic(full_width = F, html_font = "Cambria")
 ```
-This gives a better piture of what's going on. Above we see the fold specific
+This gives a better picture of what's going on. Above we see the fold specific
 ATEs for comparing the region above the reference region for $X_1$. 
 
 ## Runtime Performance Guidelines

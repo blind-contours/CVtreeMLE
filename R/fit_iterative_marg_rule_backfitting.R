@@ -47,7 +47,7 @@
 #'                                                      max_iter = 1,
 #'                                                      verbose = FALSE,
 #'                                                      parallel_cv = FALSE,
-#'                                                      seed = set.seed())
+#'                                                      seed = 6442)
 #'
 #' @export
 

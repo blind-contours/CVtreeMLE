@@ -163,7 +163,7 @@ CVtreeMLE <- function(w,
                       aw_stack = NULL,
                       a_stack = NULL,
                       n_folds,
-                      seed = set.seed(6442),
+                      seed = 6442,
                       family,
                       h_aw_trunc_lvl = 10,
                       parallel = TRUE,
@@ -207,6 +207,8 @@ CVtreeMLE <- function(w,
   if (!family %in% c("binomial", "gaussian")) {
     stop('Family must be either "binomial" or "gaussian".')
   }
+
+  set.seed(seed)
 
   if (inherits(data, "data.frame")) {
     data <- as.data.frame(data)

@@ -15,6 +15,7 @@
 #' @param max_iter Max number of iterations of iterative backfitting algorithm
 #' @param verbose Run in verbose setting
 #' @param parallel_cv TRUE/FALSE indicator to parallelize cv
+#' @param seed Seed number for consistent results
 #' @import sl3
 #' @importFrom pre pre maxdepth_sampler
 #' @importFrom magrittr %>%
@@ -37,7 +38,8 @@
 #'                                             fold = 1,
 #'                                             max_iter = 1,
 #'                                             verbose = FALSE,
-#'                                             parallel = FALSE)
+#'                                             parallel = FALSE,
+#'                                             seed = 6442)
 #' @export
 
 fit_mix_rule_backfitting <- function(at,
