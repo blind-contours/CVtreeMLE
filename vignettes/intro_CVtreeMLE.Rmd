@@ -68,8 +68,8 @@ library(kableExtra)
 library(dplyr)
 
 seed <- 5454432
+set.seed(seed)
 ```
-
 
 ## Simulate Data
 
@@ -127,7 +127,10 @@ proc.time() - ptm
 ## Mixture Results
 
 We can look at the pooled TMLE results for this model, let's focus on the 
-results that are found consistenly across all the folds:
+results that are found consistenly across all the folds. By consistent we mean
+rules that have the same sets of variables with the same direction of effect 
+across all the folds. Weaker interactions may only be found in some folds, here
+we will focus on the strongest: 
 
 ```{r pooled mixture results}
 pooled_mixture_results <- NIEHS_results$`Pooled TMLE Mixture Results`
@@ -138,9 +141,8 @@ pooled_mixture_results %>%
   kableExtra::kable_classic(full_width = F, html_font = "Cambria")
 ```
 
-
 Above, the pooled mixture ATE for each rule is given. Let's focus on the first 
-row that has $X_1*X_5$. The Mixture ATE shows the ATE, or the expected mean 
+row that has $X_2*X_5$. The Mixture ATE shows the ATE, or the expected mean 
 outcome difference if all individuals were exposed to the mixture rule compared 
 to if no individuals were exposed to the mixture rule. This ATE is calculated
 by pooling the nuisance parameter values across the validation folds and 
@@ -153,21 +155,24 @@ this so-called interaction:
 ```{r fold specific mixture results}
 vfold_mixture_results <- NIEHS_results$`V-Specific Mix Results`
 
-vfold_mixture_results$X1X5 %>%
-  kableExtra::kbl(caption = "X1 and X5 Interaction") %>%
+vfold_mixture_results$X2X5 %>%
+  kableExtra::kbl(caption = "X2 and X5 Interaction") %>%
   kableExtra::kable_classic(full_width = F, html_font = "Cambria")
 
 ```
-Above we see the fold specific results for $X_1 * X_5$. Let's focus on $X_1$ in 
+Above we see the fold specific results for $X_2 * X_5$. Let's focus on $X_2$ in 
 the rules listed under _mix_rule_. Here we see that in fold 1 the threshold
-for $X_1$ is 0.998, in fold 2 it's 0.992 etc. Of these thresholds we select
+for $X_2$ is 1.046, in fold 2 it's 1.057 etc. Of these thresholds we select
 the lowest because this value covers observations indicated by higher 
-thresholds. So in our union rule the threshold for $X_1$ is 0.992 because 
+thresholds. So in our union rule the threshold for $X_2$ is 0.727 because 
 this threshold covers all other observations indicated by slightly higher
 rules in the other folds. The same is true for $X_5$ but we select the 
 highest threshold because the direction is $<=$. This is why in the first table
-the union rule is X1 > 0.992 & X1 < 4.687 & X5 > 0.067 & X5 < 2.521. Overall, 
-the ATE for this rule is 8.060. What happens is that the nuisance parameters 
+the union rule is X1 > 0.727 & X1 < 2.467 & X5 > 0.067 & X5 < 2.526. Overall, 
+the ATE for this rule is 6.5 for the pooled TMLE estimate. We see this is
+higher than if we were to simply take a weighted average.
+
+What happens is that the nuisance parameters 
 used to generate the v-fold specific results are instead pooled and a TMLE
 update is done across all the validation data. This is why the results for 
 the pooled TMLE update are different compared to the pooled result shown in 
@@ -176,10 +181,18 @@ similar to a meta-analysis.
 
 ## Comparing Mixture Rules to Ground-Truth
 
-![NIEHS_fig](NIEHS_interactions.png|width=100px)
+In terms of toxicology, there are the following kinds of interaction 
+(relative to concentration addition) in this data:
+
+* X1 and X2 TEF (toxic equivalent factor), a special case of concentration addition (both increase Y)
+* X1 and X4 competitive antagonism (similarly for X2 and X4)
+* X1 and X5 competitive antagonism (similarly for X2 and X4)
+* X1 and X7 supra-additive (“synergy”) (similarly for X2 and X7)
+* X4 and X5 TEF, a type of concentration addition (both decrease y)
+* X4 and X7 antagonism (unusual kind) (similarly for X5 and X7)
 
 
-As we can see, $X_1 * X_5$ is listed as having competitive antagonism. This is 
+As we can see, $X_2 * X_5$ is listed as having competitive antagonism. This is 
 picked up in `CVtreeMLE` because the thresholds that define the ATE are for 
 regions where $X_1$ is high and $X_5$ is low. Thus the impact is greater in 
 this region because $X_5$ antagonizes the effect of $X_1$. The ground-truth data

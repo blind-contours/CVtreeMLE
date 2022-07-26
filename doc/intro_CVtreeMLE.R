@@ -12,14 +12,14 @@ library(sl3)
 library(kableExtra)
 library(dplyr)
 
-set.seed(11249)
+seed <- 5454432
 
 ## ----simulate data, warning=FALSE---------------------------------------------
 NIEHS_data <- NIEHS_data_1
 
 head(NIEHS_data) %>%
-  kbl(caption = "NIEHS Data") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
+  kableExtra::kbl(caption = "NIEHS Data") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
 
 ## ----add covariates, warning=FALSE--------------------------------------------
 NIEHS_data$Z2 <- rbinom(nrow(NIEHS_data),
@@ -38,6 +38,8 @@ NIEHS_results <- CVtreeMLE(data = as.data.frame(NIEHS_data),
                          a = c(paste("X", seq(7), sep = "")),
                          y = "Y",
                          n_folds = 5,
+                         seed = seed,
+                         parallel_cv = TRUE,
                          family = "gaussian",
                          num_cores = 6,
                          max_iter = 1)
@@ -48,15 +50,15 @@ pooled_mixture_results <- NIEHS_results$`Pooled TMLE Mixture Results`
 
 pooled_mixture_results %>%
   dplyr::filter(Proportion_Folds == 1.0)  %>%
-  kbl(caption = "Pooled TMLE Mixture Results") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
+  kableExtra::kbl(caption = "Pooled TMLE Mixture Results") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
 
 ## ----fold specific mixture results--------------------------------------------
 vfold_mixture_results <- NIEHS_results$`V-Specific Mix Results`
 
-vfold_mixture_results$X1X5 %>%
-  kbl(caption = "X1 and X5 Interaction") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
+vfold_mixture_results$X2X5 %>%
+  kableExtra::kbl(caption = "X2 and X5 Interaction") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
 
 
 ## ----plot sim_mixture_results, fig.height = 3, fig.width = 8------------------
@@ -68,13 +70,13 @@ pooled_marginal_results <- NIEHS_results$`Pooled TMLE Marginal Results`
 
 pooled_marginal_results %>%
   dplyr::filter(`Proportion in Fold` == 1)  %>%
-  kbl(caption = "Pooled Marginal Results") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
+  kableExtra::kbl(caption = "Pooled Marginal Results") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
 
 ## ----marginal refs------------------------------------------------------------
 pooled_marginal_refs<- NIEHS_results$`Pooled Marginal Refs`
 
 pooled_marginal_refs %>%
-  kbl(caption = "Pooled Marginal Reference Regions") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
+  kableExtra::kbl(caption = "Pooled Marginal Reference Regions") %>%
+  kableExtra::kable_classic(full_width = F, html_font = "Cambria")
 
