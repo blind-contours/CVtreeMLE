@@ -1,6 +1,6 @@
 ---
 title: "Evaluating Causal Effects of Mixed Exposures using Data Adaptive Decision Trees and CV-TMLE"
-author: "[David McCoy](https://davidmccoy.org)"
+author: "[David McCoy]"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: ../inst/REFERENCES.bib
