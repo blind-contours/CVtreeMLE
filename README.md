@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# R/`CVtreeMLE` <img src="man/figures/CVtreeMLE_sticker.png" height="300" align="right"/>
+# `CVtreeMLE` \<img src=“man/figures/CVtreeMLE_sticker.png height=”300” align=“right”/\>
 
 <!-- badges: start -->
 
@@ -20,6 +20,8 @@ developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.re
 license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4070042.svg)](https://doi.org/10.5281/zenodo.4070042) -->
 <!-- [![DOI](https://joss.theoj.org/papers/10.21105/joss.02447/status.svg)](https://doi.org/10.21105/joss.02447) -->
+[![Codecov test
+coverage](https://codecov.io/gh/blind-contours/CVtreeMLE/branch/main/graph/badge.svg)](https://app.codecov.io/gh/blind-contours/CVtreeMLE?branch=main)
 <!-- badges: end -->
 
 > Efficient Estimation of the Causal Effects of Joint Exposure using
@@ -170,7 +172,7 @@ exposure levels.
 ## Simulate Data
 
 ``` r
-sim_data <- simulate_mixture_cube(n_obs = 500,
+sim_data <- simulate_mixture_cube(n_obs = 800,
                                   splits = c(0.99, 2.0, 2.5),
                                   mins = c(0, 0, 0),
                                   maxs = c(3, 4, 5),
@@ -210,122 +212,122 @@ y
 <tbody>
 <tr>
 <td style="text-align:right;">
-0.3125971
+0.0092552
 </td>
 <td style="text-align:right;">
-0.0281233
+-0.2031663
 </td>
 <td style="text-align:right;">
-0.0918698
+0.3790036
 </td>
 <td style="text-align:right;">
-2.1287872
+0.0344271
 </td>
 <td style="text-align:right;">
-0.5587179
+0.2936966
 </td>
 <td style="text-align:right;">
-0.3523733
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-0.4677867
-</td>
-<td style="text-align:right;">
-0.1344452
-</td>
-<td style="text-align:right;">
-2.2546606
-</td>
-<td style="text-align:right;">
-0.0433708
-</td>
-<td style="text-align:right;">
-1.2521522
-</td>
-<td style="text-align:right;">
-0.6081815
+-0.1806314
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
--0.7798901
+0.0981536
 </td>
 <td style="text-align:right;">
--0.5718299
+0.2613579
 </td>
 <td style="text-align:right;">
-0.1683829
+1.3882993
 </td>
 <td style="text-align:right;">
-2.3168107
+2.3493205
 </td>
 <td style="text-align:right;">
-0.1473310
+3.8962661
 </td>
 <td style="text-align:right;">
--1.3717913
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
--0.0760508
-</td>
-<td style="text-align:right;">
--0.6356721
-</td>
-<td style="text-align:right;">
-1.3832386
-</td>
-<td style="text-align:right;">
-0.9429022
-</td>
-<td style="text-align:right;">
-2.9218706
-</td>
-<td style="text-align:right;">
--0.7252087
+0.3439479
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
--0.1238976
+-0.0950558
 </td>
 <td style="text-align:right;">
--0.3105393
+0.2606486
 </td>
 <td style="text-align:right;">
-0.4341428
+1.9012774
 </td>
 <td style="text-align:right;">
-3.0653637
+2.0433104
 </td>
 <td style="text-align:right;">
-1.6723064
+0.1834768
 </td>
 <td style="text-align:right;">
--0.4330232
+0.1821716
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
-0.2149969
+-0.0991683
 </td>
 <td style="text-align:right;">
-0.1632984
+-0.5569234
 </td>
 <td style="text-align:right;">
-1.0384095
+1.2717409
 </td>
 <td style="text-align:right;">
-2.2392699
+2.7877759
 </td>
 <td style="text-align:right;">
-0.1746694
+0.6990761
 </td>
 <td style="text-align:right;">
-0.3813563
+-0.6474042
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.1347455
+</td>
+<td style="text-align:right;">
+0.3248600
+</td>
+<td style="text-align:right;">
+1.6475103
+</td>
+<td style="text-align:right;">
+3.3305123
+</td>
+<td style="text-align:right;">
+4.1460804
+</td>
+<td style="text-align:right;">
+0.4376962
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+-0.6767346
+</td>
+<td style="text-align:right;">
+-0.5346316
+</td>
+<td style="text-align:right;">
+0.2067554
+</td>
+<td style="text-align:right;">
+2.0040681
+</td>
+<td style="text-align:right;">
+0.3495084
+</td>
+<td style="text-align:right;">
+-1.2134008
 </td>
 </tr>
 </tbody>
@@ -376,7 +378,7 @@ sim_results <- CVtreeMLE(data = sim_data,
 
 proc.time() - ptm
 #>     user   system  elapsed 
-#>   65.589    3.803 1492.426
+#>   79.039    4.023 1951.853
 ```
 
 Note that above, there are default estimators for all parameters if they
@@ -444,16 +446,48 @@ Proportion_Folds
 <tbody>
 <tr>
 <td style="text-align:right;">
-5.934
+2.945
 </td>
 <td style="text-align:right;">
-0.022
+0.217
 </td>
 <td style="text-align:right;">
-5.891
+2.519
 </td>
 <td style="text-align:right;">
-5.977
+3.371
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:left;">
+M1M2
+</td>
+<td style="text-align:right;">
+1.552
+</td>
+<td style="text-align:left;">
+M1 \> 0.002 & M1 \< 1.182 & M2 \> 1.946 & M2 \< 3.975
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+5.962
+</td>
+<td style="text-align:right;">
+0.105
+</td>
+<td style="text-align:right;">
+5.756
+</td>
+<td style="text-align:right;">
+6.167
 </td>
 <td style="text-align:right;">
 0
@@ -465,11 +499,11 @@ Proportion_Folds
 M1M2M3
 </td>
 <td style="text-align:right;">
-0.38
+0.366
 </td>
 <td style="text-align:left;">
-M1 \> 0.021 & M1 \< 0.953 & M2 \> 2.011 & M2 \< 3.994 & M3 \> 2.484 & M3
-\< 4.98
+M1 \> 0.009 & M1 \< 0.989 & M2 \> 1.946 & M2 \< 3.975 & M3 \> 2.449 & M3
+\< 4.99
 </td>
 <td style="text-align:right;">
 1
@@ -498,19 +532,19 @@ fold specific IC.
 mixture_v_results <- sim_results$`V-Specific Mix Results`
 mixture_v_results$M1M2M3
 #>     ate    se lower_ci upper_ci p_val p_val_adj  rmse
-#> 1 5.539 0.045    5.451   5.6270     0         0 0.351
-#> 2 5.356 0.175    5.013   5.7000     0         0 0.854
-#> 3 5.275 0.091    5.098   5.4530     0         0 0.270
-#> 4 5.765 0.082    5.605   5.9250     0         0 0.133
-#> 5 5.436 0.165    5.112   5.7600     0         0 0.215
-#> 6 5.529 0.274    4.993   6.0657     0         0 0.314
+#> 1 5.006 0.424   4.1750   5.8380     0         0 0.834
+#> 2 5.410 0.060   5.2920   5.5280     0         0 0.684
+#> 3 5.704 0.072   5.5630   5.8440     0         0 0.156
+#> 4 5.461 0.293   4.8860   6.0360     0         0 0.644
+#> 5 5.552 0.032   5.4890   5.6150     0         0 0.444
+#> 6 5.542 0.525   4.5137   6.5709     0         0 0.455
 #>                                                                     mix_rule
-#> 1                                      M2 > 2.007 & M1 <= 0.953 & M3 > 2.484
-#> 2                                      M3 > 2.533 & M2 > 1.987 & M1 <= 0.934
-#> 3                                      M2 > 2.007 & M3 > 2.484 & M1 <= 0.953
-#> 4                                        M3 > 2.5 & M1 <= 0.953 & M2 > 1.944
-#> 5                                        M1 <= 0.953 & M3 > 2.5 & M2 > 1.944
-#> 6 M1 > 0.021 & M1 < 0.953 & M2 > 2.011 & M2 < 3.994 & M3 > 2.484 & M3 < 4.98
+#> 1                                      M1 <= 1.004 & M2 > 1.936 & M3 > 2.449
+#> 2                                      M3 > 2.508 & M2 > 1.994 & M1 <= 0.989
+#> 3                                      M1 <= 1.019 & M3 > 2.502 & M2 > 1.966
+#> 4                                      M1 <= 0.995 & M2 > 2.006 & M3 > 2.341
+#> 5                                      M1 <= 1.019 & M3 > 2.501 & M2 > 1.966
+#> 6 M1 > 0.009 & M1 < 0.989 & M2 > 1.946 & M2 < 3.975 & M3 > 2.449 & M3 < 4.99
 #>     fold variables
 #> 1      1    M1M2M3
 #> 2      2    M1M2M3
@@ -608,37 +642,37 @@ var
 M1_2-M1_1
 </td>
 <td style="text-align:right;">
--1.583
+-1.543
 </td>
 <td style="text-align:right;">
-0.073
+0.054
 </td>
 <td style="text-align:right;">
--1.727
+-1.648
 </td>
 <td style="text-align:right;">
--1.439
+-1.437
 </td>
 <td style="text-align:right;">
-0.000000
+0
 </td>
 <td style="text-align:right;">
-0.000000
+0
 </td>
 <td style="text-align:right;">
-1.191
+1.154
 </td>
 <td style="text-align:left;">
 M1_2
 </td>
 <td style="text-align:left;">
-M1 \> 0.93418 & M1 \< 2.98811
+M1 \> 0.9862 & M1 \< 2.99837
 </td>
 <td style="text-align:left;">
-0.001
+0.002
 </td>
 <td style="text-align:left;">
-2.988
+2.998
 </td>
 <td style="text-align:left;">
 1
@@ -652,37 +686,37 @@ M1
 M2_2-M2_1
 </td>
 <td style="text-align:right;">
-1.507
+1.447
 </td>
 <td style="text-align:right;">
-0.139
+0.101
 </td>
 <td style="text-align:right;">
-1.235
+1.250
 </td>
 <td style="text-align:right;">
-1.780
+1.644
 </td>
 <td style="text-align:right;">
-0.000000
+0
 </td>
 <td style="text-align:right;">
-0.000000
+0
 </td>
 <td style="text-align:right;">
-2.310
+2.311
 </td>
 <td style="text-align:left;">
 M2_2
 </td>
 <td style="text-align:left;">
-M2 \> 2.0011 & M2 \< 3.99468
+M2 \> 1.96401 & M2 \< 3.97516
 </td>
 <td style="text-align:left;">
-0
+0.007
 </td>
 <td style="text-align:left;">
-3.995
+3.975
 </td>
 <td style="text-align:left;">
 1
@@ -696,37 +730,37 @@ M2
 M3_2-M3_1
 </td>
 <td style="text-align:right;">
-1.416
+1.528
 </td>
 <td style="text-align:right;">
-0.384
+0.128
 </td>
 <td style="text-align:right;">
-0.662
+1.277
 </td>
 <td style="text-align:right;">
-2.169
+1.780
 </td>
 <td style="text-align:right;">
-0.000231
+0
 </td>
 <td style="text-align:right;">
-0.001389
+0
 </td>
 <td style="text-align:right;">
-2.258
+2.291
 </td>
 <td style="text-align:left;">
 M3_2
 </td>
 <td style="text-align:left;">
-M3 \> 2.4842 & M3 \< 4.98025
+M3 \> 2.5078 & M3 \< 4.99038
 </td>
 <td style="text-align:left;">
-0.003
+0.001
 </td>
 <td style="text-align:left;">
-4.98
+4.99
 </td>
 <td style="text-align:left;">
 1

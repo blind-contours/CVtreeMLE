@@ -38,7 +38,8 @@ Suggests:
     testthat (>= 3.0.0),
     xml2,
     mlbench,
-    kableExtra
+    kableExtra,
+    covr
 Remotes: tlverse/sl3@devel
 Encoding: UTF-8
 LazyData: true
