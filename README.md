@@ -19,7 +19,7 @@ developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.re
 > Efficient Estimation of the Causal Effects of Joint Exposure using
 > Data Adaptive Decision Trees and Cross-Validated Targeted Maximum
 > Likelihood Estimation **Authors:** [David
-> McCoy](https://davidmccoy.org)
+> McCoy]
 
 ------------------------------------------------------------------------
 
