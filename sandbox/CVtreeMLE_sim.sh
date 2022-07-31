@@ -3,10 +3,10 @@
 #SBATCH --job-name=CVtreeMLE_sim
 #
 # Partition:
-#SBATCH --partition=savio2
+#SBATCH --partition=savio3
 #
 
-#SBATCH --qos=biostat_savio2_normal
+#SBATCH --qos=biostat_savio3_normal
 #SBATCH --account=co_biostat
 
 # Number of nodes for use case:
