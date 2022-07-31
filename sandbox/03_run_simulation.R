@@ -16,7 +16,7 @@ library(sl3)
 library(dplyr)
 library(foreach)
 
-
+Sys.unsetenv("GITHUB_PAT")
 devtools::install()
 
 # simulation parameters
