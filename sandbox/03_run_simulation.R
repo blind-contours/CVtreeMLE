@@ -17,7 +17,7 @@ library(dplyr)
 library(foreach)
 
 
-devtools::load_all(here())
+devtools::install()
 
 # simulation parameters
 seed <- set.seed(7259)
