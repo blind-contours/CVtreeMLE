@@ -14,6 +14,7 @@ library(tidyverse)
 library(origami)
 library(sl3)
 library(dplyr)
+library(foreach)
 
 
 devtools::load_all(here())
