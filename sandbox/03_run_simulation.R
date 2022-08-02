@@ -17,7 +17,7 @@ library(dplyr)
 library(foreach)
 
 Sys.unsetenv("GITHUB_PAT")
-devtools::install()
+devtools::install(upgrade = "never")
 
 # simulation parameters
 seed <- set.seed(7259)
