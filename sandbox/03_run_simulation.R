@@ -18,7 +18,7 @@ library(foreach)
 
 Sys.unsetenv("GITHUB_PAT")
 devtools::install(upgrade = "never")
-
+library(CVtreeMLE)
 # simulation parameters
 seed <- set.seed(7259)
 n_sim <- 2 # number of simulations
