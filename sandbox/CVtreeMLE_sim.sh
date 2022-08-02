@@ -11,6 +11,9 @@
 
 # Number of nodes for use case:
 #SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=30
+#SBATCH --exclusive
 #
 # Wall clock limit:
 #SBATCH --time 48:00:00
