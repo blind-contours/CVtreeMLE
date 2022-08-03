@@ -72,8 +72,8 @@ simulate_mixture_cube <- function(n_obs = 500,
                                   mix_subspace_betas = c(0.00, 0.08, 0.05, 0.01,
                                                          0.05, 0.033, 0.07,
                                                          0.09),
-                                  subspace_assoc_strength_betas = c(0, 0, 0, 0,
-                                                                    0, 0, 6, 0),
+                                  subspace_assoc_strength_betas = c(1, 1, 1, 1,
+                                                                    1, 1, 1, 7),
                                   marginal_impact_betas =  c(0, 0, 0),
                                   eps_sd = 0.01,
                                   binary = FALSE) {
@@ -83,7 +83,7 @@ simulate_mixture_cube <- function(n_obs = 500,
   }
 
 
-  rawvars <- mvrnorm(n = n_obs, mu = mu, Sigma = sigma)
+  rawvars <- MASS::mvrnorm(n = n_obs, mu = mu, Sigma = sigma)
   # CDF of these variables for mixture
   pvars <- stats::pnorm(rawvars)
 
