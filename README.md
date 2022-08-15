@@ -1,29 +1,58 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# R/`CVtreeMLE` <img src="man/figures/CVtreeMLE_sticker.png" height="300" align="right"/>
+# `CVtreeMLE` \<img src=“man/figures/CVtreeMLE_sticker.png height=”300” align=“right”/\>
 
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/blind-contours/CVtreeMLE/workflows/R-CMD-check/badge.svg)](https://github.com/blind-contours/CVtreeMLE/actions)
-[![Codecov test coverage](https://codecov.io/gh/blind-contours/CVtreeMLE/branch/main/graph/badge.svg)](https://app.codecov.io/gh/blind-contours/CVtreeMLE?branch=main)
-[![CRAN total downloads](http://cranlogs.r-pkg.org/badges/grand-total/CVtreeMLE)](https://CRAN.R-project.org/package=CVtreeMLE)
+[![Coverage
+Status](https://codecov.io/gh/blind-contours/CVtreeMLE/branch/main/graph/badge.svg?token=HJP5PYQSG4)](https://codecov.io/github/blind-contours/CVtreeMLE?branch=master)
+[![CRAN](https://www.r-pkg.org/badges/version/CVtreeMLE)](https://www.r-pkg.org/pkg/CVtreeMLE)
+[![CRAN
+downloads](https://cranlogs.r-pkg.org/badges/CVtreeMLE)](https://CRAN.R-project.org/package=CVtreeMLE)
+[![CRAN total
+downloads](http://cranlogs.r-pkg.org/badges/grand-total/CVtreeMLE)](https://CRAN.R-project.org/package=CVtreeMLE)
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-[![MIT license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
+[![MIT
+license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4070042.svg)](https://doi.org/10.5281/zenodo.4070042) -->
 <!-- [![DOI](https://joss.theoj.org/papers/10.21105/joss.02447/status.svg)](https://doi.org/10.21105/joss.02447) -->
+[![Codecov test
+coverage](https://codecov.io/gh/blind-contours/CVtreeMLE/branch/main/graph/badge.svg)](https://app.codecov.io/gh/blind-contours/CVtreeMLE?branch=main)
 <!-- badges: end -->
 
 > Efficient Estimation of the Causal Effects of Joint Exposure using
 > Data Adaptive Decision Trees and Cross-Validated Targeted Maximum
-> Likelihood Estimation **Authors:** [David
-> McCoy]
+> Likelihood Estimation **Author:** David McCoy
 
 ------------------------------------------------------------------------
 
 ## What is `CVtreeMLE`?
+
+To-date, there is no method which delivers robust statistical inference
+based on leaves of a decision tree that also uses the full data.
+Although decision trees are widely used algorithms because they provide
+interpretable rule-based results, existing methods do not flexibly
+adjust for covariates while fitting the tree to a specific set of
+exposures. This is of particular interest for environmental
+epidemiologists who may be interested in what parts of a pollution
+exposure cause adverse health effects or to the medical analyst
+interested in finding combinations of drugs which improve patient
+outcomes. Current approaches use sample splitting techniques where the
+rules found on a training set are applied to a test set to estimate the
+conditional mean in each of tree leaves. This type of sample splitting
+loses power. Furthermore, existing methods require the decision tree
+algorithm to be chosen by the analyst which may not fit the data best,
+introducing bias.
+
+A gap exists in statistical estimation where the analyst wants to
+understand what exposure levels, as part of a mixture, have the greatest
+effect on some outcome while nonparametrically adjusting for baseline
+covariates and data-adaptively identifying the best fitting tree applied
+to the mixed exposure. This is the goal of `CVtreeMLE`.
 
 The `CVtreeMLE` (Cross-Validated Decision Trees with Targeted Maximum
 Likelihood Estimation) R package is designed to provide statistical
@@ -43,11 +72,15 @@ cross-validation (CV), that is, in 10-fold CV, the data is split 10
 times (folds), where 90% of the data is used to determine rules in a
 mixture, and the
 ![g](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;g "g")
-(probability of being exposued estimator, P(A\|W)) and
+(probability of being exposed estimator, P(A\|W)) and
 ![Q](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;Q "Q")
 (outcome estimator E(Y\|A,W)) estimators needed for the ATE. These rules
 and estimators created in training data are applied to the validation
-data in order to calculate the final ATE target parameter.
+data in order to calculate the final ATE target parameter. This process
+cycles 10 times and the parameters across the folds are pooled, utlizing
+the full data. Because the partition nodes used in the tree may vary
+across the folds, we provide a union rule and stability estimates which
+informs how variable the rule is across the folds.
 
 In order to optimize the optimum bias-variance trade-off for our causal
 parameter of interest we use cross-validated targeted minimum loss based
@@ -55,7 +88,7 @@ estimation (CV-TMLE). `CVtreeMLE` builds off of the CV-TMLE general
 theorem of cross-validated minimum loss based estimation Zheng and Laan
 (2010) which allows the full utilization of loss based super learning to
 obtain the initial estimators needed for our target parameter without
-risk of overfitting. Thus, `CVtreeMLE` makes possible the non-parametric
+risk of overfitting. Thus, `CVtreeMLE` makes possible the nonparametric
 estimation of the causal effects of a mixed exposure that both results
 in interpretable results which are useful for public policy and are
 asymptotically efficient.
@@ -69,13 +102,17 @@ for the
 and
 ![g](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;g "g")
 mechanisms for the average treatment effect (ATE) target parameter.
-`sl3` is also used in the iterative backfitting procedure. In the
-iterative backfitting procedure, an ensemble of decision trees are fit
-on the full mixture modeled together, the [`pre`
-package](https://github.com/marjoleinF/pre)(Fokkema 2020) is used to fit
-rule ensembles. In backfitting procedure to find thresholds in each
-mixture component individually, a Super Learner of decision trees
-generated from the [`partykit`
+`sl3` is also used in the iterative backfitting procedure. The iterative
+backfitting algorithm fits E(Y\|A,W) = f(A) + h(W), where f(A) is a
+Super Learner of decision trees and H(W) is an unrestricted Super
+Learner. This semi-parametric additive model allows us to isolate
+identification of nodes in A that best explain an outcome while flexibly
+adjusting for covariates. In the iterative backfitting procedure, an
+ensemble of decision trees are fit on the full mixture modeled together;
+the [`pre` package](https://github.com/marjoleinF/pre)(Fokkema 2020) is
+used to fit rule ensembles. In backfitting procedure to find thresholds
+in each mixture component individually, a Super Learner of decision
+trees generated from the [`partykit`
 package](http://partykit.r-forge.r-project.org/partykit/)\[partykit2015\]
 are created. In each case, the goal is to find the best fitting decision
 tree from which we extract decision tree rules, we then calculate the
@@ -147,7 +184,7 @@ is less than 1,
 is greater than 2 and
 ![M_3](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;M_3 "M_3")
 is greater than 2.5. We want to simulate an outcome that is highest in
-this region and where the size of the region is based on covariates.
+this region and where the density of the region is based on covariates.
 
 To do this, use the `simulate_mixture_cube` function to generate
 simulated  
@@ -156,7 +193,7 @@ mixture variables,
 ![A](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;A "A"),
 that are correlated and baseline covariates,
 ![W](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;W "W"),
-that are potential confounders. Our outcome will be generated such that
+that are confounders. Our outcome will be generated such that
 individuals with a specific set of exposures have a different outcome
 compared to individuals who are not exposed to this combination of
 exposure levels.
@@ -349,10 +386,9 @@ outcome is 0 in all other regions.
 
 ## Run `CVtreeMLE`
 
-We will now pass the simulated data, learners, and variable names for
-each node in
+We will now pass the simulated data and variable names for each node in
 ![O = W,A,Y](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;O%20%3D%20W%2CA%2CY "O = W,A,Y")
-to the `CVtreeMLE` function:
+to the `CVtreeMLE` function.
 
 ``` r
 ptm <- proc.time()
@@ -369,8 +405,8 @@ sim_results <- CVtreeMLE(data = sim_data,
                          num_cores = 2)
 
 proc.time() - ptm
-#>     user   system  elapsed 
-#>   79.039    4.023 1951.853
+#>    user  system elapsed 
+#>   83.73    4.45 1975.31
 ```
 
 Note that above, there are default estimators for all parameters if they
@@ -382,7 +418,7 @@ xgboost, elastic net, and glms. Users can also pass in their own custom
 stacks of learners. We also see here that, using 2 cores with these
 learners on our simulated data with 500 observations and 6 variables,
 our run time is 21 minutes. This can be greatly improved by increasing
-the num_cores.
+the num_cores parameter.
 
 ## Results
 
@@ -514,11 +550,12 @@ is 5.96 higher compared to those that are not exposed to this rule. The
 standard error, confidence intervals and p-values are derived from the
 influence curve of this estimator.
 
-We can also look at the v-fold specific results. For inconsistent rules
-this gives better interpretability with valid statistical inference.
-Below we show the v-fold specific interactions found with fold specific
-estimates of our ATE target parameter and variance estimates from the
-fold specific IC.
+We can also look at the v-fold specific results. This gives the analyst
+the ability to investigate how stable the estimates and rules are. These
+results are the same as standard sample splitting techniques and
+therefore have proper variance estimates and p-values. Below we show the
+v-fold specific interactions found with fold specific estimates of our
+ATE target parameter and variance estimates from the fold specific IC.
 
 ``` r
 mixture_v_results <- sim_results$`V-Specific Mix Results`
@@ -549,7 +586,7 @@ mixture_v_results$M1M2M3
 In v-fold specific results we also give a pooled estimate. This is
 different than the pooled TMLE estimate. Here we simply take the
 weighted average of the fold specific ATEs and the harmonic mean of the
-variances.
+variances. This is similar to meta-analysis approaches.
 
 We can plot our v-fold mixture results findings using the
 `plot_mixture_results` function. This will return a list of plots with
@@ -565,7 +602,7 @@ mixture_plots$M1M2M3
 ![](man/figures/README-plot%20sim_mixture_results-1.png)<!-- --> This
 plot shows the ATE specific for each fold and for the weighted-mean
 results over the fold with corresponding pooled variance. The rule is
-the pooled rule which includes all observations that were indicated by
+the union rule which includes all observations that were indicated by
 the fold specific rules.
 
 `CVtreeMLE` also data-adaptively identifies thresholds in the marginal
@@ -842,13 +879,13 @@ where I was a biomedical big data fellow.
 
 ## License
 
-© 2017-2021 [David B. McCoy](https://davidmccoy.org)
+© 2017-2021 David B. McCoy
 
 The contents of this repository are distributed under the MIT license.
 See below for details:
 
     MIT License
-    Copyright (c) 2017-2021 David B. McCoy
+    Copyright (c) 2017-2023 David B. McCoy
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
     in the Software without restriction, including without limitation the rights

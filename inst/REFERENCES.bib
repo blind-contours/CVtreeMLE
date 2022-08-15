@@ -1,37 +1,89 @@
-  @Article{partykit2015,
-    title = {{partykit}: A Modular Toolkit for Recursive Partytioning
-      in {R}},
-    author = {Torsten Hothorn and Achim Zeileis},
-    journal = {Journal of Machine Learning Research},
-    year = {2015},
-    volume = {16},
-    pages = {3905-3909},
-    url = {https://jmlr.org/papers/v16/hothorn15a.html},
-  }
-  @Article{Hothorn2006,
-    title = {Unbiased Recursive Partitioning: A Conditional Inference
-      Framework},
-    author = {Torsten Hothorn and Kurt Hornik and Achim Zeileis},
-    journal = {Journal of Computational and Graphical Statistics},
-    year = {2006},
-    volume = {15},
-    number = {3},
-    doi = {10.1198/106186006X133933},
-    pages = {651--674},
-  }
-  @Article{Zeileis2008,
-    title = {Model-Based Recursive Partitioning},
-    author = {Achim Zeileis and Torsten Hothorn and Kurt Hornik},
-    journal = {Journal of Computational and Graphical Statistics},
-    year = {2008},
-    volume = {17},
-    number = {2},
-    doi = {10.1198/106186008X319331},
-    pages = {492--514},
-  }
+@article{Athey2016a,
+abstract = {In this paper we propose methods for estimating heterogeneity in
+causal effects in experimental and observational studies and for conducting
+hypothesis tests about the magnitude of differences in treatment effects across
+subsets of the population. We provide a data-driven approach to partition the
+data into subpopulations that differ in the magnitude of their treatment
+effects. The approach enables the construction of valid confidence intervals
+for treatment effects, even with many covariates relative to the sample size,
+and without "sparsity" assumptions. We propose an "honest" approach to
+estimation, whereby one sample is used to construct the partition and another
+to estimate treatment effects for each subpopulation. Our approach builds on
+regression tree methods, modified to optimize for goodness of fit in treatment
+effects and to account for honest estimation. Our model selection criterion
+anticipates that bias will be eliminated by honest estimation and also accounts
+for the effect of making additional splits on the variance of treatment effect
+estimates within each subpopulation. We address the challenge that the
+"ground truth" for a causal effect is not observed for any individual unit,
+so that standard approaches to cross-validation must be modified. Through a
+simulation study, we show that for our preferred method honest estimation
+results in nominal coverage for 90% confidence intervals, whereas coverage
+ranges between 74% and 84% for nonhonest approaches. Honest estimation
+requires estimating the model with a smaller sample size; the cost in terms
+of mean squared error of treatment effects for our preferred method ranges
+between 7-22%.},
+archivePrefix = {arXiv},
+arxivId = {1504.01132},
+author = {Athey, Susan and Imbens, Guido},
+doi = {10.1073/pnas.1510489113},
+eprint = {1504.01132},
+file = {:Users/davidmccoy/Downloads/pnas.1510489113 (1).pdf:pdf},
+issn = {10916490},
+journal = {Proceedings of the National Academy of Sciences of the United States of America},
+keywords = {Causal inference,Cross-validation,Heterogeneous treatment effects,Potential outcomes,Supervised machine learning},
+number = {27},
+pages = {7353--7360},
+pmid = {27382149},
+title = {{Recursive partitioning for heterogeneous causal effects}},
+volume = {113},
+year = {2016}
+}
+
+@Article{partykit2015,
+title = {{partykit}: A Modular Toolkit for Recursive Partytioning
+  in {R}},
+author = {Torsten Hothorn and Achim Zeileis},
+journal = {Journal of Machine Learning Research},
+year = {2015},
+volume = {16},
+pages = {3905-3909},
+url = {https://jmlr.org/papers/v16/hothorn15a.html},
+}
+@Article{Hothorn2006,
+title = {Unbiased Recursive Partitioning: A Conditional Inference
+  Framework},
+author = {Torsten Hothorn and Kurt Hornik and Achim Zeileis},
+journal = {Journal of Computational and Graphical Statistics},
+year = {2006},
+volume = {15},
+number = {3},
+doi = {10.1198/106186006X133933},
+pages = {651--674},
+}
+@Article{Zeileis2008,
+title = {Model-Based Recursive Partitioning},
+author = {Achim Zeileis and Torsten Hothorn and Kurt Hornik},
+journal = {Journal of Computational and Graphical Statistics},
+year = {2008},
+volume = {17},
+number = {2},
+doi = {10.1198/106186008X319331},
+pages = {492--514},
+}
 
 @article{Fokkema2020a,
-abstract = {Prediction rule ensembles (PREs) are sparse collections of rules, offering highly inter-pretable regression and classification models. This paper shows how they can be fitted using function pre from R package pre, which derives PREs largely through the method-ology of Friedman and Popescu (2008). The implementation and functionality of pre is described and illustrated through application on a dataset on the prediction of depres-sion. Furthermore, accuracy and sparsity of pre is compared with that of single trees, random forests, lasso regression and the original RuleFit implementation of Friedman and Popescu (2008) in four benchmark datasets. Results indicate that pre derives ensembles with predictive accuracy similar to that of random forests, while using a smaller number of variables for prediction. Furthermore, pre provided better accuracy and sparsity than the original RuleFit implementation.},
+abstract = {Prediction rule ensembles (PREs) are sparse collections of rules,
+offering highly inter-pretable regression and classification models. This paper
+shows how they can be fitted using function pre from R package pre, which
+derives PREs largely through the method-ology of Friedman and Popescu (2008).
+The implementation and functionality of pre is described and illustrated through
+application on a dataset on the prediction of depres-sion. Furthermore, accuracy
+and sparsity of pre is compared with that of single trees, random forests, lasso
+regression and the original RuleFit implementation of Friedman and Popescu
+(2008) in four benchmark datasets. Results indicate that pre derives ensembles
+with predictive accuracy similar to that of random forests, while using a
+smaller number of variables for prediction. Furthermore, pre provided
+better accuracy and sparsity than the original RuleFit implementation.},
 archivePrefix = {arXiv},
 arxivId = {1707.07149},
 author = {Fokkema, Marjolein},
@@ -48,206 +100,206 @@ year = {2020}
 }
 
 @incollection{diaz2018stochastic,
-  title={Stochastic Treatment Regimes},
-  author={D{\'\i}az, Iv{\'a}n and {van der Laan}, Mark J},
-  booktitle={Targeted Learning in Data Science: Causal Inference for Complex
-    Longitudinal Studies},
-  pages={167--180},
-  year={2018},
-  publisher={Springer Science \& Business Media}
+title={Stochastic Treatment Regimes},
+author={D{\'\i}az, Iv{\'a}n and {van der Laan}, Mark J},
+booktitle={Targeted Learning in Data Science: Causal Inference for Complex
+Longitudinal Studies},
+pages={167--180},
+year={2018},
+publisher={Springer Science \& Business Media}
 }
 
 @article{diaz2012population,
-  title={Population intervention causal effects based on stochastic
-    interventions},
-  author={D{\'\i}az, Iv{\'a}n and {van der Laan}, Mark J},
-  journal={Biometrics},
-  volume={68},
-  number={2},
-  pages={541--549},
-  year={2012},
-  publisher={Wiley Online Library}
+title={Population intervention causal effects based on stochastic
+interventions},
+author={D{\'\i}az, Iv{\'a}n and {van der Laan}, Mark J},
+journal={Biometrics},
+volume={68},
+number={2},
+pages={541--549},
+year={2012},
+publisher={Wiley Online Library}
 }
 
 @book{vdl2018targeted,
-  title={Targeted Learning in Data Science: Causal Inference for Complex
-    Longitudinal Studies},
-  author={{van der Laan}, Mark J and Rose, Sherri},
-  year={2018},
-  publisher={Springer Science \& Business Media}
+title={Targeted Learning in Data Science: Causal Inference for Complex
+Longitudinal Studies},
+author={{van der Laan}, Mark J and Rose, Sherri},
+year={2018},
+publisher={Springer Science \& Business Media}
 }
 
 @book{vdl2011targeted,
-  title={Targeted learning: causal inference for observational and experimental
-         data},
-  author={{van der Laan}, Mark J and Rose, Sherri},
-  year={2011},
-  publisher={Springer Science \& Business Media}
+title={Targeted learning: causal inference for observational and experimental
+     data},
+author={{van der Laan}, Mark J and Rose, Sherri},
+year={2011},
+publisher={Springer Science \& Business Media}
 }
 
 @article{rose2011targeted2sd,
-  title={A targeted maximum likelihood estimator for two-stage designs},
-  author={Rose, Sherri and {van der Laan}, Mark J},
-  journal={The International Journal of Biostatistics},
-  volume={7},
-  number={1},
-  pages={1--21},
-  year={2011}
+title={A targeted maximum likelihood estimator for two-stage designs},
+author={Rose, Sherri and {van der Laan}, Mark J},
+journal={The International Journal of Biostatistics},
+volume={7},
+number={1},
+pages={1--21},
+year={2011}
 }
 
 @article{diaz2011super,
-  title={Super learner based conditional density estimation with application to
-    marginal structural models},
-  author={D{\'\i}az, Iv{\'a}n and {van der Laan}, Mark J},
-  journal={The International Journal of Biostatistics},
-  volume={7},
-  number={1},
-  pages={1--20},
-  year={2011},
-  publisher={De Gruyter}
+title={Super learner based conditional density estimation with application to
+marginal structural models},
+author={D{\'\i}az, Iv{\'a}n and {van der Laan}, Mark J},
+journal={The International Journal of Biostatistics},
+volume={7},
+number={1},
+pages={1--20},
+year={2011},
+publisher={De Gruyter}
 }
 
 @article{diaz2020causal,
-  title={Causal mediation analysis for stochastic interventions},
-  author={D{\'\i}az, Iv{\'a}n and Hejazi, Nima S},
-  year={2020},
-  url = {https://doi.org/10.1111/rssb.12362},
-  doi = {10.1111/rssb.12362},
-  journal={Journal of the Royal Statistical Society: Series B (Statistical
-    Methodology)},
-  volume = {82},
-  number = {3},
-  pages = {661-683},
-  publisher={Wiley Online Library}
+title={Causal mediation analysis for stochastic interventions},
+author={D{\'\i}az, Iv{\'a}n and Hejazi, Nima S},
+year={2020},
+url = {https://doi.org/10.1111/rssb.12362},
+doi = {10.1111/rssb.12362},
+journal={Journal of the Royal Statistical Society: Series B (Statistical
+Methodology)},
+volume = {82},
+number = {3},
+pages = {661-683},
+publisher={Wiley Online Library}
 }
 
 @article{hejazi2020efficient,
-  title = {Efficient nonparametric inference on the effects of stochastic
-    interventions under two-phase sampling, with applications to vaccine
-    efficacy trials},
-  author = {Hejazi, Nima S and {van der Laan}, Mark J and Janes, Holly E and
-    Gilbert, Peter B and Benkeser, David C},
-  year={2020},
-  journal = {Biometrics},
-  publisher = {Wiley Online Library},
-  volume={},
-  number={},
-  pages={},
-  url = {https://doi.org/10.1111/biom.13375},
-  doi = {10.1111/biom.13375}
+title = {Efficient nonparametric inference on the effects of stochastic
+interventions under two-phase sampling, with applications to vaccine
+efficacy trials},
+author = {Hejazi, Nima S and {van der Laan}, Mark J and Janes, Holly E and
+Gilbert, Peter B and Benkeser, David C},
+year={2020},
+journal = {Biometrics},
+publisher = {Wiley Online Library},
+volume={},
+number={},
+pages={},
+url = {https://doi.org/10.1111/biom.13375},
+doi = {10.1111/biom.13375}
 }
 
 @article{pfanzagl1985contributions,
-  title={Contributions to a general asymptotic statistical theory},
-  author={Pfanzagl, J and Wefelmeyer, W},
-  journal={Statistics \& Risk Modeling},
-  volume={3},
-  number={3-4},
-  pages={379--388},
-  year={1985}
+title={Contributions to a general asymptotic statistical theory},
+author={Pfanzagl, J and Wefelmeyer, W},
+journal={Statistics \& Risk Modeling},
+volume={3},
+number={3-4},
+pages={379--388},
+year={1985}
 }
 
 @article{vdl2007super,
-  title={Super learner},
-  author={{van der Laan}, Mark J and Polley, Eric C and Hubbard, Alan E},
-  journal={Statistical applications in genetics and molecular biology},
-  volume={6},
-  number={1},
-  year={2007}
+title={Super learner},
+author={{van der Laan}, Mark J and Polley, Eric C and Hubbard, Alan E},
+journal={Statistical applications in genetics and molecular biology},
+volume={6},
+number={1},
+year={2007}
 }
 
 @book{pearl2000causality,
-  title={Causality},
-  author={Pearl, Judea},
-  year={2000},
-  publisher={Cambridge university press}
+title={Causality},
+author={Pearl, Judea},
+year={2000},
+publisher={Cambridge university press}
 }
 
 @software{hejazi2021haldensify,
-  author = {Hejazi, Nima S and Benkeser, David C and {van der Laan}, Mark J},
-  title = {{haldensify}: Highly adaptive lasso conditional density estimation},
-  year  = {2021},
-  note = {{R} package version 0.2.1},
-  url = {https://github.com/nhejazi/haldensify/},
-  doi = {10.5281/zenodo.3698329}
+author = {Hejazi, Nima S and Benkeser, David C and {van der Laan}, Mark J},
+title = {{haldensify}: Highly adaptive lasso conditional density estimation},
+year  = {2021},
+note = {{R} package version 0.2.1},
+url = {https://github.com/nhejazi/haldensify/},
+doi = {10.5281/zenodo.3698329}
 }
 
 @software{coyle2021sl3,
-  author = {Coyle, Jeremy R and Hejazi, Nima S and Malenica, Ivana and
-    Phillips, Rachael V and Sofrygin, Oleg},
-  title = {{sl3}: Modern Pipelines for Machine Learning and {Super Learning}},
-  year = {2021},
-  note = {{R} package version 1.4.2},
-  url = {https://github.com/tlverse/sl3/},
-  doi = {10.5281/zenodo.1342293}
+author = {Coyle, Jeremy R and Hejazi, Nima S and Malenica, Ivana and
+Phillips, Rachael V and Sofrygin, Oleg},
+title = {{sl3}: Modern Pipelines for Machine Learning and {Super Learning}},
+year = {2021},
+note = {{R} package version 1.4.2},
+url = {https://github.com/tlverse/sl3/},
+doi = {10.5281/zenodo.1342293}
 }
 
 @software{coyle2021hal9001,
-  author = {Coyle, Jeremy R and Hejazi, Nima S and Phillips, Rachael V and {van
-    der Laan}, Lars W and {van der Laan}, Mark J},
-  title = {{hal9001}: The scalable highly adaptive lasso},
-  year  = {2021},
-  note = {{R} package version 0.4.1},
-  url = {https://github.com/tlverse/hal9001/},
-  doi = {10.5281/zenodo.3558313}
+author = {Coyle, Jeremy R and Hejazi, Nima S and Phillips, Rachael V and {van
+der Laan}, Lars W and {van der Laan}, Mark J},
+title = {{hal9001}: The scalable highly adaptive lasso},
+year  = {2021},
+note = {{R} package version 0.4.1},
+url = {https://github.com/tlverse/hal9001/},
+doi = {10.5281/zenodo.3558313}
 }
 
 @book{vdl2022targeted,
-  doi = {},
-  url = {https://tlverse.org/tlverse-handbook/},
-  year = {2022},
-  publisher = {CRC Press},
-  author = {{van der Laan}, Mark J and Coyle, Jeremy R and Hejazi, Nima S and
-    Malenica, Ivana and Phillips, Rachael V and Hubbard, Alan E},
-  title = {{Targeted Learning in \texttt{R}: A Causal Data Science Handbook}},
-  note = {in preparation},
-  keywords = {books}
+doi = {},
+url = {https://tlverse.org/tlverse-handbook/},
+year = {2022},
+publisher = {CRC Press},
+author = {{van der Laan}, Mark J and Coyle, Jeremy R and Hejazi, Nima S and
+Malenica, Ivana and Phillips, Rachael V and Hubbard, Alan E},
+title = {{Targeted Learning in \texttt{R}: A Causal Data Science Handbook}},
+note = {in preparation},
+keywords = {books}
 }
 
 @article{vdl2004asymptotic,
-  title={Asymptotic optimality of likelihood-based cross-validation},
-  author={{van der Laan}, Mark J and Dudoit, Sandrine and Keles, Sunduz},
-  journal={Statistical Applications in Genetics and Molecular Biology},
-  volume={3},
-  number={1},
-  pages={1--23},
-  year={2004}
+title={Asymptotic optimality of likelihood-based cross-validation},
+author={{van der Laan}, Mark J and Dudoit, Sandrine and Keles, Sunduz},
+journal={Statistical Applications in Genetics and Molecular Biology},
+volume={3},
+number={1},
+pages={1--23},
+year={2004}
 }
 
 @article{vdl2006cross,
-  title={The cross-validated adaptive epsilon-net estimator},
-  author={{van der Laan}, Mark J and Dudoit, Sandrine and {van der Vaart}, Aad
-    W},
-  journal={Statistics \& Decisions},
-  volume={24},
-  number={3},
-  pages={373--395},
-  year={2006},
-  publisher={Oldenbourg Wissenschaftsverlag}
+title={The cross-validated adaptive epsilon-net estimator},
+author={{van der Laan}, Mark J and Dudoit, Sandrine and {van der Vaart}, Aad
+W},
+journal={Statistics \& Decisions},
+volume={24},
+number={3},
+pages={373--395},
+year={2006},
+publisher={Oldenbourg Wissenschaftsverlag}
 }
 
 @article{vdv2006oracle,
-  title={Oracle inequalities for multi-fold cross validation},
-  author={{van der Vaart}, Aad W and Dudoit, Sandrine and {van der Laan}, Mark
-    J},
-  journal={Statistics \& Decisions},
-  volume={24},
-  number={3},
-  pages={351--371},
-  year={2006},
-  publisher={Oldenbourg Wissenschaftsverlag}
+title={Oracle inequalities for multi-fold cross validation},
+author={{van der Vaart}, Aad W and Dudoit, Sandrine and {van der Laan}, Mark
+J},
+journal={Statistics \& Decisions},
+volume={24},
+number={3},
+pages={351--371},
+year={2006},
+publisher={Oldenbourg Wissenschaftsverlag}
 }
 
 @article{dudoit2005asymptotics,
-  title={Asymptotics of cross-validated risk estimation in estimator selection
-    and performance assessment},
-  author={Dudoit, Sandrine and {van der Laan}, Mark J},
-  journal={Statistical Methodology},
-  volume={2},
-  number={2},
-  pages={131--154},
-  year={2005},
-  publisher={Elsevier}
+title={Asymptotics of cross-validated risk estimation in estimator selection
+and performance assessment},
+author={Dudoit, Sandrine and {van der Laan}, Mark J},
+journal={Statistical Methodology},
+volume={2},
+number={2},
+pages={131--154},
+year={2005},
+publisher={Elsevier}
 }
 
 @article{Hubbard2016,
@@ -279,210 +331,210 @@ year = {2010}
 }
 
 @article{fisher2018,
-	Author = {Fisher, Aaron and Kennedy, Edward H},
-	Date-Added = {2019-04-28 16:08:13 -0700},
-	Date-Modified = {2019-04-28 16:10:23 -0700},
-	Journal = {arXiv preprint arXiv:1810.03260},
-	Title = {Visually communicating and teaching intuition for influence functions},
-	Year = {2018}}
+Author = {Fisher, Aaron and Kennedy, Edward H},
+Date-Added = {2019-04-28 16:08:13 -0700},
+Date-Modified = {2019-04-28 16:10:23 -0700},
+Journal = {arXiv preprint arXiv:1810.03260},
+Title = {Visually communicating and teaching intuition for influence functions},
+Year = {2018}}
 
 @article{Rubin2005,
-	Abstract = { Causal effects are defined as comparisons of potential outcomes under different treatments on a common set of units. Observed values of the potential outcomes are revealed by the assignment mechanism---a probabilistic model for the treatment each unit receives as a function of covariates and potential outcomes. Fisher made tremendous contributions to causal inference through his work on the design of randomized experiments, but the potential outcomes perspective applies to other complex experiments and nonrandomized studies as well. As noted by Kempthorne in his 1976 discussion of Savage's Fisher lecture, Fisher never bridged his work on experimental design and his work on parametric modeling, a bridge that appears nearly automatic with an appropriate view of the potential outcomes framework, where the potential outcomes and covariates are given a Bayesian distribution to complete the model specification. Also, this framework crisply separates scientific inference for causal effects and decisions based on such inference, a distinction evident in Fisher's discussion of tests of significance versus tests in an accept/reject framework. But Fisher never used the potential outcomes framework, originally proposed by Neyman in the context of randomized experiments, and as a result he provided generally flawed advice concerning the use of the analysis of covariance to adjust for posttreatment concomitants in randomized trials. },
-	Author = {Donald B Rubin},
-	Date-Added = {2016-11-05 10:46:26 +0000},
-	Date-Modified = {2016-11-05 11:57:31 +0000},
-	Doi = {10.1198/016214504000001880},
-	Eprint = {http://dx.doi.org/10.1198/016214504000001880},
-	Journal = {Journal of the American Statistical Association},
-	Number = {469},
-	Pages = {322-331},
-	Title = {Causal Inference Using Potential Outcomes},
-	Url = {http://dx.doi.org/10.1198/016214504000001880},
-	Volume = {100},
-	Year = {2005},
-	Bdsk-Url-1 = {http://dx.doi.org/10.1198/016214504000001880}}
+Abstract = { Causal effects are defined as comparisons of potential outcomes under different treatments on a common set of units. Observed values of the potential outcomes are revealed by the assignment mechanism---a probabilistic model for the treatment each unit receives as a function of covariates and potential outcomes. Fisher made tremendous contributions to causal inference through his work on the design of randomized experiments, but the potential outcomes perspective applies to other complex experiments and nonrandomized studies as well. As noted by Kempthorne in his 1976 discussion of Savage's Fisher lecture, Fisher never bridged his work on experimental design and his work on parametric modeling, a bridge that appears nearly automatic with an appropriate view of the potential outcomes framework, where the potential outcomes and covariates are given a Bayesian distribution to complete the model specification. Also, this framework crisply separates scientific inference for causal effects and decisions based on such inference, a distinction evident in Fisher's discussion of tests of significance versus tests in an accept/reject framework. But Fisher never used the potential outcomes framework, originally proposed by Neyman in the context of randomized experiments, and as a result he provided generally flawed advice concerning the use of the analysis of covariance to adjust for posttreatment concomitants in randomized trials. },
+Author = {Donald B Rubin},
+Date-Added = {2016-11-05 10:46:26 +0000},
+Date-Modified = {2016-11-05 11:57:31 +0000},
+Doi = {10.1198/016214504000001880},
+Eprint = {http://dx.doi.org/10.1198/016214504000001880},
+Journal = {Journal of the American Statistical Association},
+Number = {469},
+Pages = {322-331},
+Title = {Causal Inference Using Potential Outcomes},
+Url = {http://dx.doi.org/10.1198/016214504000001880},
+Volume = {100},
+Year = {2005},
+Bdsk-Url-1 = {http://dx.doi.org/10.1198/016214504000001880}}
 
 @article{van2006,
-	Author = {van der Laan, Mark J and Rubin, Daniel},
-	Date-Added = {2016-11-04 23:41:05 +0000},
-	Date-Modified = {2016-11-04 23:41:16 +0000},
-	Journal = {The International Journal of Biostatistics},
-	Number = {1},
-	Title = {Targeted maximum likelihood learning},
-	Volume = {2},
-	Year = {2006}}
+Author = {van der Laan, Mark J and Rubin, Daniel},
+Date-Added = {2016-11-04 23:41:05 +0000},
+Date-Modified = {2016-11-04 23:41:16 +0000},
+Journal = {The International Journal of Biostatistics},
+Number = {1},
+Title = {Targeted maximum likelihood learning},
+Volume = {2},
+Year = {2006}}
 
 @article{lunceford2004,
-	Author = {Lunceford, Jared K. and Davidian, Marie},
-	Date-Added = {2016-11-04 23:09:47 +0000},
-	Date-Modified = {2016-11-04 23:14:37 +0000},
-	Doi = {10.1002/sim.1903},
-	Issn = {1097-0258},
-	Journal = {Statistics in Medicine},
-	Number = {19},
-	Pages = {2937--2960},
-	Publisher = {John Wiley &amp; Sons, Ltd.},
-	Title = {Stratification and weighting via the propensity score in estimation of causal treatment effects: a comparative study},
-	Url = {http://dx.doi.org/10.1002/sim.1903},
-	Volume = {23},
-	Year = {2004},
-	Bdsk-Url-1 = {http://dx.doi.org/10.1002/sim.1903}}
+Author = {Lunceford, Jared K. and Davidian, Marie},
+Date-Added = {2016-11-04 23:09:47 +0000},
+Date-Modified = {2016-11-04 23:14:37 +0000},
+Doi = {10.1002/sim.1903},
+Issn = {1097-0258},
+Journal = {Statistics in Medicine},
+Number = {19},
+Pages = {2937--2960},
+Publisher = {John Wiley &amp; Sons, Ltd.},
+Title = {Stratification and weighting via the propensity score in estimation of causal treatment effects: a comparative study},
+Url = {http://dx.doi.org/10.1002/sim.1903},
+Volume = {23},
+Year = {2004},
+Bdsk-Url-1 = {http://dx.doi.org/10.1002/sim.1903}}
 
 @article{rosenbaum1983,
-	Author = {Rosenbaum, Paul R and Rubin, Donald B},
-	Date-Added = {2016-11-04 23:06:43 +0000},
-	Date-Modified = {2016-11-04 23:06:53 +0000},
-	Journal = {Biometrika},
-	Number = {1},
-	Pages = {41--55},
-	Publisher = {Biometrika Trust},
-	Title = {The central role of the propensity score in observational studies for causal effects},
-	Volume = {70},
-	Year = {1983}}
+Author = {Rosenbaum, Paul R and Rubin, Donald B},
+Date-Added = {2016-11-04 23:06:43 +0000},
+Date-Modified = {2016-11-04 23:06:53 +0000},
+Journal = {Biometrika},
+Number = {1},
+Pages = {41--55},
+Publisher = {Biometrika Trust},
+Title = {The central role of the propensity score in observational studies for causal effects},
+Volume = {70},
+Year = {1983}}
 
 @article{efron1983,
-	Author = {Efron, Bradley and Gong, Gail},
-	Date-Added = {2016-11-01 15:20:51 +0000},
-	Date-Modified = {2016-11-01 15:21:02 +0000},
-	Journal = {The American Statistician},
-	Number = {1},
-	Pages = {36--48},
-	Publisher = {Taylor \&amp; Francis},
-	Title = {A leisurely look at the bootstrap, the jackknife, and cross-validation},
-	Volume = {37},
-	Year = {1983}}
+Author = {Efron, Bradley and Gong, Gail},
+Date-Added = {2016-11-01 15:20:51 +0000},
+Date-Modified = {2016-11-01 15:21:02 +0000},
+Journal = {The American Statistician},
+Number = {1},
+Pages = {36--48},
+Publisher = {Taylor \&amp; Francis},
+Title = {A leisurely look at the bootstrap, the jackknife, and cross-validation},
+Volume = {37},
+Year = {1983}}
 
 @book{efron1982,
-	Author = {Efron, Bradley and Efron, B},
-	Date-Added = {2016-11-01 12:23:55 +0000},
-	Date-Modified = {2016-11-01 12:24:06 +0000},
-	Publisher = {SIAM},
-	Title = {The jackknife, the bootstrap and other resampling plans},
-	Volume = {38},
-	Year = {1982}}
+Author = {Efron, Bradley and Efron, B},
+Date-Added = {2016-11-01 12:23:55 +0000},
+Date-Modified = {2016-11-01 12:24:06 +0000},
+Publisher = {SIAM},
+Title = {The jackknife, the bootstrap and other resampling plans},
+Volume = {38},
+Year = {1982}}
 
 @article{breiman1996,
-	Author = {Breiman, Leo},
-	Date-Added = {2016-11-01 11:07:48 +0000},
-	Date-Modified = {2016-11-01 11:07:59 +0000},
-	Journal = {Machine learning},
-	Number = {1},
-	Pages = {49--64},
-	Publisher = {Springer},
-	Title = {Stacked regressions},
-	Volume = {24},
-	Year = {1996}}
+Author = {Breiman, Leo},
+Date-Added = {2016-11-01 11:07:48 +0000},
+Date-Modified = {2016-11-01 11:07:59 +0000},
+Journal = {Machine learning},
+Number = {1},
+Pages = {49--64},
+Publisher = {Springer},
+Title = {Stacked regressions},
+Volume = {24},
+Year = {1996}}
 
 @article{van2007,
-	Author = {Van der Laan, Mark J and Polley, Eric C and Hubbard, Alan E},
-	Date-Added = {2016-10-31 17:22:47 +0000},
-	Date-Modified = {2016-10-31 17:22:56 +0000},
-	Journal = {Statistical applications in genetics and molecular biology},
-	Number = {1},
-	Title = {Super learner},
-	Volume = {6},
-	Year = {2007}}
+Author = {Van der Laan, Mark J and Polley, Eric C and Hubbard, Alan E},
+Date-Added = {2016-10-31 17:22:47 +0000},
+Date-Modified = {2016-10-31 17:22:56 +0000},
+Journal = {Statistical applications in genetics and molecular biology},
+Number = {1},
+Title = {Super learner},
+Volume = {6},
+Year = {2007}}
 
 @article{rubin1974,
-	Author = {Rubin, Donald B},
-	Date-Added = {2016-10-31 15:24:42 +0000},
-	Date-Modified = {2016-10-31 15:24:49 +0000},
-	Journal = {Journal of educational Psychology},
-	Number = {5},
-	Pages = {688},
-	Publisher = {American Psychological Association},
-	Title = {Estimating causal effects of treatments in randomized and nonrandomized studies.},
-	Volume = {66},
-	Year = {1974}}
+Author = {Rubin, Donald B},
+Date-Added = {2016-10-31 15:24:42 +0000},
+Date-Modified = {2016-10-31 15:24:49 +0000},
+Journal = {Journal of educational Psychology},
+Number = {5},
+Pages = {688},
+Publisher = {American Psychological Association},
+Title = {Estimating causal effects of treatments in randomized and nonrandomized studies.},
+Volume = {66},
+Year = {1974}}
 
 @article{hampel1974,
-	Author = {Hampel, Frank R},
-	Date-Added = {2016-10-24 14:12:13 +0000},
-	Date-Modified = {2016-10-24 14:12:28 +0000},
-	Journal = {Journal of the American Statistical Association},
-	Number = {346},
-	Pages = {383--393},
-	Publisher = {Taylor \&amp; Francis},
-	Title = {The influence curve and its role in robust estimation},
-	Volume = {69},
-	Year = {1974}}
+Author = {Hampel, Frank R},
+Date-Added = {2016-10-24 14:12:13 +0000},
+Date-Modified = {2016-10-24 14:12:28 +0000},
+Journal = {Journal of the American Statistical Association},
+Number = {346},
+Pages = {383--393},
+Publisher = {Taylor \&amp; Francis},
+Title = {The influence curve and its role in robust estimation},
+Volume = {69},
+Year = {1974}}
 
 @article{neu2005,
-	Author = {Neugebauer, Romain and van der Laan, Mark},
-	Date-Added = {2016-10-20 09:49:31 +0000},
-	Date-Modified = {2016-10-20 09:50:01 +0000},
-	Journal = {Journal of Statistical Planning and Inference},
-	Number = {1},
-	Pages = {405--426},
-	Publisher = {Elsevier},
-	Title = {Why prefer double robust estimators in causal inference?},
-	Volume = {129},
-	Year = {2005}}
+Author = {Neugebauer, Romain and van der Laan, Mark},
+Date-Added = {2016-10-20 09:49:31 +0000},
+Date-Modified = {2016-10-20 09:50:01 +0000},
+Journal = {Journal of Statistical Planning and Inference},
+Number = {1},
+Pages = {405--426},
+Publisher = {Elsevier},
+Title = {Why prefer double robust estimators in causal inference?},
+Volume = {129},
+Year = {2005}}
 
 @article{robins2000,
-	Author = {Robins, James M and Hernan, Miguel Angel and Brumback, Babette},
-	Date-Added = {2016-10-20 09:42:19 +0000},
-	Date-Modified = {2016-10-20 09:42:33 +0000},
-	Journal = {Epidemiology},
-	Pages = {550--560},
-	Publisher = {JSTOR},
-	Title = {Marginal structural models and causal inference in epidemiology},
-	Year = {2000}}
+Author = {Robins, James M and Hernan, Miguel Angel and Brumback, Babette},
+Date-Added = {2016-10-20 09:42:19 +0000},
+Date-Modified = {2016-10-20 09:42:33 +0000},
+Journal = {Epidemiology},
+Pages = {550--560},
+Publisher = {JSTOR},
+Title = {Marginal structural models and causal inference in epidemiology},
+Year = {2000}}
 
 @article{bang2005,
-	Author = {Bang, Heejung and Robins, James M},
-	Date-Added = {2016-10-20 09:41:18 +0000},
-	Date-Modified = {2016-10-20 09:42:41 +0000},
-	Journal = {Biometrics},
-	Number = {4},
-	Pages = {962--973},
-	Publisher = {Wiley Online Library},
-	Title = {Doubly robust estimation in missing data and causal inference models},
-	Volume = {61},
-	Year = {2005}}
+Author = {Bang, Heejung and Robins, James M},
+Date-Added = {2016-10-20 09:41:18 +0000},
+Date-Modified = {2016-10-20 09:42:41 +0000},
+Journal = {Biometrics},
+Number = {4},
+Pages = {962--973},
+Publisher = {Wiley Online Library},
+Title = {Doubly robust estimation in missing data and causal inference models},
+Volume = {61},
+Year = {2005}}
 
 @article{rubin2011,
-	Author = {Rubin, Donald B},
-	Date-Added = {2016-10-20 09:28:13 +0000},
-	Date-Modified = {2016-10-20 09:28:32 +0000},
-	Journal = {Journal of the American Statistical Association},
-	Publisher = {Taylor \&amp; Francis},
-	Title = {Causal inference using potential outcomes},
-	Year = {2011}}
+Author = {Rubin, Donald B},
+Date-Added = {2016-10-20 09:28:13 +0000},
+Date-Modified = {2016-10-20 09:28:32 +0000},
+Journal = {Journal of the American Statistical Association},
+Publisher = {Taylor \&amp; Francis},
+Title = {Causal inference using potential outcomes},
+Year = {2011}}
 
 @article{robins1986,
-	Author = {Greenland, Sander and Robins, James M},
-	Date-Added = {2016-10-19 15:38:47 +0000},
-	Date-Modified = {2016-10-19 15:39:03 +0000},
-	Journal = {International journal of epidemiology},
-	Number = {3},
-	Pages = {413--419},
-	Publisher = {IEA},
-	Title = {Identifiability, exchangeability, and epidemiological confounding},
-	Volume = {15},
-	Year = {1986}}
+Author = {Greenland, Sander and Robins, James M},
+Date-Added = {2016-10-19 15:38:47 +0000},
+Date-Modified = {2016-10-19 15:39:03 +0000},
+Journal = {International journal of epidemiology},
+Number = {3},
+Pages = {413--419},
+Publisher = {IEA},
+Title = {Identifiability, exchangeability, and epidemiological confounding},
+Volume = {15},
+Year = {1986}}
 
 @book{buh2016,
-	Author = {B{\"u}hlmann, Peter and Drineas, Petros and van der Laan, Mark and Kane, Michael},
-	Date-Added = {2016-10-19 15:10:01 +0000},
-	Date-Modified = {2016-10-19 15:10:27 +0000},
-	Publisher = {CRC Press},
-	Title = {Handbook of big data},
-	Year = {2016}}
+Author = {B{\"u}hlmann, Peter and Drineas, Petros and van der Laan, Mark and Kane, Michael},
+Date-Added = {2016-10-19 15:10:01 +0000},
+Date-Modified = {2016-10-19 15:10:27 +0000},
+Publisher = {CRC Press},
+Title = {Handbook of big data},
+Year = {2016}}
 
 @book{van2011,
-	Author = {van der Laan, Mark and Rose, Sherri},
-	Date-Added = {2016-10-19 12:25:52 +0000},
-	Date-Modified = {2016-10-19 14:38:16 +0000},
-	Publisher = {Springer Series in Statistics},
-	Title = {Targeted learning: causal inference for observational and experimental data},
-	Year = {2011}}
+Author = {van der Laan, Mark and Rose, Sherri},
+Date-Added = {2016-10-19 12:25:52 +0000},
+Date-Modified = {2016-10-19 14:38:16 +0000},
+Publisher = {Springer Series in Statistics},
+Title = {Targeted learning: causal inference for observational and experimental data},
+Year = {2011}}
 
 @article{gruber2011,
-	Author = {Susan Gruber and Mark van der Laan},
-	Date-Added = {2016-10-19 12:23:25 +0000},
-	Date-Modified = {2016-10-19 14:38:33 +0000},
-	Journal = {U.C. Berkeley Division of Biostatistics Working Paper Series},
-	Title = {tmle: An R Package for Targeted Maximum Likelihood Estimation},
-	Year = {2011},
-	Bdsk-Url-1 = {http://biostats.bepress.com/ucbbiostat/paper275}}
+Author = {Susan Gruber and Mark van der Laan},
+Date-Added = {2016-10-19 12:23:25 +0000},
+Date-Modified = {2016-10-19 14:38:33 +0000},
+Journal = {U.C. Berkeley Division of Biostatistics Working Paper Series},
+Title = {tmle: An R Package for Targeted Maximum Likelihood Estimation},
+Year = {2011},
+Bdsk-Url-1 = {http://biostats.bepress.com/ucbbiostat/paper275}}
