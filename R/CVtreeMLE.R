@@ -19,11 +19,14 @@
 #' @param y A character indicating which variable in the data to use as the
 #' outcome.
 #' @param a_stack Stack of estimators used in the SL during the iterative
-#' backfitting for `Y|A`, this should be an SL3 object
+#' backfitting for `Y|A`, this should be an SL3 object. If NULL then default
+#' learners are used.
 #' @param w_stack Stack of estimators used in the SL during the iterative
-#' backfitting for `Y|W`, this should be an SL3 stack
+#' backfitting for `Y|W`, this should be an SL3 stack. If NULL then default
+#' learners are used.
 #' @param aw_stack Stack of estimators used in the SL for the Q and g
-#' mechanisms.
+#' mechanisms. If NULL then default
+#' learners are used.
 #' @param n_folds Number of cross-validation folds.
 #' @param seed Pass in a seed number for consistency of results
 #' @param family Family ('binomial' or 'gaussian').
@@ -172,12 +175,6 @@ CVtreeMLE <- function(w,
                       num_cores = 2,
                       max_iter = 5,
                       verbose = FALSE) {
-
-  # Confirm that data has at least two columns.
-  if (length(a) < 2L) {
-    stop("Vector of mixture variable names must have at least two variable
-         characters")
-  }
 
   if (any(sapply(data[, a], is.factor))) {
     print("Factor variable detected in exposures, converting to numeric")
