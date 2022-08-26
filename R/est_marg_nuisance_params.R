@@ -21,7 +21,6 @@
 #' found across the folds
 #' @param parallel_cv TRUE/FALSE if cv parallelization is used
 #' @param seed Seed number
-#' @import sl3
 #' @importFrom magrittr %>%
 #' @importFrom rlang :=
 
@@ -95,7 +94,7 @@ est_marg_nuisance_params <- function(at,
         at_data <- rbind(at_c_ref_data, at_c_comp_data)
         av_data <- rbind(av_c_ref_data, av_c_comp_data)
 
-        task_at <- sl3::make_sl3_Task(
+        task_at <- make_sl3_Task(
           data = at_data,
           covariates = w,
           outcome = "a",
@@ -103,17 +102,17 @@ est_marg_nuisance_params <- function(at,
           folds = 2
         )
 
-        task_av <- sl3::make_sl3_Task(
+        task_av <- make_sl3_Task(
           data = av_data,
           covariates = w,
           outcome = "a",
           outcome_type = "binomial"
         )
 
-        discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(
-          sl3::loss_loglik_binomial)
+        discrete_sl_metalrn <- Lrnr_cv_selector$new(
+          loss_loglik_binomial)
 
-        discrete_sl <- sl3::Lrnr_sl$new(
+        discrete_sl <- Lrnr_sl$new(
           learners = aw_stack,
           metalearner = discrete_sl_metalrn,
         )
@@ -131,7 +130,7 @@ est_marg_nuisance_params <- function(at,
         av_data$ghat_1w <- ghat_1w
         av_data$h_aw <- h_aw
 
-        task_at <- sl3::make_sl3_Task(
+        task_at <- make_sl3_Task(
           data = at_data,
           covariates = c(w, "a"),
           outcome = "y_scaled",
@@ -143,31 +142,31 @@ est_marg_nuisance_params <- function(at,
         x_m1$a <- 1 # under exposure
         x_m0$a <- 0 # under control
 
-        task_av <- sl3::make_sl3_Task(
+        task_av <- make_sl3_Task(
           data = av_data,
           covariates = c(w, "a"),
           outcome = "y_scaled",
           outcome_type = family
         )
 
-        task_av_1 <- sl3::make_sl3_Task(
+        task_av_1 <- make_sl3_Task(
           data = x_m1,
           covariates = c(w, "a"),
           outcome = "y_scaled",
           outcome_type = family
         )
 
-        task_av_0 <- sl3::make_sl3_Task(
+        task_av_0 <- make_sl3_Task(
           data = x_m0,
           covariates = c(w, "a"),
           outcome = "y_scaled",
           outcome_type = family
         )
 
-        discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(
-          sl3::loss_squared_error)
+        discrete_sl_metalrn <- Lrnr_cv_selector$new(
+          loss_squared_error)
 
-        discrete_sl <- sl3::Lrnr_sl$new(
+        discrete_sl <- Lrnr_sl$new(
           learners = aw_stack,
           metalearner = discrete_sl_metalrn,
         )

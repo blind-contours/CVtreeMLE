@@ -2,8 +2,9 @@
 % Please edit documentation in R/CVtreeMLE.R
 \name{CVtreeMLE}
 \alias{CVtreeMLE}
-\title{Fitting ensemble decision trees with targeted maximum likelihood
-estimation}
+\title{Fit ensemble decision trees to a vector of exposures and use targeted
+maximum likelihood estimation to determine the average treatment effect
+in each leaf of best fitting tree}
 \usage{
 CVtreeMLE(
   w,
@@ -16,7 +17,6 @@ CVtreeMLE(
   n_folds,
   seed = 6442,
   family,
-  h_aw_trunc_lvl = 10,
   parallel = TRUE,
   parallel_cv = TRUE,
   parallel_type = "multi_session",
@@ -26,10 +26,10 @@ CVtreeMLE(
 )
 }
 \arguments{
-\item{w}{A vector of characters indicating which variables in the data to use
-as covariates.}
+\item{w}{A character vector indicating which variables in the data to use
+as baseline covariates.}
 
-\item{a}{A vector of characters indicating which variables in the data to use
+\item{a}{A character vector indicating which variables in the data to use
 as exposures.}
 
 \item{y}{A character indicating which variable in the data to use as the
@@ -37,22 +37,27 @@ outcome.}
 
 \item{data}{Data frame of (W,A,Y) variables of interest.}
 
-\item{w_stack}{Stack of estimators used in the SL during the iterative
-backfitting for \code{Y|W}, this should be an SL3 stack}
+\item{w_stack}{Stack of estimators used in the Super Learner during the
+iterative backfitting for \code{Y|W}, this should be an SL3 stack. If not
+provided, \code{utils_create_sls} is used to create default
+estimators used in the ensemble.}
 
-\item{aw_stack}{Stack of estimators used in the SL for the Q and g
-mechanisms.}
+\item{aw_stack}{Stack of estimators used in the Super Learner for the Q and g
+mechanisms. If not
+provided, \code{utils_create_sls} is used to create default
+estimators used in the ensemble.}
 
-\item{a_stack}{Stack of estimators used in the SL during the iterative
-backfitting for \code{Y|A}, this should be an SL3 object}
+\item{a_stack}{Stack of estimators used in the Super Learner during
+the iterative backfitting for \code{Y|A}, this should be an SL3 object.
+If not provided, \code{utils_create_sls} is used to create default
+decision tree estimators used in the ensemble.}
 
 \item{n_folds}{Number of cross-validation folds.}
 
-\item{seed}{Pass in a seed number for consistency of results}
+\item{seed}{Pass in a seed number for consistency of results. If not provided
+a default seed is generated.}
 
 \item{family}{Family ('binomial' or 'gaussian').}
-
-\item{h_aw_trunc_lvl}{Truncation level for the clever covariate.}
 
 \item{parallel}{Use parallel processing if a backend is registered; enabled
 by default.}
@@ -65,16 +70,41 @@ which type of parallelization to do \code{multi_session} or \code{multicore}}
 
 \item{num_cores}{If using parallel, the number of cores to parallelize over}
 
-\item{max_iter}{Max number of iterations of iterative backfitting algorithm}
+\item{max_iter}{Max number of iterations of iterative backfitting algorithm.
+Default is \code{5}.}
 
-\item{verbose}{If true, creates a sink file where detailed information and
-diagnostics of the run process are given.}
+\item{verbose}{If true, a message will be printed indicating what process
+is being started by CVtreeMLE. During the iterative backfitting procedure
+the iteration in each fold along with the difference in model fit and
+rules determined will be printed. After the iterative backfitting procedures
+a table of rules determined in each fold will be printed.}
+
+\item{h_aw_trunc_lvl}{Truncation level for the clever covariate.}
 }
 \value{
 Object of class \code{CVtreeMLE}, containing a list of table results
 for: marginal ATEs, mixture ATEs, RMSE of marginal model fits, RMSE of
-mixture model fits, marginal rules, mixture rules and SL model fits for the
-marginal combinations.
+mixture model fits, marginal rules, and mixture rules.
+
+\itemize{
+\item Model RMSEs: Root mean square error for marginal and interaction
+models in the iterative backfitting procedure
+\item Pooled TMLE Marginal Results: Data frame of pooled TMLE Marginal
+Results: Pooled ATE results using TMLE for thresholds identified for
+each mixture component found
+\item V-Specific Marg Results: A list of the v-fold marginal results.
+These are grouped by variable and direction of the ATE.
+\item Pooled TMLE Mixture Results: Data frame of pooled TMLE Mixture
+Results
+\item V-Specific Mix Results: A list of the v-fold mixture results.
+These are grouped by variable and direction of the ATE.
+\item Pooled Marginal Refs: A data frame of the reference categories
+determined in each of the marginal results.
+\item Marginal Rules: A data frame that includes the marginal rules and
+details related to fold found and RMSE
+\item Mixture Rules: A data frame that includes the mixture rules and
+details related to fold found and RMSE
+}
 }
 \description{
 Fit ensemble decision trees on a mixed exposure while
@@ -189,4 +219,5 @@ CVtreeMLE_fit <- CVtreeMLE(data = data,
                           family = "binomial",
                           parallel = FALSE,
                           n_folds = 2)
+
 }

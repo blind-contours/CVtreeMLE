@@ -15,7 +15,7 @@ simulate_mixture_cube(
   w1_betas = c(0, 0.01, 0.03, 0.06, 0.1, 0.05, 0.2, 0.04),
   w2_betas = c(0, 0.04, 0.01, 0.07, 0.15, 0.1, 0.1, 0.04),
   mix_subspace_betas = c(0, 0.08, 0.05, 0.01, 0.05, 0.033, 0.07, 0.09),
-  subspace_assoc_strength_betas = c(0, 0, 0, 0, 0, 0, 6, 0),
+  subspace_assoc_strength_betas = c(1, 1, 1, 1, 1, 1, 1, 7),
   marginal_impact_betas = c(0, 0, 0),
   eps_sd = 0.01,
   binary = FALSE

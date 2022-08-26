@@ -1,5 +1,6 @@
-#' @title Fitting ensemble decision trees with targeted maximum likelihood
-#' estimation
+#' @title Fit ensemble decision trees to a vector of exposures and use targeted
+#' maximum likelihood estimation to determine the average treatment effect
+#' in each leaf of best fitting tree
 #'
 #' @description Fit ensemble decision trees on a mixed exposure while
 #' controlling for covariates using iterative backfitting of two Super Learners.
@@ -12,28 +13,36 @@
 #' effects if data-adaptively identified.
 #'
 #' @param data Data frame of (W,A,Y) variables of interest.
-#' @param w A vector of characters indicating which variables in the data to use
-#'  as covariates.
-#' @param a A vector of characters indicating which variables in the data to use
+#' @param w A character vector indicating which variables in the data to use
+#'  as baseline covariates.
+#' @param a A character vector indicating which variables in the data to use
 #'  as exposures.
 #' @param y A character indicating which variable in the data to use as the
 #' outcome.
-#' @param a_stack Stack of estimators used in the SL during the iterative
-#' backfitting for `Y|A`, this should be an SL3 object. If NULL then default
-#' learners are used.
-#' @param w_stack Stack of estimators used in the SL during the iterative
-#' backfitting for `Y|W`, this should be an SL3 stack. If NULL then default
-#' learners are used.
-#' @param aw_stack Stack of estimators used in the SL for the Q and g
-#' mechanisms. If NULL then default
-#' learners are used.
+#' @param a_stack Stack of estimators used in the Super Learner during
+#' the iterative backfitting for `Y|A`, this should be an SL3 object.
+#' If not provided, \code{utils_create_sls} is used to create default
+#' decision tree estimators used in the ensemble.
+#' @param w_stack Stack of estimators used in the Super Learner during the
+#' iterative backfitting for `Y|W`, this should be an SL3 stack. If not
+#' provided, \code{utils_create_sls} is used to create default
+#' estimators used in the ensemble.
+#' @param aw_stack Stack of estimators used in the Super Learner for the Q and g
+#' mechanisms. If not
+#' provided, \code{utils_create_sls} is used to create default
+#' estimators used in the ensemble.
 #' @param n_folds Number of cross-validation folds.
-#' @param seed Pass in a seed number for consistency of results
+#' @param seed Pass in a seed number for consistency of results. If not provided
+#' a default seed is generated.
 #' @param family Family ('binomial' or 'gaussian').
 #' @param h_aw_trunc_lvl Truncation level for the clever covariate.
-#' @param max_iter Max number of iterations of iterative backfitting algorithm
-#' @param verbose If true, creates a sink file where detailed information and
-#' diagnostics of the run process are given.
+#' @param max_iter Max number of iterations of iterative backfitting algorithm.
+#' Default is `5`.
+#' @param verbose If true, a message will be printed indicating what process
+#' is being started by CVtreeMLE. During the iterative backfitting procedure
+#' the iteration in each fold along with the difference in model fit and
+#' rules determined will be printed. After the iterative backfitting procedures
+#' a table of rules determined in each fold will be printed.
 #' @param parallel Use parallel processing if a backend is registered; enabled
 #' by default.
 #' @param parallel_cv Use parallel processing on CV procedure vs. parallel
@@ -82,20 +91,15 @@
 #'  all the observations across the folds that the respective variable set in
 #'  the rule.
 #' }
-
-#' @return Object of class \code{CVtreeMLE}, containing a list of table results
-#' for: marginal ATEs, mixture ATEs, RMSE of marginal model fits, RMSE of
-#' mixture model fits, marginal rules, mixture rules and SL model fits for the
-#' marginal combinations.
 #'
 #' @importFrom foreach %dopar% %do%
 #' @importFrom magrittr %>%
 #' @importFrom stats as.formula glm p.adjust plogis predict qlogis qnorm qunif
 #' @importFrom stats rnorm runif
-#' @import sl3
 #' @importFrom rlang :=
 #' @importFrom dplyr filter
 #' @importFrom data.table rbindlist
+#' @import furrr
 
 #' @section Authors:
 #' David McCoy, University of California, Berkeley
@@ -137,7 +141,6 @@
 #' inference for observational and experimental data}. Springer Science &
 #' Business Media.
 #'
-#' @export
 #'
 #' @examples
 #' n <- 800
@@ -155,6 +158,32 @@
 #'                           family = "binomial",
 #'                           parallel = FALSE,
 #'                           n_folds = 2)
+#'
+#' @return Object of class \code{CVtreeMLE}, containing a list of table results
+#' for: marginal ATEs, mixture ATEs, RMSE of marginal model fits, RMSE of
+#' mixture model fits, marginal rules, and mixture rules.
+#'
+#' \itemize{
+#'   \item Model RMSEs: Root mean square error for marginal and interaction
+#'   models in the iterative backfitting procedure
+#'   \item Pooled TMLE Marginal Results: Data frame of pooled TMLE Marginal
+#'   Results: Pooled ATE results using TMLE for thresholds identified for
+#'   each mixture component found
+#'   \item V-Specific Marg Results: A list of the v-fold marginal results.
+#'   These are grouped by variable and direction of the ATE.
+#'   \item Pooled TMLE Mixture Results: Data frame of pooled TMLE Mixture
+#'   Results
+#'   \item V-Specific Mix Results: A list of the v-fold mixture results.
+#'   These are grouped by variable and direction of the ATE.
+#'   \item Pooled Marginal Refs: A data frame of the reference categories
+#'   determined in each of the marginal results.
+#'   \item Marginal Rules: A data frame that includes the marginal rules and
+#'   details related to fold found and RMSE
+#'   \item Mixture Rules: A data frame that includes the mixture rules and
+#'   details related to fold found and RMSE
+#' }
+#'
+#' @export
 
 # Start CVtreeMLE ---------------------------
 
@@ -168,7 +197,6 @@ CVtreeMLE <- function(w,
                       n_folds,
                       seed = 6442,
                       family,
-                      h_aw_trunc_lvl = 10,
                       parallel = TRUE,
                       parallel_cv = TRUE,
                       parallel_type = "multi_session",
@@ -238,11 +266,11 @@ CVtreeMLE <- function(w,
   }
 
   if (parallel == TRUE) {
-    if(parallel_type == "multi_session"){
+    if( parallel_type == "multi_session" ) {
     future::plan(future::multisession,
                  workers = num_cores,
                  gc = TRUE)
-    }else{
+    }else {
       future::plan(future::multicore,
                    workers = num_cores,
                    gc = TRUE)
@@ -262,15 +290,17 @@ CVtreeMLE <- function(w,
   mix_fold_directions <- list()
 
   fold_results_marginal_data <- list()
-  fold_results_marginal_additive_data <- list()
 
   fold_results_marginal_combo_data <- list()
-  fold_results_marginal_Sls <- list()
 
   fold_results_mix_combo_data <- list()
   fold_results_mix_Sls <- list()
 
   # Iterative Back-fitting on Mixture ---------------------------
+
+  if (verbose) {
+    print("-----Starting Iterative Backfitting of Exposures on Covariates-----")
+  }
 
   fold_mixture_rules <- furrr::future_map_dfr(unique(data$folds),
                                               function(fold_k) {
@@ -309,7 +339,17 @@ CVtreeMLE <- function(w,
     no_mixture_rules <- FALSE
   }
 
+  if (verbose) {
+      print("Mixture results found")
+      print(fold_mixture_rules)
+    }
+
   # Iterative Back-fitting on Marginals ---------------------------
+
+  if (verbose) {
+    print("-----Starting Iterative Backfitting of Each Exposure on Covariates to
+          Determine if Partitioning Nodes Exist-----")
+  }
 
   fold_marginal_rules <- furrr::future_map_dfr(unique(data$folds),
                                                function(fold_k) {
@@ -345,11 +385,22 @@ CVtreeMLE <- function(w,
     no_marginal_rules <- FALSE
   }
 
-  if (no_marginal_rules == TRUE & no_mixture_rules == TRUE) {
+  if (no_marginal_rules == TRUE && no_mixture_rules == TRUE) {
     return("No Mixture or Marginal Rules Found")
   }
 
+  if (verbose) {
+    print("Marginal results found")
+    print(filt_fold_marginal_rules)
+  }
+
   # Estimate nuisance parameters ---------------------------
+
+
+  if (verbose) {
+    print("-----Starting Fitting Estimators to the Rules Determined to Calculate
+          the Average Treatment Effects of Terminal Nodes in Trees-----")
+  }
 
   results <- furrr::future_map(unique(data$folds), function(fold_k) {
 
@@ -387,7 +438,6 @@ CVtreeMLE <- function(w,
     )
 
     mix_interaction_data <- mix_nuisance_params$data
-    # names(mix_interaction_data) <- rules$test
 
     mix_fold_data[[paste("Fold", fold_k)]] <- mix_interaction_data
 
@@ -406,7 +456,7 @@ CVtreeMLE <- function(w,
       seed
     )
 
-    non_ref_rules <- marg_decisions[marg_decisions$quantile > 1,]
+    non_ref_rules <- marg_decisions[marg_decisions$quantile > 1, ]
 
     names(marg_nuisance_params) <- non_ref_rules$var_quant_group
 
@@ -452,16 +502,13 @@ CVtreeMLE <- function(w,
     fold_results_marginal_combo_data[[
       paste("Fold", fold_k)]] <- comb_results$data
 
-    fold_results_marginal_Sls[[
-      paste("Fold", fold_k)]] <- comb_results$learner
 
     results_list <- list(
       fold_results_mix_rules,
       mix_fold_data,
       fold_results_marg_rules,
       fold_results_marginal_data,
-      fold_results_marginal_combo_data,
-      fold_results_marginal_Sls
+      fold_results_marginal_combo_data
     )
 
     names(results_list) <- c(
@@ -469,9 +516,7 @@ CVtreeMLE <- function(w,
       "mix data",
       "marg rules",
       "marg data",
-      "marg combo data",
-      "marginal SLs"
-    )
+      "marg combo data")
 
     results_list
   }, .options = furrr::furrr_options(seed = seed, packages = "CVtreeMLE"))
@@ -481,17 +526,12 @@ CVtreeMLE <- function(w,
 
   marginal_data <- purrr::map(results, c("marg data"))
   marginal_rules <- purrr::map(results, c("marg rules"))
-  marginal_directions <- purrr::map(results, c("marg directions"))
 
   mix_data <- purrr::map(results, c("mix data"))
   mix_rules <- purrr::map(results, c("mix rules"))
-  mix_directions <- purrr::map(results, c("mix directions"))
 
   marg_combo_data <- purrr::map(results, c("marg combo data"))
-  mix_combo_data <- purrr::map(results, c("mix combo data"))
 
-  marg_sls <- purrr::map(results, c("marginal SLs"))
-  mix_sls <- purrr::map(results, c("mix SLs"))
 
   if (no_mixture_rules == FALSE) {
 
@@ -603,7 +643,10 @@ CVtreeMLE <- function(w,
 
     marginal_results$var <- marg_vars
 
-    marginal_rules <- unlist(marginal_rules, recursive = FALSE, use.names = FALSE)
+    marginal_rules <- unlist(marginal_rules,
+                             recursive = FALSE,
+                             use.names = FALSE)
+
     marginal_rules <- marginal_rules[!sapply(marginal_rules, is.null)]
     marginal_rules <- do.call(rbind, marginal_rules)
   }
@@ -616,13 +659,7 @@ CVtreeMLE <- function(w,
     "V-Specific Mix Results" = v_fold_mixture_results_w_pooled,
     "Pooled Marginal Refs" = ref_rules,
     "Mixture Rules" = mix_rules,
-    "Marginal Rules" = marginal_rules,
-    "Fold Results Mix Comb Data" = mix_combo_data,
-    "Fold Results Marg Comb Data" = marg_combo_data,
-    "Fold Super Learners Mix Comb" = mix_sls,
-    "Fold Super Learners Marg Comb" = marg_sls,
-    "Mixture Data List" = mixture_data_list,
-    "Marginal Data List" = updated_marginal_data
+    "Marginal Rules" = marginal_rules
   )
 
   class(results_list) <- "CVtreeMLE"

@@ -42,7 +42,6 @@
 #' @importFrom dplyr mutate
 #' @importFrom MASS mvrnorm
 #' @importFrom rlang :=
-#' @importFrom Hmisc rMultinom
 #' @export
 
 

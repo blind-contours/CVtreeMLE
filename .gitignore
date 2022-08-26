@@ -9,3 +9,4 @@ inst/
 README.Rmd
 docs
 /doc/
+*.html

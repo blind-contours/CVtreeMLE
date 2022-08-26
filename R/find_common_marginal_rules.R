@@ -86,23 +86,12 @@ find_common_marginal_rules <- function(fold_rules,
         summarise(min = min(!!(as.name(var))))
       var_min_1 <- subset(var_min_1, all_folds == 1, select = min)
 
-      var_min_0 <-
-        fold_rules_df %>%
-        group_by(all_folds) %>%
-        summarise(min = min(!!(as.name(var))))
-      var_min_0 <- subset(var_min_0, all_folds == 0, select = min)
 
       var_max_1 <-
         fold_rules_df %>%
         group_by(all_folds) %>%
         summarise(max = max(!!(as.name(var))))
       var_max_1 <- subset(var_max_1, all_folds == 1, select = max)
-
-      var_max_0 <-
-        fold_rules_df %>%
-        group_by(all_folds) %>%
-        summarise(max = max(!!(as.name(var))))
-      var_max_0 <- subset(var_max_0, all_folds == 0, select = max)
 
       rule <-
         paste(

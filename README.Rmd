@@ -147,6 +147,8 @@ First load the package and other packages needed
 ```{r libraries, warning=FALSE}
 library(CVtreeMLE)
 library(sl3)
+library(pre)
+library(partykit)
 library(kableExtra)
 library(ggplot2)
 

@@ -24,7 +24,6 @@
 #' @param seed Seed number
 #' folds
 #' @param parallel_cv TRUE/FALSE if parallel CV is used
-#' @import sl3
 #' @importFrom magrittr %>%
 #' @importFrom rlang :=
 #' @importFrom dplyr group_by filter top_n
@@ -59,23 +58,23 @@ est_comb_exposure <- function(at,
     av_marg_comb <-
       cbind(marg_rule_valid, av_mc[w], av_mc["y_scaled"])
 
-    task_at <- sl3::make_sl3_Task(
+    task_at <- make_sl3_Task(
       data = at_marg_comb,
       covariates = c(colnames(marg_rule_train), w),
       outcome = "y_scaled",
       outcome_type = family
     )
 
-    task_av <- sl3::make_sl3_Task(
+    task_av <- make_sl3_Task(
       data = av_marg_comb,
       covariates = c(colnames(marg_rule_valid), w),
       outcome = "y_scaled",
       outcome_type = family
     )
 
-    discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(sl3::loss_squared_error)
+    discrete_sl_metalrn <- Lrnr_cv_selector$new(loss_squared_error)
 
-    discrete_sl <- sl3::Lrnr_sl$new(
+    discrete_sl <- Lrnr_sl$new(
       learners = aw_stack,
       metalearner = discrete_sl_metalrn,
     )

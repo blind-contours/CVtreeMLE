@@ -195,7 +195,6 @@ v_fold_mixture_group_split <- function(data) {
 #' @param i null
 #' @param ... additional arguments
 #' @return List of rules
-#' @import partykit
 #'
 #' @export
 # Copied from internal partykit function

@@ -30,5 +30,3 @@ example_output <- fit_mix_rule_backfitting(at = data,
 expect_true(example_output[
   which.max(example_output$coefficient), "description"] ==
   "M3 > 2.50969709970333 & M1 > 0.947419263385584 & M2 > 1.99541667300285")
-
-

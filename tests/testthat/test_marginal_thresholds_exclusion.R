@@ -31,7 +31,5 @@ example_output <- fit_marg_rule_backfitting(mix_comps = mix_comps,
                                                       seed = 6442)
 
 # Mixture variable 4 has no impact and so we expect no rules are found for it:
-expect_true(example_output[example_output$target_m == "M4",]$rules ==
+expect_true(example_output[example_output$target_m == "M4", ]$rules ==
               "No Rules Found")
-
-

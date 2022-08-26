@@ -16,8 +16,6 @@
 #' @param verbose Run in verbose setting
 #' @param parallel_cv TRUE/FALSE indicator to parallelize cv
 #' @param seed Seed number for consistent results
-#' @import sl3
-#' @importFrom pre pre maxdepth_sampler
 #' @importFrom magrittr %>%
 #' @importFrom rlang .data
 #' @importFrom dplyr group_by filter top_n
@@ -61,14 +59,14 @@ fit_mix_rule_backfitting <- function(at,
 
   pre_boot_list <- list()
 
-  task <- sl3::make_sl3_Task(
+  task <- make_sl3_Task(
     data = at, covariates = w,
     outcome = "y_scaled", outcome_type = "continuous"
   )
 
-  discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(sl3::loss_squared_error)
+  discrete_sl_metalrn <- Lrnr_cv_selector$new(loss_squared_error)
 
-  discrete_sl <- sl3::Lrnr_sl$new(
+  discrete_sl <- Lrnr_sl$new(
     learners = w_stack,
     metalearner = discrete_sl_metalrn,
   )
@@ -82,14 +80,14 @@ fit_mix_rule_backfitting <- function(at,
   formula <-
     as.formula(paste("y_scaled", "~", paste(a, collapse = "+")))
 
-  pre_model_t0 <- pre::pre(formula,
+  pre_model_t0 <- pre(formula,
                            data = at,
                            family = "gaussian",
                            use.grad = FALSE,
                            tree.unbiased = TRUE,
                            removecomplements = TRUE,
                            removeduplicates = TRUE,
-                           maxdepth = pre::maxdepth_sampler(),
+                           maxdepth = maxdepth_sampler(),
                            sampfrac = min(1, (11 * sqrt(dim(at)[1]) + 1) /
                                             dim(at)[1]),
                            nfolds = 10,
@@ -111,7 +109,7 @@ fit_mix_rule_backfitting <- function(at,
   while (stop == FALSE) {
     iter <- iter + 1
 
-    task <- sl3::make_sl3_Task(
+    task <- make_sl3_Task(
       data = at, covariates = w,
       outcome = "y_scaled",
       outcome_type = "continuous",
@@ -120,7 +118,7 @@ fit_mix_rule_backfitting <- function(at,
 
     sl_fit_backfit <- discrete_sl$train(task)
 
-    sl_fit_backfit_no_offset <- sl3::sl3_Task$new(
+    sl_fit_backfit_no_offset <- sl3_Task$new(
       data = at_no_offset,
       covariates = w,
       outcome = "y_scaled",
@@ -132,14 +130,14 @@ fit_mix_rule_backfitting <- function(at,
 
     at$QbarW_now <- preds_no_offset
 
-    pre_model <- pre::pre(formula,
+    pre_model <- pre(formula,
                           data = at,
                           family = "gaussian",
                           use.grad = FALSE,
                           tree.unbiased = TRUE,
                           removecomplements = TRUE,
                           removeduplicates = TRUE,
-                          maxdepth = pre::maxdepth_sampler(),
+                          maxdepth = maxdepth_sampler(),
                           sampfrac = min(1, (11 * sqrt(dim(at)[1]) + 1) /
                                            dim(at)[1]),
                           nfolds = 10,

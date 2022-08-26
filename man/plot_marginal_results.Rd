@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_marginal_results.R
 \name{plot_marginal_results}
 \alias{plot_marginal_results}
-\title{Create dot-whisker plots for the margina results found}
+\title{Create dot-whisker plots for the marginal results found}
 \usage{
 plot_marginal_results(v_marginal_results, mix_comps, hjust)
 }
@@ -15,5 +15,5 @@ components}
 \item{hjust}{Degree to horizontally adjust the placement of rules on plot}
 }
 \description{
-Create dot-whisker plots for the margina results found
+Create dot-whisker plots for the marginal results found
 }

@@ -19,8 +19,6 @@
 #'  bias to reduce variance)
 #' @param parallel_cv TRUE/FALSE if cv parallelization is used
 #' @param seed Seed number
-#' @import sl3
-#' @importFrom pre pre
 #' @importFrom magrittr %>%
 #' @importFrom dplyr group_by filter top_n
 #' @return Rules object. TODO: add more detail here.
@@ -62,7 +60,7 @@ est_mix_nuisance_params <- function(at,
         at_mix$A_mix <- interaction_rule
         av_mix$A_mix <- av_rules_eval[, interaction]
 
-        task_at <- sl3::make_sl3_Task(
+        task_at <- make_sl3_Task(
           data = at_mix,
           covariates = w,
           outcome = "A_mix",
@@ -70,17 +68,17 @@ est_mix_nuisance_params <- function(at,
           folds = 2
         )
 
-        task_av <- sl3::make_sl3_Task(
+        task_av <- make_sl3_Task(
           data = av_mix,
           covariates = w,
           outcome = "A_mix",
           outcome_type = "binomial"
         )
 
-        discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(
-          sl3::loss_loglik_binomial)
+        discrete_sl_metalrn <- Lrnr_cv_selector$new(
+          loss_loglik_binomial)
 
-        discrete_sl <- sl3::Lrnr_sl$new(
+        discrete_sl <- Lrnr_sl$new(
           learners = aw_stack,
           metalearner = discrete_sl_metalrn,
         )
@@ -94,7 +92,7 @@ est_mix_nuisance_params <- function(at,
                                       exposure = "A_mix",
                                       h_aw_trunc_lvl = 10)
 
-        task_at <- sl3::make_sl3_Task(
+        task_at <- make_sl3_Task(
           data = at_mix,
           covariates = c(w, "A_mix"),
           outcome = "y_scaled",
@@ -106,31 +104,31 @@ est_mix_nuisance_params <- function(at,
         x_m1$A_mix <- 1 # under exposure
         x_m0$A_mix <- 0 # under control
 
-        task_av <- sl3::make_sl3_Task(
+        task_av <- make_sl3_Task(
           data = av_mix,
           covariates = c(w, "A_mix"),
           outcome = "y_scaled",
           outcome_type = family
         )
 
-        task_av_1 <- sl3::make_sl3_Task(
+        task_av_1 <- make_sl3_Task(
           data = x_m1,
           covariates = c(w, "A_mix"),
           outcome = "y_scaled",
           outcome_type = family
         )
 
-        task_av_0 <- sl3::make_sl3_Task(
+        task_av_0 <- make_sl3_Task(
           data = x_m0,
           covariates = c(w, "A_mix"),
           outcome = "y_scaled",
           outcome_type = family
         )
 
-        discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(
-          sl3::loss_squared_error)
+        discrete_sl_metalrn <- Lrnr_cv_selector$new(
+          loss_squared_error)
 
-        discrete_sl <- sl3::Lrnr_sl$new(
+        discrete_sl <- Lrnr_sl$new(
           learners = aw_stack,
           metalearner = discrete_sl_metalrn,
         )

@@ -5,7 +5,6 @@
 #' learning estimators for each parameter. The default estimators are
 #' fast but also flexible.
 #'
-#' @import sl3
 #' @return List of ensemble estimators
 #' @export
 
