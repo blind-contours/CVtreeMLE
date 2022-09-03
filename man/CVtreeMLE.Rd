@@ -78,8 +78,6 @@ is being started by CVtreeMLE. During the iterative backfitting procedure
 the iteration in each fold along with the difference in model fit and
 rules determined will be printed. After the iterative backfitting procedures
 a table of rules determined in each fold will be printed.}
-
-\item{h_aw_trunc_lvl}{Truncation level for the clever covariate.}
 }
 \value{
 Object of class \code{CVtreeMLE}, containing a list of table results

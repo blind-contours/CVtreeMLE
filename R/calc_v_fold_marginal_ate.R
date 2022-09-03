@@ -19,11 +19,18 @@
 
 #' @importFrom data.table rbindlist
 #' @importFrom dplyr group_by bind_rows
-
-#' @return Rules object. TODO: add more detail here.
 #' @importFrom stats as.formula glm p.adjust plogis predict qlogis qnorm qunif
 #' @importFrom stats rnorm runif
 #' @importFrom rlang :=
+#' @return A list of the marginal results for each fold including:
+#'  \itemize{
+#'   \item \code{marginal_results}: A data frame with the data adpatively
+#'   determined mixture component thresholds on the rows and ATE, variance,
+#'   and RMSE estimates on the columns.
+#'   \item \code{data}: A list of data frames for each mixture component
+#'   threshold evaluated as the exposure, baseline covariates, outcome,
+#'   nuisance parameter estimates, marginal ATE and the influence curve.
+#'   }
 #'
 #' @export
 
@@ -77,7 +84,7 @@ calc_v_fold_marginal_ate <- function(marginal_data,
   }
 
   rule_comparisons <- cbind(unlist(rule_ref_cols), unlist(rule_comp_cols))
-  colnames(rule_comparisons) <- c("Reference", "Comparison")
+  colnames(rule_comparisons) <- c("Reference_Rule", "Comparison_Rule")
   comp_labels <- unlist(comp_labels)
 
   marginal_results <-
@@ -98,7 +105,7 @@ calc_v_fold_marginal_ate <- function(marginal_data,
       "RMSE"
     )
 
-  marginal_results$comparison <- comp_labels
+  marginal_results$Levels <- comp_labels
 
   updated_marginal_data <- list()
 

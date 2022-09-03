@@ -13,7 +13,7 @@ est_marg_nuisance_params(
   a,
   no_marg_rules,
   marg_decisions,
-  h_aw_trunc_lvl,
+  h_aw_trunc_lvl = 10,
   parallel_cv,
   seed
 )
@@ -46,7 +46,9 @@ mixture component}
 \item{seed}{Seed number}
 }
 \value{
-Rules object. TODO: add more detail here.
+marginal_data: A list of data frames for each mixture component
+with the baseline covariates, exposure, outcome, and nuisance parameters
+needed to calculate the ATE.
 }
 \description{
 For each marginal mixture component rule found, create a

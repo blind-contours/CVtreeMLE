@@ -23,11 +23,19 @@
 #' @param verbose Run in verbose setting
 #' @param parallel_cv Parallelize the cross-validation (TRUE/FALSE)
 #' @param seed Numeric, seed number for consistent results
-#' @return A matrix with the rules for each mixture component
 #' @importFrom magrittr %>%
 #' @importFrom stringr str_detect
 #' @importFrom stats na.omit
 #' @importFrom purrr discard
+#'
+#' @return A list of the marginal rule results within a fold including:
+#'  \itemize{
+#'   \item \code{marginal_df}: A data frame with the data adaptively
+#'   determined rules found in the \code{partykit} model along with
+#'   the coefficients and other measures.
+#'   \item \code{models}: The best fitting \code{partykit} model found for
+#'   each mixture component in the fold.
+#'   }
 #'
 #' @examples
 #'data <- simulate_mixture_cube()
@@ -79,16 +87,16 @@ fit_marg_rule_backfitting <- function(mix_comps,
     target_m <- mix_comps[i]
     covars_m <- c(mix_comps[-i], w)
 
-    task <- make_sl3_Task(
+    task <- sl3::make_sl3_Task(
       data = at,
       covariates = covars_m,
       outcome = "y_scaled",
       outcome_type = "continuous"
     )
 
-    discrete_sl_metalrn <- Lrnr_cv_selector$new(loss_squared_error)
+    discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(sl3::loss_squared_error)
 
-    discrete_sl <- Lrnr_sl$new(
+    discrete_sl <- sl3::Lrnr_sl$new(
       learners = w_stack,
       metalearner = discrete_sl_metalrn,
     )
@@ -99,14 +107,14 @@ fit_marg_rule_backfitting <- function(mix_comps,
 
     at[, "Qbar_ne_M_W_initial"] <- qbar_ne_m_w_initial
 
-    task <- make_sl3_Task(
+    task <- sl3::make_sl3_Task(
       data = at,
       covariates = target_m,
       outcome = "y_scaled",
       outcome_type = "continuous"
     )
 
-    tree_sl <- Lrnr_sl$new(
+    tree_sl <- sl3::Lrnr_sl$new(
       learners = tree_stack,
       metalearner = discrete_sl_metalrn,
     )
@@ -127,7 +135,7 @@ fit_marg_rule_backfitting <- function(mix_comps,
     while (stop == FALSE) {
       iter <- iter + 1
 
-      task_offset <- sl3_Task$new(
+      task_offset <- sl3::sl3_Task$new(
         data = at,
         covariates = covars_m,
         outcome = "y_scaled",
@@ -135,7 +143,7 @@ fit_marg_rule_backfitting <- function(mix_comps,
         offset = "Qbar_M_W_initial"
       )
 
-      task_no_offset <- sl3_Task$new(
+      task_no_offset <- sl3::sl3_Task$new(
         data = at_no_offset,
         covariates = covars_m,
         outcome = "y_scaled",
@@ -151,7 +159,7 @@ fit_marg_rule_backfitting <- function(mix_comps,
 
       at[, "Qbar_ne_M_W_now"] <- preds_no_offset
 
-      task <- make_sl3_Task(
+      task <- sl3::make_sl3_Task(
         data = at,
         covariates = target_m,
         outcome = "y_scaled",
@@ -159,7 +167,7 @@ fit_marg_rule_backfitting <- function(mix_comps,
         offset = "Qbar_ne_M_W_initial"
       )
 
-      task_no_offset <- make_sl3_Task(
+      task_no_offset <- sl3::make_sl3_Task(
         data = at_no_offset,
         covariates = target_m,
         outcome = "y_scaled",
@@ -237,7 +245,7 @@ fit_marg_rule_backfitting <- function(mix_comps,
 
 
     marg_decisions[[i]] <- rules
-    models[[i]] <- selected_learner$fit_object
+    models[[target_m]] <- selected_learner$fit_object
   }
 
   marg_decisions <- do.call(rbind, marg_decisions)

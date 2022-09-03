@@ -19,7 +19,6 @@ values on the original scale.}
 \value{
 A \code{numeric} vector of the same length as \code{scaled_vals},
 where the values are re-scaled to lie in their original/natural interval.
-@export
 }
 \description{
 Transform Values From The Unit Interval Back To Their Original Scale

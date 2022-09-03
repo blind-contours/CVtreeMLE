@@ -56,7 +56,7 @@ impact each mixture variable has}
 \item{binary}{TRUE/FALSE depending on if the outcome should be binary}
 }
 \value{
-Rules object. TODO: add more detail here.
+obs: A data frame of the simulated data for the mixture cube.
 }
 \description{
 Simulate a mixture cube. This creates three correlated mixture

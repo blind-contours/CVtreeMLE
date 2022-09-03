@@ -19,6 +19,9 @@ across the folds}
 }
 \value{
 Rules object. TODO: add more detail here.
+
+A data frame of mixture results for each variable level combination
+for each fold
 }
 \description{
 For each rule in each fold extract the relevant nuisance

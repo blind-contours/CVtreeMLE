@@ -35,7 +35,6 @@
 #' @param seed Pass in a seed number for consistency of results. If not provided
 #' a default seed is generated.
 #' @param family Family ('binomial' or 'gaussian').
-#' @param h_aw_trunc_lvl Truncation level for the clever covariate.
 #' @param max_iter Max number of iterations of iterative backfitting algorithm.
 #' Default is `5`.
 #' @param verbose If true, a message will be printed indicating what process
@@ -223,6 +222,10 @@ CVtreeMLE <- function(w,
     stop("NA values cannot be in the outcome variable")
   }
 
+  if (anyNA(data[, a])) {
+    stop("NA values cannot be in the exposure variables")
+  }
+
   if (family == "binomial" &&
     (min(data[, y], na.rm = TRUE) < 0 || max(data[, y], na.rm = TRUE) > 1)) {
     stop("With binomial family Y must be bounded by [0, 1].
@@ -302,7 +305,7 @@ CVtreeMLE <- function(w,
     print("-----Starting Iterative Backfitting of Exposures on Covariates-----")
   }
 
-  fold_mixture_rules <- furrr::future_map_dfr(unique(data$folds),
+  fold_mixture_rules <- furrr::future_map(unique(data$folds),
                                               function(fold_k) {
 
     at <- data[data$folds != fold_k, ]
@@ -323,11 +326,18 @@ CVtreeMLE <- function(w,
       )
 
     rules
-  }, .options = furrr::furrr_options(seed = seed, packages = "CVtreeMLE"))
+  }, .options = furrr::furrr_options(seed = seed, packages = c("CVtreeMLE",
+                                                               "pre",
+                                                               "sl3")))
+  mixture_rules <- purrr::map(fold_mixture_rules,
+                               c("rules"))
+  mixture_rules <- do.call(rbind, mixture_rules)
+  mixture_models <- purrr::map(fold_mixture_rules,
+                              c("model"))
 
 
-  fold_mixture_rules <- fold_mixture_rules[
-    fold_mixture_rules$description != "No Rules Found", ]
+  fold_mixture_rules <- mixture_rules[
+    mixture_rules$description != "No Rules Found", ]
 
   fold_mixture_rules$description <- round_rules(fold_mixture_rules$description)
 
@@ -351,7 +361,7 @@ CVtreeMLE <- function(w,
           Determine if Partitioning Nodes Exist-----")
   }
 
-  fold_marginal_rules <- furrr::future_map_dfr(unique(data$folds),
+  fold_marginal_rules <- furrr::future_map(unique(data$folds),
                                                function(fold_k) {
 
     at <- data[data$folds != fold_k, ]
@@ -371,9 +381,19 @@ CVtreeMLE <- function(w,
     )
 
     marg_decisions
-  }, .options = furrr::furrr_options(seed = seed, packages = "CVtreeMLE"))
+  }, .options = furrr::furrr_options(seed = seed, packages = c("CVtreeMLE",
+                                                               "partykit",
+                                                               "sl3")))
 
-  filt_fold_marginal_rules <- filter_marginal_rules(fold_marginal_rules, n_folds)
+  marginal_rules <- purrr::map(fold_marginal_rules,
+                               c("marginal_df"))
+
+  marginal_models <- purrr::map(fold_marginal_rules,
+                               c("models"))
+
+  marginal_rules <- do.call(rbind, marginal_rules)
+
+  filt_fold_marginal_rules <- filter_marginal_rules(marginal_rules, n_folds)
   filt_fold_marginal_rules$rules <- round_rules(filt_fold_marginal_rules$rules)
   marginal_RMSE <- calc_marginal_rule_rmses(data = filt_fold_marginal_rules)
 
@@ -425,16 +445,15 @@ CVtreeMLE <- function(w,
     fold_results_mix_rules[[paste("Fold", fold_k)]] <- rules
 
     mix_nuisance_params <- est_mix_nuisance_params(
-      at,
-      av,
-      w,
-      no_mix_rules,
-      aw_stack,
-      family,
-      rules,
-      h_aw_trunc_lvl,
-      parallel_cv,
-      seed
+      at = at,
+      av = av,
+      w = w,
+      no_mix_rules = no_mix_rules,
+      aw_stack = aw_stack,
+      family = family,
+      rules = rules,
+      parallel_cv = parallel_cv,
+      seed = seed
     )
 
     mix_interaction_data <- mix_nuisance_params$data
@@ -443,17 +462,16 @@ CVtreeMLE <- function(w,
 
 
     marg_nuisance_params <- est_marg_nuisance_params(
-      at,
-      av,
-      w,
-      aw_stack,
-      family,
-      a,
-      no_marg_rules,
-      marg_decisions,
-      h_aw_trunc_lvl,
-      parallel_cv,
-      seed
+      at = at,
+      av = av,
+      w = w,
+      aw_stack = aw_stack,
+      family = family,
+      a = a,
+      no_marg_rules = no_marg_rules,
+      marg_decisions = marg_decisions,
+      parallel_cv = parallel_cv,
+      seed = seed
     )
 
     non_ref_rules <- marg_decisions[marg_decisions$quantile > 1, ]
@@ -487,17 +505,17 @@ CVtreeMLE <- function(w,
     at_w_rule_evals <- rules_evaluated_on_training$data
     av_w_rule_evals <- rules_evaluated_on_valiation$data
 
-    comb_results <- est_comb_exposure(at,
-                                      av,
-                                      y,
-                                      w,
-                                      marg_rule_train,
-                                      marg_rule_valid,
-                                      no_marg_rules,
-                                      aw_stack,
+    comb_results <- est_comb_exposure(at = at,
+                                      av = av,
+                                      y = y,
+                                      w = w,
+                                      marg_rule_train = marg_rule_train,
+                                      marg_rule_valid = marg_rule_valid,
+                                      no_marg_rules = no_marg_rules,
+                                      aw_stack = aw_stack,
                                       family = family,
-                                      parallel_cv,
-                                      seed)
+                                      parallel_cv = parallel_cv,
+                                      seed = seed)
 
     fold_results_marginal_combo_data[[
       paste("Fold", fold_k)]] <- comb_results$data
@@ -519,8 +537,8 @@ CVtreeMLE <- function(w,
       "marg combo data")
 
     results_list
-  }, .options = furrr::furrr_options(seed = seed, packages = "CVtreeMLE"))
-
+  }, .options = furrr::furrr_options(seed = seed, packages = c("CVtreeMLE",
+                                                              "sl3")))
 
   # Aggregate results ---------------------------
 
@@ -614,6 +632,13 @@ CVtreeMLE <- function(w,
                               data = data,
                               n_folds = n_folds)
 
+    v_fold_marginal_results_w_pooled <- do.call(rbind,
+                                                v_fold_marginal_results_w_pooled)
+
+    v_fold_marginal_results_w_pooled$var <- stringr::str_extract(string =
+                                        v_fold_marginal_results_w_pooled$Comparison,
+                                      pattern = paste(a, collapse = "|"))
+
     # Create union marginals rules ---------------------------
 
     total_marginal_rules <- find_common_marginal_rules(
@@ -659,7 +684,9 @@ CVtreeMLE <- function(w,
     "V-Specific Mix Results" = v_fold_mixture_results_w_pooled,
     "Pooled Marginal Refs" = ref_rules,
     "Mixture Rules" = mix_rules,
-    "Marginal Rules" = marginal_rules
+    "Marginal Rules" = marginal_rules,
+    "Mixture Models" = mixture_models,
+    "Marginal Models" = marginal_models
   )
 
   class(results_list) <- "CVtreeMLE"

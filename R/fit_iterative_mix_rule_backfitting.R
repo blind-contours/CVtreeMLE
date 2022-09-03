@@ -19,7 +19,13 @@
 #' @importFrom magrittr %>%
 #' @importFrom rlang .data
 #' @importFrom dplyr group_by filter top_n
-#' @return Rules object. TODO: add more detail here.
+#' @return A list of the mixture rule results within a fold including:
+#'  \itemize{
+#'   \item \code{rules}: A data frame with the data adpatively
+#'   determined rules found in the \code{pre} model along with the coefficient,
+#'   direction, fold, RMSE and other measures.
+#'   \item \code{model}: The best fitting pre model found in the fold.
+#'   }
 #' @examples
 #' data <- simulate_mixture_cube()
 #' data$y_scaled <- data$y
@@ -59,14 +65,14 @@ fit_mix_rule_backfitting <- function(at,
 
   pre_boot_list <- list()
 
-  task <- make_sl3_Task(
+  task <- sl3::make_sl3_Task(
     data = at, covariates = w,
     outcome = "y_scaled", outcome_type = "continuous"
   )
 
-  discrete_sl_metalrn <- Lrnr_cv_selector$new(loss_squared_error)
+  discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(sl3::loss_squared_error)
 
-  discrete_sl <- Lrnr_sl$new(
+  discrete_sl <- sl3::Lrnr_sl$new(
     learners = w_stack,
     metalearner = discrete_sl_metalrn,
   )
@@ -80,14 +86,14 @@ fit_mix_rule_backfitting <- function(at,
   formula <-
     as.formula(paste("y_scaled", "~", paste(a, collapse = "+")))
 
-  pre_model_t0 <- pre(formula,
+  pre_model_t0 <- pre::pre(formula,
                            data = at,
                            family = "gaussian",
                            use.grad = FALSE,
                            tree.unbiased = TRUE,
                            removecomplements = TRUE,
                            removeduplicates = TRUE,
-                           maxdepth = maxdepth_sampler(),
+                           maxdepth = pre::maxdepth_sampler(),
                            sampfrac = min(1, (11 * sqrt(dim(at)[1]) + 1) /
                                             dim(at)[1]),
                            nfolds = 10,
@@ -109,7 +115,7 @@ fit_mix_rule_backfitting <- function(at,
   while (stop == FALSE) {
     iter <- iter + 1
 
-    task <- make_sl3_Task(
+    task <- sl3::make_sl3_Task(
       data = at, covariates = w,
       outcome = "y_scaled",
       outcome_type = "continuous",
@@ -118,7 +124,7 @@ fit_mix_rule_backfitting <- function(at,
 
     sl_fit_backfit <- discrete_sl$train(task)
 
-    sl_fit_backfit_no_offset <- sl3_Task$new(
+    sl_fit_backfit_no_offset <- sl3::sl3_Task$new(
       data = at_no_offset,
       covariates = w,
       outcome = "y_scaled",
@@ -130,14 +136,14 @@ fit_mix_rule_backfitting <- function(at,
 
     at$QbarW_now <- preds_no_offset
 
-    pre_model <- pre(formula,
+    pre_model <- pre::pre(formula,
                           data = at,
                           family = "gaussian",
                           use.grad = FALSE,
                           tree.unbiased = TRUE,
                           removecomplements = TRUE,
                           removeduplicates = TRUE,
-                          maxdepth = maxdepth_sampler(),
+                          maxdepth = pre::maxdepth_sampler(),
                           sampfrac = min(1, (11 * sqrt(dim(at)[1]) + 1) /
                                            dim(at)[1]),
                           nfolds = 10,
@@ -234,5 +240,5 @@ fit_mix_rule_backfitting <- function(at,
     rules$RMSE <- NA
   }
 
-  return(rules)
+  return(list("rules" = rules, "model" = pre_model))
 }

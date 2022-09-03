@@ -18,7 +18,8 @@ estimates of the fold-specific rule results}
 \item{data}{Input dataframe on which to evaluate the rules}
 }
 \value{
-Rules object. TODO: add more detail here.
+v_fold_mixture_w_pooled: A list grouped by the variable sets included
+in the rule with the pooled results added to the final row.
 }
 \description{
 For each fold, estimates the ATE for a fold specific

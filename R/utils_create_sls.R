@@ -10,50 +10,50 @@
 
 create_sls <- function() {
 
-  mean_lrnr <- Lrnr_mean$new()
-  lrnr_ranger <- Lrnr_ranger$new()
-  lrnr_glm <- make_learner(Lrnr_glm)
-  lrnr_elasticnet <- make_learner(Lrnr_glmnet, alpha = .5)
-  lrnr_xgboost <- Lrnr_xgboost$new()
+  mean_lrnr <- sl3::Lrnr_mean$new()
+  lrnr_ranger <- sl3::Lrnr_ranger$new()
+  lrnr_glm <- sl3::make_learner(sl3::Lrnr_glm)
+  lrnr_elasticnet <- sl3::make_learner(sl3::Lrnr_glmnet, alpha = .5)
+  lrnr_xgboost <- sl3::Lrnr_xgboost$new()
 
   learners <- c(mean_lrnr, lrnr_glm,
                 lrnr_ranger, lrnr_elasticnet,
                 lrnr_xgboost)
 
-  w_stack <- make_learner(Stack, learners)
-  aw_stack <- make_learner(Stack, learners)
+  w_stack <- sl3::make_learner(sl3::Stack, learners)
+  aw_stack <- sl3::make_learner(sl3::Stack, learners)
 
-  lrnr_glmtree_001 <- Lrnr_glmtree$new(alpha = 0.1,
+  lrnr_glmtree_001 <- sl3::Lrnr_glmtree$new(alpha = 0.1,
                                        maxdepth = 3,
                                        bonferroni = TRUE,
                                        minsize = 20)
 
-  lrnr_glmtree_002 <- Lrnr_glmtree$new(alpha = 0.2,
+  lrnr_glmtree_002 <- sl3::Lrnr_glmtree$new(alpha = 0.2,
                                        maxdepth = 4,
                                        bonferroni = TRUE,
                                        minsize = 30)
 
-  lrnr_glmtree_003 <- Lrnr_glmtree$new(alpha = 0.3,
+  lrnr_glmtree_003 <- sl3::Lrnr_glmtree$new(alpha = 0.3,
                                        maxdepth = 2,
                                        bonferroni = TRUE,
                                        minsize = 30)
 
-  lrnr_glmtree_004 <- Lrnr_glmtree$new(alpha = 0.5,
+  lrnr_glmtree_004 <- sl3::Lrnr_glmtree$new(alpha = 0.5,
                                        maxdepth = 1,
                                        bonferroni = TRUE,
                                        minsize = 20)
 
-  lrnr_glmtree_005 <- Lrnr_glmtree$new(alpha = 0.5,
+  lrnr_glmtree_005 <- sl3::Lrnr_glmtree$new(alpha = 0.5,
                                        maxdepth = 4,
                                        bonferroni = TRUE,
                                        minsize = 20)
 
-  lrnr_glmtree_006 <- Lrnr_glmtree$new(alpha = 0.1,
+  lrnr_glmtree_006 <- sl3::Lrnr_glmtree$new(alpha = 0.1,
                                        maxdepth = 4,
                                        bonferroni = FALSE,
                                        minsize = 20)
 
-  lrnr_glmtree_007 <- Lrnr_glmtree$new(alpha = 0.1,
+  lrnr_glmtree_007 <- sl3::Lrnr_glmtree$new(alpha = 0.1,
                                        maxdepth = 5,
                                        bonferroni = FALSE,
                                        minsize = 20)
@@ -63,7 +63,7 @@ create_sls <- function() {
                 lrnr_glmtree_005, lrnr_glmtree_006,
                 lrnr_glmtree_007)
 
-  tree_stack <- make_learner(Stack, learners)
+  tree_stack <- sl3::make_learner(sl3::Stack, learners)
 
   return(list("W_stack" = w_stack,
               "AW_stack" = aw_stack,

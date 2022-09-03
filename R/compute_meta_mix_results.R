@@ -12,11 +12,12 @@
 
 #' @importFrom data.table rbindlist
 #' @importFrom dplyr group_by bind_rows
-
-#' @return Rules object. TODO: add more detail here.
 #' @importFrom stats as.formula glm p.adjust plogis predict qlogis
 #' @importFrom stats qnorm qunif rnorm runif
 #' @importFrom rlang :=
+#'
+#' @return v_fold_mixture_w_pooled: A list grouped by the variable sets included
+#' in the rule with the pooled results added to the final row.
 #'
 #' @export
 

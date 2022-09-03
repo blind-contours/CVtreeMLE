@@ -43,7 +43,14 @@ estimation}
 \item{seed}{Numeric, seed number for consistent results}
 }
 \value{
-A matrix with the rules for each mixture component
+A list of the marginal rule results within a fold including:
+\itemize{
+\item \code{marginal_df}: A data frame with the data adaptively
+determined rules found in the \code{partykit} model along with
+the coefficients and other measures.
+\item \code{models}: The best fitting \code{partykit} model found for
+each mixture component in the fold.
+}
 }
 \description{
 Iteratively back-fit a Super Learner on marginal mixture components

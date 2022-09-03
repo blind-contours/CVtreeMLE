@@ -1,7 +1,8 @@
 library(CVtreeMLE)
 library(testthat)
 library(sl3)
-
+library(pre)
+library(partykit)
 
 
 data <- simulate_mixture_cube()
@@ -24,5 +25,7 @@ example_output <- fit_mix_rule_backfitting(at = data,
                                              parallel = FALSE,
                                              seed = 6442)
 
-expect_true(example_output[
-  which.max(example_output$coefficient), "test"] == "M1M2M3")
+mixture_rules <- example_output$rules
+
+expect_true(mixture_rules[
+  which.max(mixture_rules$coefficient), "test"] == "M1M2M3")

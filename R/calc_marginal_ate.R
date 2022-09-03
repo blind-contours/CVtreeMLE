@@ -15,11 +15,19 @@
 #' @param marginal_rules List of dataframes for rules found across the folds
 #' @param y Vector indicating the Y
 #' @param n_folds Number of folds used in cross-validation
-
+#'
 #' @importFrom data.table rbindlist
 #' @importFrom dplyr group_by bind_rows
-
-#' @return Rules object. TODO: add more detail here.
+#'
+#' @return A list of the marginal results including:
+#' ' \itemize{
+#'   \item \code{marginal_results}: A data frame with the data adpatively
+#'   determined mixture component thresholds on the rows and ATE, variance,
+#'   and RMSE estimates on the columns.
+#'   \item \code{data}: A list of data frames for each mixture component
+#'   threshold evaluated as the exposure, baseline covariates, outcome,
+#'   nuisance parameter estimates, marginal ATE and the influence curve.
+#'   }
 #' @importFrom stats as.formula glm p.adjust
 #' @importFrom stats plogis predict qlogis qnorm qunif rnorm runif
 #' @importFrom rlang :=

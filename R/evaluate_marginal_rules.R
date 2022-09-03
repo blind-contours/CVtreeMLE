@@ -7,8 +7,14 @@
 #' folds
 
 #' @importFrom dplyr transmute
-#' @return Rules object. TODO: add more detail here.
 #' @importFrom rlang :=
+#' @return A list with marginal rules evaluated which includes:
+#' \itemize{
+#'   \item \code{data}: The fold raw data with the sum of evaluated rule
+#'   binary vectors for each mixture component added.
+#'   \item \code{marg_rule_df}: A binary matrix where each marginal rule has
+#'   been evaluated to a binary vector.
+#' }
 #'
 #' @export
 

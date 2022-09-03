@@ -27,7 +27,19 @@ across the folds}
 across all the folds}
 }
 \value{
-Rules object. TODO: add more detail here.
+A list with mixture analysis results which includes:
+\itemize{
+\item \code{results}: A data frame with variable threshold combinations
+on the rows and ATE, variance and consistency estimates on the columns.
+\item \code{group_list}: A list of rule combinations found in the
+ensemble decision tree model grouped by variable sets in the rules and
+directions of the coefficient in the linear model. Also provided is the
+fold the rule was found and the RMSE of the model which used the rule.
+\item \code{mixture_data_list}: A list of data frames which houses the
+data for each mixture rule evaluated as an exposure, the baseline
+covariates, outcome, and nuisance parameter estimates for the respective
+rule.
+}
 }
 \description{
 Aggregate mixture rules found across the folds that have

@@ -5,29 +5,24 @@
 #' component that can be interpreted
 #' as a common rule across the folds. To do this, observations that meet all
 #' rules for all folds are determined. Then a new rule is created for these
-#' observations. A coverage metric is
-#' calculated which is the fraction of observations in this common rule
-#' compared to the sum of observations that met each rule. The coverage metric
-#' can be thought of as an intersection over
-#' union or the Jaccard coefficient for the rules.
+#' observations. Specifically, we put OR statements between the rules
+#' found across the folds then look at the min and max values in this new
+#' region which encompasses all observations across the folds.
 #'
 #' @param fold_rules List of rules found for each mixture component found
 #' across the folds
 #' @param data Full data which rules are evaluated
 #' @param mix_comps Vector of mixture components
-#' @param marginal_results Dataframe holding the results for each marginal
+#' @param marginal_results Data frame holding the results for each marginal
 #' component rule
 #' @param n_folds Total number of folds
-
 #' @importFrom data.table rbindlist
 #' @importFrom dplyr group_by bind_rows
-
-#' @return Rules object. TODO: add more detail here.
 #' @importFrom stats as.formula glm p.adjust plogis predict qlogis
 #' @importFrom stats qnorm qunif rnorm runif
 #' @importFrom rlang :=
 #' @importFrom dplyr summarise group_by
-#' @return Dataframe with rules, threshold regions, proportion in folds and
+#' @return Data frame with rules, threshold regions, proportion in folds and
 #' min/max values
 #'
 #' @export

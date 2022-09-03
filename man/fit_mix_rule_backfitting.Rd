@@ -41,7 +41,13 @@ learning to fit Y|W}
 \item{seed}{Seed number for consistent results}
 }
 \value{
-Rules object. TODO: add more detail here.
+A list of the mixture rule results within a fold including:
+\itemize{
+\item \code{rules}: A data frame with the data adpatively
+determined rules found in the \code{pre} model along with the coefficient,
+direction, fold, RMSE and other measures.
+\item \code{model}: The best fitting pre model found in the fold.
+}
 }
 \description{
 Iteratively Backfit a Super Learner, h(x) = Y|W, and an Ensemble

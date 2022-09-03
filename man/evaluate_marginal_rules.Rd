@@ -17,7 +17,13 @@ folds}
 \item{mix_comps}{Vector of characters denoting mixture components}
 }
 \value{
-Rules object. TODO: add more detail here.
+A list with marginal rules evaluated which includes:
+\itemize{
+\item \code{data}: The fold raw data with the sum of evaluated rule
+binary vectors for each mixture component added.
+\item \code{marg_rule_df}: A binary matrix where each marginal rule has
+been evaluated to a binary vector.
+}
 }
 \description{
 Evaluate mixture rules found during the rpart decision tree process

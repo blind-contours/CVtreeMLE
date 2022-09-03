@@ -172,7 +172,7 @@ marginal_group_split <- function(data) {
 #'
 #' @export
 v_fold_marginal_qgroup_split <- function(data) {
-  data <- data %>% dplyr::group_by(.data$comparison)
+  data <- data %>% dplyr::group_by(.data$Levels)
   data <- dplyr::group_split(data)
   return(data)
 }

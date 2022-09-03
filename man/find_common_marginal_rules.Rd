@@ -21,15 +21,13 @@ across the folds}
 
 \item{mix_comps}{Vector of mixture components}
 
-\item{marginal_results}{Dataframe holding the results for each marginal
+\item{marginal_results}{Data frame holding the results for each marginal
 component rule}
 
 \item{n_folds}{Total number of folds}
 }
 \value{
-Rules object. TODO: add more detail here.
-
-Dataframe with rules, threshold regions, proportion in folds and
+Data frame with rules, threshold regions, proportion in folds and
 min/max values
 }
 \description{
@@ -38,9 +36,7 @@ each fold. Therefore, it is necessary to create one rule for each mixture
 component that can be interpreted
 as a common rule across the folds. To do this, observations that meet all
 rules for all folds are determined. Then a new rule is created for these
-observations. A coverage metric is
-calculated which is the fraction of observations in this common rule
-compared to the sum of observations that met each rule. The coverage metric
-can be thought of as an intersection over
-union or the Jaccard coefficient for the rules.
+observations. Specifically, we put OR statements between the rules
+found across the folds then look at the min and max values in this new
+region which encompasses all observations across the folds.
 }

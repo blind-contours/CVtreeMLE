@@ -12,6 +12,7 @@
 #' @return A \code{numeric} vector of the same length as \code{vals}, where
 #'  the returned values are bounded to machine precision. This is intended to
 #'  avoid numerical instability issues.
+#' @export
 calc_ate_estimates <- function(data,
                                ate_var,
                                outcome,
@@ -89,6 +90,7 @@ calc_ate_estimates <- function(data,
 #' @return A \code{numeric} vector of the same length as \code{vals}, where
 #'  the returned values are bounded to machine precision. This is intended to
 #'  avoid numerical instability issues.
+#' @export
 calc_clever_covariate <- function(ghat_1_w,
                                   data,
                                   exposure,
@@ -152,6 +154,7 @@ calc_clever_covariate <- function(ghat_1_w,
 #' @return A \code{numeric} vector of the same length as \code{vals}, where
 #'  the returned values are bounded to machine precision. This is intended to
 #'  avoid numerical instability issues.
+#' @export
 fit_least_fav_submodel <- function(h_aw, data, qbar_aw, qbar_1w, qbar_0w) {
   logit_update <-
     stats::glm(

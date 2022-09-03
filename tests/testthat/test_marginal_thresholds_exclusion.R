@@ -1,6 +1,8 @@
 library(CVtreeMLE)
 library(testthat)
 library(sl3)
+library(partykit)
+library(pre)
 
 
 seed <- 6442
@@ -30,6 +32,8 @@ example_output <- fit_marg_rule_backfitting(mix_comps = mix_comps,
                                                       parallel_cv = FALSE,
                                                       seed = 6442)
 
+marginal_df <- example_output$marginal_df
+
 # Mixture variable 4 has no impact and so we expect no rules are found for it:
-expect_true(example_output[example_output$target_m == "M4", ]$rules ==
+expect_true(marginal_df[marginal_df$target_m == "M4", ]$rules ==
               "No Rules Found")

@@ -27,8 +27,13 @@
 #' @importFrom magrittr %>%
 #' @importFrom rlang :=
 #' @importFrom dplyr group_by filter top_n
-#' @return Rules object. TODO: add more detail here.
-#'
+#' @return A list of the combination marginal results within a fold including:
+#'  \itemize{
+#'   \item \code{data}: A data frame with the marginal rules evaluated as
+#'   binary vectors, baseline covariates and predicted outcomes given
+#'   ensemble fitting.
+#'   \item \code{learner}: The Super Learner model fit to the data.
+#'   }
 #' @export
 
 est_comb_exposure <- function(at,
@@ -58,23 +63,23 @@ est_comb_exposure <- function(at,
     av_marg_comb <-
       cbind(marg_rule_valid, av_mc[w], av_mc["y_scaled"])
 
-    task_at <- make_sl3_Task(
+    task_at <- sl3::make_sl3_Task(
       data = at_marg_comb,
       covariates = c(colnames(marg_rule_train), w),
       outcome = "y_scaled",
       outcome_type = family
     )
 
-    task_av <- make_sl3_Task(
+    task_av <- sl3::make_sl3_Task(
       data = av_marg_comb,
       covariates = c(colnames(marg_rule_valid), w),
       outcome = "y_scaled",
       outcome_type = family
     )
 
-    discrete_sl_metalrn <- Lrnr_cv_selector$new(loss_squared_error)
+    discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(sl3::loss_squared_error)
 
-    discrete_sl <- Lrnr_sl$new(
+    discrete_sl <- sl3::Lrnr_sl$new(
       learners = aw_stack,
       metalearner = discrete_sl_metalrn,
     )
@@ -84,7 +89,7 @@ est_comb_exposure <- function(at,
     qbar_aw <- bound_precision(sl_fit$predict(task_av))
     qbar_aw <- scale_to_original(scaled_vals = qbar_aw,
                                  max_orig = max(at_mc[y]),
-                                min_orig = min(at_mc[y]))
+                                 min_orig = min(at_mc[y]))
 
     av_marg_comb$qbar_aw_combo <- qbar_aw
     av_marg_comb$y_scaled <- av_mc$y_scaled

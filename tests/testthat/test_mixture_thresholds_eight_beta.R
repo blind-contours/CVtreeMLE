@@ -1,6 +1,8 @@
 library(CVtreeMLE)
 library(testthat)
 library(sl3)
+library(pre)
+library(partykit)
 
 
 seed <- 6442
@@ -27,6 +29,8 @@ example_output <- fit_mix_rule_backfitting(at = data,
                                              parallel = FALSE,
                                              seed = seed)
 
-expect_true(example_output[
-  which.max(example_output$coefficient), "description"] ==
-  "M3 > 2.50969709970333 & M1 > 0.947419263385584 & M2 > 1.99541667300285")
+mixture_rules <- example_output$rules
+
+expect_true(mixture_rules[
+  which.max(mixture_rules$coefficient), "test"] ==
+  "M1M2M3")

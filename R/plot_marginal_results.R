@@ -13,10 +13,8 @@ plot_marginal_results <- function(v_marginal_results,
   plot_list <- list()
 
   for (var in mix_comps) {
-    marg_results <- v_marginal_results[stringr::str_detect(
-      names(v_marginal_results), var)]
-    if (length(marg_results) != 0) {
-      marg_data <- do.call(rbind, marg_results)
+    marg_data <- v_marginal_results[v_marginal_results$var == var,]
+    if (length(marg_data) != 0) {
       marg_data$`Marginal ATE` <- round(as.numeric(marg_data$`Marginal ATE`), 3)
       marg_data$`Lower CI` <- round(as.numeric(marg_data$`Lower CI`), 3)
       marg_data$`Upper CI` <- round(as.numeric(marg_data$`Upper CI`), 3)
@@ -30,8 +28,8 @@ plot_marginal_results <- function(v_marginal_results,
       axis_text_theme <- ggplot2::element_text(size = text_size,
                                                color = "black")
 
-      marg_data$Type <- factor(marg_data$comparison,
-        levels = unique(marg_data$comparison)
+      marg_data$Type <- factor(marg_data$Levels,
+        levels = unique(marg_data$Levels)
       )
 
       plot <- ggplot2::ggplot(
@@ -40,7 +38,7 @@ plot_marginal_results <- function(v_marginal_results,
           x = "`Marginal ATE`", y = "Type", color = "Type",
           xmin = "`Lower CI`",
           xmax = "`Upper CI`",
-          label = "`Comparison`"
+          label = "`Comparison_Rule`"
         )
       ) +
         ggplot2::facet_wrap(~fold) +

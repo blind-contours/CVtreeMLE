@@ -3,7 +3,8 @@
 #' @param data Input data
 #' @param rules Dataframe of the rules determined
 #' @importFrom dplyr transmute
-#' @return Rules object. TODO: add more detail here.
+#' @return binary_rule_matrix: A binary matrix where each column is the mixture
+#' rule evaluated into a binary vector.
 
 #'
 #' @export

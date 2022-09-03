@@ -12,7 +12,8 @@ evaluate_mixture_rules(data, rules)
 \item{rules}{Dataframe of the rules determined}
 }
 \value{
-Rules object. TODO: add more detail here.
+binary_rule_matrix: A binary matrix where each column is the mixture
+rule evaluated into a binary vector.
 }
 \description{
 Evaluate mixture rules found during the PRE process

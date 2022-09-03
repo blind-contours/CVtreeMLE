@@ -30,7 +30,7 @@ common_mixture_rules(
 \value{
 Rules object. TODO: add more detail here.
 
-Dataframe with mixture results including the union rule and
+Data frame with mixture results including the union rule and
 proportion found across the folds
 }
 \description{

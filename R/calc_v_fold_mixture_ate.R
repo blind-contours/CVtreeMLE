@@ -18,6 +18,8 @@
 #' @importFrom stats as.formula glm p.adjust plogis predict qlogis qnorm
 #' @importFrom stats qunif rnorm runif
 #' @importFrom rlang :=
+#' @return A data frame of mixture results for each variable level combination
+#' for each fold
 #'
 #' @export
 

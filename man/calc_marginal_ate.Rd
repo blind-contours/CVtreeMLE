@@ -20,7 +20,15 @@ each mixture}
 \item{n_folds}{Number of folds used in cross-validation}
 }
 \value{
-Rules object. TODO: add more detail here.
+A list of the marginal results including:
+' \itemize{
+\item \code{marginal_results}: A data frame with the data adpatively
+determined mixture component thresholds on the rows and ATE, variance,
+and RMSE estimates on the columns.
+\item \code{data}: A list of data frames for each mixture component
+threshold evaluated as the exposure, baseline covariates, outcome,
+nuisance parameter estimates, marginal ATE and the influence curve.
+}
 }
 \description{
 Aggregate marginal rules for each mixture variable found

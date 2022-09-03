@@ -2,6 +2,8 @@ library(tidyverse)
 library(here)
 library(ggpubr)
 library(purrr)
+library(tidry)
+
 psi_true <- 6
 
 sim_results <- readRDS(

@@ -1,6 +1,8 @@
 library(CVtreeMLE)
 library(testthat)
 library(sl3)
+library(partykit)
+library(pre)
 
 
 # simulation code from ph 295, fall 2016 --
@@ -61,24 +63,42 @@ simobsscm <- function(n) {
 
 data <- simobsscm(100)
 summary(data)
-
-#################################
-
-na_indices <- sample(seq_along(data[, "y"]), 10)
-
-data[na_indices, "y"] <- na
-
 colnames(data)[3] <- "a_1"
 data$a_2 <- rbinom(dim(data)[1], 1, prob = 0.4)
 
+# Test expect error when NA is in the outcome
+
+y_na_indices <- sample(seq_along(data[, "y"]), 10)
+a_na_indices <- sample(seq_along(data[, "a_1"]), 10)
+
+data_na_y <- data_na_a <- data
+
+data_na_y[y_na_indices, "y"] <- NA
+data_na_a[a_na_indices, "a_1"] <- NA
+
+# Expect error when NA in outcome -------------
+
 expect_error(cvtreemle_results <- CVtreeMLE(
-  data = data,
-  w = w,
+  data = data_na_y,
+  w = c("w_1", "w_2"),
   y = "y",
-  a = a,
+  a = c("a_1", "a_2"),
   n_folds = 2,
   family = "gaussian",
-  h.aw_trunc_lvl = 10,
+  max_iter = 10,
+  parallel = TRUE,
+  verbose = FALSE
+))
+
+# Expect error when NA in the exposures -------------
+
+expect_error(cvtreemle_results <- CVtreeMLE(
+  data = data_na_a,
+  w = c("w_1", "w_2"),
+  y = "y",
+  a = c("a_1", "a_2"),
+  n_folds = 2,
+  family = "gaussian",
   max_iter = 10,
   parallel = TRUE,
   verbose = FALSE

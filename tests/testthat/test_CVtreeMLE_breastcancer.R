@@ -1,14 +1,12 @@
 library(testthat)
 library(CVtreeMLE)
+library(sl3)
+library(partykit)
+library(pre)
 library(xml2)
 library(sl3)
 library(dplyr)
-
-# Only run in RStudio so that automated CRAN checks don't give errors.
-if (.Platform$GUI == "RStudio") {
-  # Use multicore parallelization to speed up processing.
-  future::plan("multiprocess", workers = 2)
-}
+library(tidyr)
 
 data(BreastCancer, package = "mlbench")
 data <- BreastCancer
@@ -41,13 +39,15 @@ breast_cancr_results <- CVtreeMLE(
   w = w,
   a = a,
   y = y,
-  n_folds = 4,
+  n_folds = 2,
   seed = seed,
   family = "binomial",
   parallel = TRUE,
   num_cores = 2,
   max_iter = 3
 )
+
+proc.time() - ptm
 
 ## test mixture result outputs given interaction exist in this data:
 expect_true(
@@ -56,10 +56,4 @@ expect_true(
 expect_true(
   class(breast_cancr_results$`Pooled TMLE Mixture Results`) == "data.frame")
 
-expect_true(
-  dim(breast_cancr_results$`Pooled TMLE Mixture Results`)[1] ==
-    length(breast_cancr_results$`Mixture Data List`)
-  )
 
-
-proc.time() - ptm

@@ -33,7 +33,7 @@ compute_meta_marg_results <- function(v_fold_marginal_results,
   for (i in seq(v_fold_marg_group)) {
     results_df <- v_fold_marg_group[[i]]
 
-    var <- mix_comps[mix_comps %in% strsplit(results_df$Reference[1],
+    var <- mix_comps[mix_comps %in% strsplit(results_df$Reference_Rule[1],
                                              split = " ")[[1]]]
 
 
@@ -61,8 +61,8 @@ compute_meta_marg_results <- function(v_fold_marginal_results,
                                          lower.tail = FALSE) * pooled_se, 4)
     )
 
-    ref_rule <- paste(results_df$Reference, collapse = "|")
-    comp_rule <- paste(results_df$Comparison, collapse = "|")
+    ref_rule <- paste(results_df$Reference_Rule, collapse = "|")
+    comp_rule <- paste(results_df$Comparison_Rule, collapse = "|")
 
     ref_data <- data %>%
       mutate("ref_rule" := ifelse(eval(parse(text = ref_rule)), 1, 0))
@@ -116,14 +116,14 @@ compute_meta_marg_results <- function(v_fold_marginal_results,
       round(pooled_p_val, 6),
       round(pooled_p_val, 6),
       round(weighted_rmse, 3),
-      unique(results_df$comparison),
+      unique(results_df$Levels),
       ref_rule,
       comp_rule
     )
 
     colnames(average_results) <- colnames(results_df)
 
-    list_names[[i]] <- unique(results_df$comparison)
+    list_names[[i]] <- unique(results_df$Levels)
 
     results <- as.data.frame(rbind(results_df, average_results))
     results$fold <- c(seq(nrow(results) - 1), "Pooled")

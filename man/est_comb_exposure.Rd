@@ -47,7 +47,13 @@ g (treatment mechanism)}
 folds}
 }
 \value{
-Rules object. TODO: add more detail here.
+A list of the combination marginal results within a fold including:
+\itemize{
+\item \code{data}: A data frame with the marginal rules evaluated as
+binary vectors, baseline covariates and predicted outcomes given
+ensemble fitting.
+\item \code{learner}: The Super Learner model fit to the data.
+}
 }
 \description{
 Estimate the expected outcome given exposure to the combination

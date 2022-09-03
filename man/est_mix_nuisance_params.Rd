@@ -12,7 +12,7 @@ est_mix_nuisance_params(
   aw_stack,
   family,
   rules,
-  h_aw_trunc_lvl,
+  h_aw_trunc_lvl = 10,
   parallel_cv,
   seed
 )
@@ -41,7 +41,8 @@ bias to reduce variance)}
 \item{seed}{Seed number}
 }
 \value{
-Rules object. TODO: add more detail here.
+A list of dataframes where the nuisance parameters are added to
+the raw data.
 }
 \description{
 For each mixture mixture interaction found, create a g estimator

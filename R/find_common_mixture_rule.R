@@ -24,7 +24,7 @@
 #' @importFrom stats as.formula glm p.adjust
 #' @importFrom stats plogis predict qlogis qnorm qunif rnorm runif
 #' @importFrom rlang :=
-#' @return Dataframe with mixture results including the union rule and
+#' @return Data frame with mixture results including the union rule and
 #' proportion found across the folds
 #'
 #' @export

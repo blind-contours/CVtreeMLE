@@ -31,17 +31,15 @@
 #'  impact each mixture variable has
 #' @param eps_sd Random error included in the generation of Y
 #' @param binary TRUE/FALSE depending on if the outcome should be binary
-
-
 #' @importFrom data.table rbindlist
 #' @importFrom dplyr group_by
-
-#' @return Rules object. TODO: add more detail here.
 #' @importFrom stats as.formula glm p.adjust plogis predict
 #' @importFrom stats qlogis qnorm qunif rnorm runif
 #' @importFrom dplyr mutate
 #' @importFrom MASS mvrnorm
 #' @importFrom rlang :=
+#' @return obs: A data frame of the simulated data for the mixture cube.
+
 #' @export
 
 
