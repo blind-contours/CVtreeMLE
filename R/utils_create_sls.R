@@ -23,40 +23,41 @@ create_sls <- function() {
   w_stack <- sl3::make_learner(sl3::Stack, learners)
   aw_stack <- sl3::make_learner(sl3::Stack, learners)
 
-  lrnr_glmtree_001 <- sl3::Lrnr_glmtree$new(alpha = 0.1,
-                                       maxdepth = 3,
-                                       bonferroni = TRUE,
-                                       minsize = 20)
-
-  lrnr_glmtree_002 <- sl3::Lrnr_glmtree$new(alpha = 0.2,
-                                       maxdepth = 4,
-                                       bonferroni = TRUE,
-                                       minsize = 30)
-
-  lrnr_glmtree_003 <- sl3::Lrnr_glmtree$new(alpha = 0.3,
+  lrnr_glmtree_001 <- sl3::Lrnr_glmtree$new(alpha = 0.05,
                                        maxdepth = 2,
                                        bonferroni = TRUE,
-                                       minsize = 30)
+                                       minsize = 50,
+                                       criterion = "aic")
 
-  lrnr_glmtree_004 <- sl3::Lrnr_glmtree$new(alpha = 0.5,
+  lrnr_glmtree_002 <- sl3::Lrnr_glmtree$new(alpha = 0.05,
+                                       maxdepth = 3,
+                                       bonferroni = TRUE,
+                                       minsize = 50)
+
+  lrnr_glmtree_003 <- sl3::Lrnr_glmtree$new(alpha = 0.1,
+                                       maxdepth = 2,
+                                       bonferroni = TRUE,
+                                       minsize = 50)
+
+  lrnr_glmtree_004 <- sl3::Lrnr_glmtree$new(alpha = 0.1,
                                        maxdepth = 1,
                                        bonferroni = TRUE,
-                                       minsize = 20)
+                                       minsize = 50)
 
-  lrnr_glmtree_005 <- sl3::Lrnr_glmtree$new(alpha = 0.5,
-                                       maxdepth = 4,
+  lrnr_glmtree_005 <- sl3::Lrnr_glmtree$new(alpha = 0.1,
+                                       maxdepth = 2,
                                        bonferroni = TRUE,
-                                       minsize = 20)
+                                       minsize = 50)
 
   lrnr_glmtree_006 <- sl3::Lrnr_glmtree$new(alpha = 0.1,
-                                       maxdepth = 4,
+                                       maxdepth = 3,
                                        bonferroni = FALSE,
-                                       minsize = 20)
+                                       minsize = 50)
 
   lrnr_glmtree_007 <- sl3::Lrnr_glmtree$new(alpha = 0.1,
-                                       maxdepth = 5,
+                                       maxdepth = 2,
                                        bonferroni = FALSE,
-                                       minsize = 20)
+                                       minsize = 50)
 
   learners <- c(lrnr_glmtree_001, lrnr_glmtree_002,
                 lrnr_glmtree_003, lrnr_glmtree_004,

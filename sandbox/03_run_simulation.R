@@ -21,7 +21,7 @@ devtools::install(upgrade = "never")
 library(CVtreeMLE)
 # simulation parameters
 seed <- set.seed(7259)
-n_sim <- 25 # number of simulations
+n_sim <- 1 # number of simulations
 n_obs <- (cumsum(rep(sqrt(40), 6))^2)[-1] # sample sizes at root-n scale
 # n_obs <- n_obs[1:3]
 truth <- c(1, 1, 1, 1, 1, 1, 1, 7)

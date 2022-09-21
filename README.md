@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# R/`CVtreeMLE` <img src="man/figures/CVtreeMLE_sticker.png" height="300" align="right"/>
+# `CVtreeMLE` \<img src=“man/figures/CVtreeMLE_sticker.png height=”300” align=“right”/\>
 
 <!-- badges: start -->
 
@@ -50,7 +50,7 @@ introducing bias.
 
 A gap exists in statistical estimation where the analyst wants to
 understand what exposure levels, as part of a mixture, have the greatest
-effect on some outcome while nonparametrically adjusting for baseline
+effect on some outcome while non-parametrically adjusting for baseline
 covariates and data-adaptively identifying the best fitting tree applied
 to the mixed exposure. This is the goal of `CVtreeMLE`.
 
@@ -77,10 +77,10 @@ mixture, and the
 (outcome estimator E(Y\|A,W)) estimators needed for the ATE. These rules
 and estimators created in training data are applied to the validation
 data in order to calculate the final ATE target parameter. This process
-cycles 10 times and the parameters across the folds are pooled, utlizing
-the full data. Because the partition nodes used in the tree may vary
-across the folds, we provide a union rule and stability estimates which
-informs how variable the rule is across the folds.
+cycles 10 times and the parameters across the folds are pooled,
+utilizing the full data. Because the partition nodes used in the tree
+may vary across the folds, we provide a union rule and stability
+estimates which informs how variable the rule is across the folds.
 
 In order to optimize the optimum bias-variance trade-off for our causal
 parameter of interest we use cross-validated targeted minimum loss based
@@ -88,7 +88,7 @@ estimation (CV-TMLE). `CVtreeMLE` builds off of the CV-TMLE general
 theorem of cross-validated minimum loss based estimation Zheng and Laan
 (2010) which allows the full utilization of loss based super learning to
 obtain the initial estimators needed for our target parameter without
-risk of overfitting. Thus, `CVtreeMLE` makes possible the nonparametric
+risk of overfitting. Thus, `CVtreeMLE` makes possible the non-parametric
 estimation of the causal effects of a mixed exposure that both results
 in interpretable results which are useful for public policy and are
 asymptotically efficient.
@@ -126,11 +126,10 @@ vignette.
 
 ## Installation
 
-*Note:* Because `CVtreeMLE` package (currently) depends on `sl3`, an
-enhancing dependency that allows ensemble machine learning to be used
-for nuisance parameter estimation and `sl3` is not on CRAN the
-`CVtreeMLE` package is not available on CRAN and must be downloaded
-here.
+*Note:* Because `CVtreeMLE` package (currently) depends on `sl3` that
+allows ensemble machine learning to be used for nuisance parameter
+estimation and `sl3` is not on CRAN the `CVtreeMLE` package is not
+available on CRAN and must be downloaded here.
 
 For the latest features, install the most recent *stable version*  
 of `CVtreeMLE`from GitHub via
@@ -147,6 +146,14 @@ please download sl3 from:
 remotes::install_github("tlverse/sl3@devel")
 ```
 
+`CVtreeMLE` also uses the predictive rules ensemble package and the
+partykit package for decision trees which the analyst can download via:
+
+``` r
+install.packages("partykit")
+install.packages("pre")
+```
+
 ------------------------------------------------------------------------
 
 ## Example
@@ -156,6 +163,16 @@ First load the package and other packages needed
 ``` r
 library(CVtreeMLE)
 library(sl3)
+library(pre)
+#> 
+#> Attaching package: 'pre'
+#> The following object is masked from 'package:sl3':
+#> 
+#>     importance
+library(partykit)
+#> Loading required package: grid
+#> Loading required package: libcoin
+#> Loading required package: mvtnorm
 library(kableExtra)
 library(ggplot2)
 
@@ -189,14 +206,16 @@ this region and where the density of the region is based on covariates.
 To do this, use the `simulate_mixture_cube` function to generate
 simulated  
 data that represents ground-truth. Here, we create three continuous
-mixture variables,
-![A](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;A "A"),
-that are correlated and baseline covariates,
-![W](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;W "W"),
+mixture variables, A, that are correlated and baseline covariates, W,
 that are confounders. Our outcome will be generated such that
 individuals with a specific set of exposures have a different outcome
 compared to individuals who are not exposed to this combination of
 exposure levels.
+
+In reality, the outcome people have will not be homogenous within a
+certain region of exposures but we use this example as a way to
+illustrate that `CVtreeMLE` is valid and identifies the correct
+parameter when we generate data with ground-truth.
 
 ## Simulate Data
 
@@ -387,8 +406,7 @@ outcome is 0 in all other regions.
 ## Run `CVtreeMLE`
 
 We will now pass the simulated data and variable names for each node in
-![O = W,A,Y](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;O%20%3D%20W%2CA%2CY "O = W,A,Y")
-to the `CVtreeMLE` function.
+O = W,A,Y to the `CVtreeMLE` function.
 
 ``` r
 ptm <- proc.time()
@@ -405,8 +423,8 @@ sim_results <- CVtreeMLE(data = sim_data,
                          num_cores = 2)
 
 proc.time() - ptm
-#>    user  system elapsed 
-#>   83.73    4.45 1975.31
+#>     user   system  elapsed 
+#>   97.841   17.765 1887.968
 ```
 
 Note that above, there are default estimators for all parameters if they
@@ -599,11 +617,11 @@ mixture_plots <- plot_mixture_results(v_intxn_results =
 mixture_plots$M1M2M3
 ```
 
-![](man/figures/README-plot%20sim_mixture_results-1.png)<!-- --> This
-plot shows the ATE specific for each fold and for the weighted-mean
-results over the fold with corresponding pooled variance. The rule is
-the union rule which includes all observations that were indicated by
-the fold specific rules.
+![](man/figures/README-plot_sim_mixture_results-1.png)<!-- --> This plot
+shows the ATE specific for each fold and for the weighted-mean results
+over the fold with corresponding pooled variance. The rule is the union
+rule which includes all observations that were indicated by the fold
+specific rules.
 
 `CVtreeMLE` also data-adaptively identifies thresholds in the marginal
 space. These around found here:
@@ -885,7 +903,7 @@ The contents of this repository are distributed under the MIT license.
 See below for details:
 
     MIT License
-    Copyright (c) 2017-2023 David B. McCoy
+    Copyright (c) 2017-2022 David B. McCoy
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
     in the Software without restriction, including without limitation the rights

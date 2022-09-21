@@ -28,7 +28,7 @@ a <- c("cl.thickness", "cell.size", "cell.shape")
 data <- data.frame(lapply(data, function(x) as.numeric(as.character(x))))
 
 data <- data %>%
-  dplyr::mutate_if(is.numeric, ~tidyr::replace_na(., mean(., na.rm = TRUE)))
+  dplyr::mutate_if(is.numeric, ~ replace_na(., mean(., na.rm = TRUE)))
 
 data <- data[colnames(data) != "class"]
 

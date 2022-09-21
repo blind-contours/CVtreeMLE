@@ -424,6 +424,8 @@ CVtreeMLE <- function(w,
 
   results <- furrr::future_map(unique(data$folds), function(fold_k) {
 
+    # for (fold_k in unique(data$folds)) {
+
     at <- data[data$folds != fold_k, ]
     av <- data[data$folds == fold_k, ]
 
@@ -537,6 +539,7 @@ CVtreeMLE <- function(w,
       "marg combo data")
 
     results_list
+
   }, .options = furrr::furrr_options(seed = seed, packages = c("CVtreeMLE",
                                                               "sl3")))
 

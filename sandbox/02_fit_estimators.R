@@ -1,10 +1,15 @@
 
-fit_estimators <- function(data, true_rule) {
+fit_estimators <- function(data,
+                           true_rule,
+                           covars,
+                           exposures,
+                           outcome,
+                           P_0_data) {
 
   sim_results <- CVtreeMLE(data = data,
-                           w = c("w", "w2"),
-                           a = c(paste("M", seq(3), sep = "")),
-                           y = "y",
+                           w = covars,
+                           a = exposures,
+                           y = outcome,
                            n_folds = 5,
                            num_cores = 20,
                            family = "gaussian",
@@ -33,6 +38,16 @@ fit_estimators <- function(data, true_rule) {
     true_rule_binary <- data %>%
       dplyr::transmute(A = ifelse(eval(parse(text = true_rule)), 1, 0))
 
+    rule_applied_P_0 <- P_0_data %>%
+      dplyr::mutate(A = ifelse(eval(parse(text = mix_decisions)), 1, 0))
+
+    P_0_means <- rule_applied_P_0 %>%
+      group_by(A) %>%
+      summarise_at(vars(outcome), list(name = mean))
+
+    P_0_ATE <- P_0_means$name[2] - P_0_means$name[1]
+    DA_rule_bias <- ate - P_0_ATE
+
     confusion_table <- table(true_rule_binary$A, rule_binary$A)
 
     true_pos <- confusion_table[2,2] / sum(true_rule_binary$A)
@@ -50,11 +65,13 @@ fit_estimators <- function(data, true_rule) {
     true_neg <- NULL
     false_pos <- NULL
     false_neg <- NULL
+    DA_rule_bias <- NULL
   }
 
   sim_out <- list("Mix ind" = mixure_found_ind, "ATE" = ate,
                   "Lower" = lower, "Upper" = upper,
                   "True Pos" = true_pos, "True Neg" = true_neg,
-                  "False Pos" = false_pos, "False Neg" = false_neg)
+                  "False Pos" = false_pos, "False Neg" = false_neg,
+                  "DA Rule Bias" = DA_rule_bias)
   return(sim_out)
 }
