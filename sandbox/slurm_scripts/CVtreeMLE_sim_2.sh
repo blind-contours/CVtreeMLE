@@ -22,4 +22,4 @@
 module load r/4.0.3
 
 ### for foreach+doSNOW ###
-R CMD BATCH --no-save 03_run_simulation.R CV_treeMLE_sim.Rout
+R CMD BATCH --no-save ./03_run_simulation.R CV_treeMLE_sim.Rout
