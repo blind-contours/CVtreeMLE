@@ -36,7 +36,6 @@ P_0_data <- simulate_mixture_cube(n_obs = 100000,
 sim_results <- lapply(n_obs, function(sample_size) {
   # get results in parallel
   results <- foreach(this_iter = seq_len(n_sim)) %do% {
-    gc()
     data_sim <-  P_0_data[sample(nrow(P_0_data), sample_size), ]
     est_out <- fit_estimators(data = data_sim, true_rule)
     return(est_out)

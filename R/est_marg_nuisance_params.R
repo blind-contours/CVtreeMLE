@@ -107,7 +107,8 @@ est_marg_nuisance_params <- function(at,
           data = av_data,
           covariates = w,
           outcome = "a",
-          outcome_type = "binomial"
+          outcome_type = "binomial",
+          folds = 2
         )
 
         discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(

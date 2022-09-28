@@ -4,10 +4,10 @@ library(ggpubr)
 library(purrr)
 library(tidry)
 
-psi_true <- 6
+psi_true <- 18
 
 sim_results <- readRDS(
-  here("sandbox/data/CVtreeMLE_2022-08-03_21_31_49.rds")
+  here("sandbox/data/CVtreeMLE_2022-09-21_22:46:37.rds")
 )
 
 # combine simulation results into one big df with n_obs column
@@ -19,10 +19,6 @@ sim_results <- names(sim_results) %>% map_dfr(
   }
 )
 
-# sim_results <- sim_results %>%
-#   group_by(n_obs, sim_iter) %>%
-#   top_n(1, abs(ATE))
-
 
 sim_statistics <- sim_results %>%
   mutate(
@@ -31,7 +27,7 @@ sim_statistics <- sim_results %>%
     )
   ) %>%
   group_by(n_obs) %>%
-  summarize(
+  summarise(
     est_bias =
       mean(ATE) - psi_true,
     est_sd = sd(ATE),
@@ -54,7 +50,7 @@ sim_statistics <- sim_results %>%
 sim_statistics_long <- sim_statistics %>%
   tidyr::gather(statistic, value, -c(n_obs))
 
-n_obs <- (cumsum(rep(sqrt(40), 6))^2)[-1] # sample sizes at root-n scale
+n_obs <- (cumsum(rep(sqrt(40), 6))^2) # sample sizes at root-n scale
 
 make_sim_statistics_plot <- function(sim_statistics_long, stats) {
   filtered_sim_stats <- sim_statistics_long %>%

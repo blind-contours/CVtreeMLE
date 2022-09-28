@@ -41,9 +41,11 @@ fit_estimators <- function(data,
     rule_applied_P_0 <- P_0_data %>%
       dplyr::mutate(A = ifelse(eval(parse(text = mix_decisions)), 1, 0))
 
+    rule_applied_P_0$y_unconf <- P_0_data$outcome - P_0_data$age - P_0_data$sex
+
     P_0_means <- rule_applied_P_0 %>%
       group_by(A) %>%
-      summarise_at(vars(outcome), list(name = mean))
+      summarise_at(vars(y_unconf), list(name = mean))
 
     P_0_ATE <- P_0_means$name[2] - P_0_means$name[1]
     DA_rule_bias <- ate - P_0_ATE
@@ -68,10 +70,15 @@ fit_estimators <- function(data,
     DA_rule_bias <- NULL
   }
 
-  sim_out <- list("Mix ind" = mixure_found_ind, "ATE" = ate,
-                  "Lower" = lower, "Upper" = upper,
-                  "True Pos" = true_pos, "True Neg" = true_neg,
-                  "False Pos" = false_pos, "False Neg" = false_neg,
-                  "DA Rule Bias" = DA_rule_bias)
+  sim_out <- list("Mix ind" = mixure_found_ind,
+                  "ATE" = ate,
+                  "Lower" = lower,
+                  "Upper" = upper,
+                  "True Pos" = true_pos,
+                  "True Neg" = true_neg,
+                  "False Pos" = false_pos,
+                  "False Neg" = false_neg,
+                  "DA Rule Bias" = DA_rule_bias,
+                  "DA Rule"= mix_decisions)
   return(sim_out)
 }

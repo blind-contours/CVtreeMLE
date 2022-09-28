@@ -85,42 +85,42 @@ simulate_mixture_cube <- function(n_obs = 500,
   pvars <- stats::pnorm(rawvars)
 
   ## create a covariate
-  w <- rnorm(n_obs, 0, 0.5)
-  w2 <- rnorm(n_obs, 0, 0.5)
+  covars <- tibble(
+    age = rnorm(n, 37, 3),
+    bmi = rnorm(n, 20, 1),
+    sex = as.numeric(rbernoulli(n, 0.5))
+  )
 
   ## probabilities
-  b0i <- mix_subspace_betas
-  b1i <- w1_betas
-  b2i <- w2_betas
+  b0i <- round(rnorm(8, 0.3, 0.01), 2)
+  b1i <- round(rnorm(8, 0.4, 0.01), 2)
+  b2i <- round(rnorm(8, 0.5, 0.01), 2)
+  b3i <- round(rnorm(8, 0.5, 0.01), 2)
 
   probs_list <- c()
 
-  for (i in seq(w)) {
-    w_i <- w[i]
-    w2_i <- w2[i]
+  for (i in seq(nrow(covars))) {
+    age <- covars$age[i]
+    bmi <- covars$bmi[i]
+    sex <- covars$sex[i]
 
-    denominator <- sum(
-      exp(b0i[2] + (b1i[2] * w_i) + (b2i[2] * w2_i)),
-      exp(b0i[3] + (b1i[3] * w_i) + (b2i[3] * w2_i)),
-      exp(b0i[4] + (b1i[4] * w_i) + (b2i[4] * w2_i)),
-      exp(b0i[5] + (b1i[5] * w_i) + (b2i[5] * w2_i)),
-      exp(b0i[6] + (b1i[6] * w_i) + (b2i[6] * w2_i)),
-      exp(b0i[7] + (b1i[7] * w_i) + (b2i[7] * w2_i)),
-      exp(b0i[8] + (b1i[8] * w_i) + (b2i[8] * w2_i))
-    )
+    gen_denominator <- function(index, b0i, b1i, b3i, covars) {
+      1 + exp(b0i[index] + (b1i[index] * age) + (b2i[index] * bmi) +
+                (b3i[index] * sex))
+    }
 
-    a0 <- exp(b0i[1] + (b1i[1] * w_i) + (b2i[1] * w2_i)) / (1 + denominator)
-    a1 <- exp(b0i[2] + (b1i[2] * w_i) + (b2i[2] * w2_i)) / (1 + denominator)
-    a2 <- exp(b0i[3] + (b1i[3] * w_i) + (b2i[3] * w2_i)) / (1 + denominator)
-    a3 <- exp(b0i[4] + (b1i[4] * w_i) + (b2i[4] * w2_i)) / (1 + denominator)
-    a4 <- exp(b0i[5] + (b1i[5] * w_i) + (b2i[5] * w2_i)) / (1 + denominator)
-    a5 <- exp(b0i[6] + (b1i[6] * w_i) + (b2i[6] * w2_i)) / (1 + denominator)
-    a6 <- exp(b0i[7] + (b1i[7] * w_i) + (b2i[7] * w2_i)) / (1 + denominator)
-    a7 <- 1 - sum(a0, a1, a2, a3, a4, a5, a6)
+    gen_probs <- function(index, b0i, b1i, b3i, covars, denominator) {
+      exp(b0i[index] + (b1i[index] * age) + (b2i[index] * bmi) +
+            (b3i[index] * sex)) / (1 + denominator)
+    }
 
-    probs_a <- c(a0, a1, a2, a3, a4, a5, a6, a7)
+    denominator <- sum(sapply(seq(from = 1, to = 8),
+                              FUN = gen_denominator, b0i, b1i, b3i, covars))
 
-    probs_list[[i]] <- probs_a
+    probs <- sapply(seq(from = 1, to = 8),
+                    FUN = gen_probs, b0i, b1i, b3i, covars, denominator)
+
+    probs_list[[i]] <- probs
   }
 
   probs_df <- as.data.frame(do.call(rbind, probs_list))
