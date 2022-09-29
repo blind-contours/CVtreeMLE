@@ -10,7 +10,7 @@ fit_estimators <- function(data,
                            w = covars,
                            a = exposures,
                            y = outcome,
-                           n_folds = 5,
+                           n_folds = 2,
                            num_cores = 20,
                            family = "gaussian",
                            parallel = TRUE,
@@ -41,11 +41,9 @@ fit_estimators <- function(data,
     rule_applied_P_0 <- P_0_data %>%
       dplyr::mutate(A = ifelse(eval(parse(text = mix_decisions)), 1, 0))
 
-    rule_applied_P_0$y_unconf <- P_0_data$outcome - P_0_data$age - P_0_data$sex
-
     P_0_means <- rule_applied_P_0 %>%
       group_by(A) %>%
-      summarise_at(vars(y_unconf), list(name = mean))
+      summarise_at(vars(outcome_true), list(name = mean))
 
     P_0_ATE <- P_0_means$name[2] - P_0_means$name[1]
     DA_rule_bias <- ate - P_0_ATE
@@ -68,6 +66,7 @@ fit_estimators <- function(data,
     false_pos <- NULL
     false_neg <- NULL
     DA_rule_bias <- NULL
+    mix_decisions <- NULL
   }
 
   sim_out <- list("Mix ind" = mixure_found_ind,

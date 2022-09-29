@@ -161,17 +161,21 @@ assign_outcomes <- function(exposure_grid, c_matrix, data){
     empty_outcomes[data$Label == label ,] <- outcome_val
   }
 
-  empty_outcomes_confounded <- empty_outcomes + data$age + data$sex
+  empty_outcomes_confounded <- empty_outcomes + data$age + data$sex +
+    rnorm(nrow(empty_outcomes), mean = 0, sd = 0.01)
 
 
-  data_w_outcomes <- cbind.data.frame(data, empty_outcomes_confounded,
+  data_w_outcomes <- cbind.data.frame(data,
+                                      empty_outcomes_confounded,
+                                      empty_outcomes,
                                       t(as.data.frame(
                                         sapply(data$Label,
                                                str_split, pattern = " "))))
 
 
   colnames(data_w_outcomes) <- c("region_label", "m1", "m2", "age", "bmi",
-                                 "sex", "outcome", "region_1", "region_2")
+                                 "sex", "outcome_obs", "outcome_true",
+                                 "region_1", "region_2")
 
   data_w_outcomes$region_1 <- as.numeric(data_w_outcomes$region_1)
   data_w_outcomes$region_2 <- as.numeric(data_w_outcomes$region_2)

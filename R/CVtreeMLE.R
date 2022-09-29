@@ -677,6 +677,10 @@ CVtreeMLE <- function(w,
 
     marginal_rules <- marginal_rules[!sapply(marginal_rules, is.null)]
     marginal_rules <- do.call(rbind, marginal_rules)
+  }else{
+    marginal_results <- NULL
+    v_fold_marginal_results_w_pooled <- NULL
+    ref_rules <- NULL
   }
 
   results_list <- list(

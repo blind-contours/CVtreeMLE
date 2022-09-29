@@ -72,17 +72,17 @@ P_0_data <- P_0_sim$data
 sim_results <- lapply(n_obs, function(sample_size) {
   # get results in parallel
   results <- foreach(this_iter = seq_len(n_sim)) %do% {
-    # data_sim <-  P_0_data[sample(nrow(P_0_data), sample_size), ]
+    data_sim <-  P_0_data[sample(nrow(P_0_data), sample_size), ]
 
-    data_sim <- P_0_data %>%
-      group_by(region_label) %>%
-      sample_n(sample_size / 25)
+    # data_sim <- P_0_data %>%
+    #   group_by(region_label) %>%
+    #   sample_n(sample_size / 25)
 
     est_out <- fit_estimators(data = as.data.frame(data_sim),
                               true_rule,
                               covars = c("age", "sex", "bmi"),
                               exposures = c("m1", "m2"),
-                              outcome = "outcome",
+                              outcome = "outcome_obs",
                               P_0_data)
     return(est_out)
   }
