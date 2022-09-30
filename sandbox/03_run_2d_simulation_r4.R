@@ -11,12 +11,12 @@ library(CVtreeMLE)
 source(here("sandbox", "02_fit_estimators.R"))
 source(here("sandbox", "simulate_2d_data.R"))
 
-Sys.unsetenv("GITHUB_PAT")
+# Sys.unsetenv("GITHUB_PAT")
 devtools::install(upgrade = "never")
 
 # simulation parameters
 seed <- set.seed(7259)
-n_sim <- 25 # number of simulations
+n_sim <- 5 # number of simulations
 n_obs <- (cumsum(rep(sqrt(40), 7))^2)[-1] # sample sizes at root-n scale
 # n_obs <- n_obs[1:3]
 true_rule <- "m1 > 4.15 & m2 > 5.17"
@@ -71,8 +71,14 @@ P_0_data <- P_0_sim$data
 # perform simulation across sample sizes
 sim_results <- lapply(n_obs, function(sample_size) {
   # get results in parallel
-  results <- foreach(this_iter = seq_len(n_sim)) %do% {
-    data_sim <-  P_0_data[sample(nrow(P_0_data), sample_size), ]
+  results <- list()
+
+  for(this_iter in seq_len(n_sim)) {
+
+    data_sim <-  P_0_data %>%
+      slice_sample(n = sample_size)
+
+    # print(mean(data_sim$outcome_obs))
 
     # data_sim <- P_0_data %>%
     #   group_by(region_label) %>%
@@ -84,7 +90,9 @@ sim_results <- lapply(n_obs, function(sample_size) {
                               exposures = c("m1", "m2"),
                               outcome = "outcome_obs",
                               P_0_data)
-    return(est_out)
+
+    results[[this_iter]] <- est_out
+
   }
   # concatenate iterations
   results_out <- bind_rows(results, .id = "sim_iter")
