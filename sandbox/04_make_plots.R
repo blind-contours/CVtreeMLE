@@ -6,8 +6,16 @@ library(tidry)
 
 psi_true <- 18
 
-sim_results <- readRDS(
-  here("sandbox/data/CVtreeMLE_2022-09-21_22:46:37.rds")
+sim_results_1 <- readRDS(
+  here("sandbox/data/CVtreeMLE_run_1.rds")
+)
+
+sim_results_2 <- readRDS(
+  here("sandbox/data/CVtreeMLE_run_2.rds")
+)
+
+sim_results_3 <- readRDS(
+  here("sandbox/data/CVtreeMLE_run_3.rds")
 )
 
 # combine simulation results into one big df with n_obs column

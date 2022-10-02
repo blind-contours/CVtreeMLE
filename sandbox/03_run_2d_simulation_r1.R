@@ -15,8 +15,7 @@ Sys.unsetenv("GITHUB_PAT")
 devtools::install(upgrade = "never")
 
 # simulation parameters
-seed <- set.seed(7259)
-n_sim <- 5 # number of simulations
+n_sim <- 2 # number of simulations
 n_obs <- (cumsum(rep(sqrt(40), 7))^2)[-1] # sample sizes at root-n scale
 # n_obs <- n_obs[1:3]
 true_rule <- "m1 > 4.15 & m2 > 5.17"
@@ -75,21 +74,19 @@ sim_results <- lapply(n_obs, function(sample_size) {
 
   for(this_iter in seq_len(n_sim)) {
 
+    seed <- sample(1:10000,1)
+    set.seed(seed)
+
     data_sim <-  P_0_data %>%
       slice_sample(n = sample_size)
 
-    # print(mean(data_sim$outcome_obs))
-
-    # data_sim <- P_0_data %>%
-    #   group_by(region_label) %>%
-    #   sample_n(sample_size / 25)
-
     est_out <- fit_estimators(data = as.data.frame(data_sim),
-                              true_rule,
+                              true_rule = true_rule,
                               covars = c("age", "sex", "bmi"),
                               exposures = c("m1", "m2"),
                               outcome = "outcome_obs",
-                              P_0_data)
+                              seed = seed,
+                              P_0_data = P_0_data)
 
     results[[this_iter]] <- est_out
 

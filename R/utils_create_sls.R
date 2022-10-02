@@ -26,8 +26,7 @@ create_sls <- function() {
   lrnr_glmtree_001 <- sl3::Lrnr_glmtree$new(alpha = 0.05,
                                        maxdepth = 2,
                                        bonferroni = TRUE,
-                                       minsize = 50,
-                                       criterion = "aic")
+                                       minsize = 50)
 
   lrnr_glmtree_002 <- sl3::Lrnr_glmtree$new(alpha = 0.05,
                                        maxdepth = 3,

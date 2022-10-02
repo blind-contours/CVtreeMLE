@@ -4,6 +4,7 @@ fit_estimators <- function(data,
                            covars,
                            exposures,
                            outcome,
+                           seed,
                            P_0_data) {
 
   sim_results <- CVtreeMLE(data = data,
@@ -14,7 +15,8 @@ fit_estimators <- function(data,
                            num_cores = 20,
                            family = "gaussian",
                            parallel = TRUE,
-                           parallel_cv = FALSE)
+                           parallel_cv = FALSE,
+                           seed = seed)
 
   max_ate_index <- which.max(abs(
     sim_results$`Pooled TMLE Mixture Results`$`Mixture ATE`))
