@@ -16,7 +16,7 @@ devtools::install(upgrade = "never")
 
 # simulation parameters
 n_sim <- 2 # number of simulations
-n_obs <- (cumsum(rep(sqrt(40), 7))^2)[-1] # sample sizes at root-n scale
+n_obs <- c(200, 350, 500, 750, 1000, 1500, 2000)
 # n_obs <- n_obs[1:3]
 true_rule <- "m1 > 4.15 & m2 > 5.17"
 
