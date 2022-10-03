@@ -17,9 +17,7 @@ devtools::install(upgrade = "never")
 # simulation parameters
 n_sim <- 2 # number of simulations
 n_obs <- c(200, 350, 500, 750, 1000, 1500, 2000)
-# n_obs <- n_obs[1:3]
 true_rule <- "m1 > 4.15 & m2 > 5.17"
-
 
 # Establish globals ---------------------------
 
@@ -30,8 +28,8 @@ n <- 500000
 mu <- c(1,2)
 
 # covariance of the exposures
-sigma <- matrix(c(1, 0.1,
-                  0.1, 1),
+sigma <- matrix(c(1, 0.4,
+                  0.4, 1),
                 nrow = 2,
                 ncol = 2)
 
@@ -52,7 +50,7 @@ c_matrix <- matrix(c(0.2,0.3,0.2,0.5),
 
 exposure_results <- gen_exposures(mu = mu,
                                   sigma = sigma,
-                                  n = 10000000,
+                                  n = 500000,
                                   n_cuts)
 
 exposures <- exposure_results$exposures_labeled
@@ -66,6 +64,7 @@ P_0_sim <- gen_covariates(n) %>% # gen covariates
                   c_matrix = c_matrix)  # assign outcome based on cube
 
 P_0_data <- P_0_sim$data
+P_0_data_filt <- P_0_data[complete.cases(P_0_data) ,]
 
 # perform simulation across sample sizes
 sim_results <- lapply(n_obs, function(sample_size) {
@@ -77,7 +76,7 @@ sim_results <- lapply(n_obs, function(sample_size) {
     seed <- sample(1:10000,1)
     set.seed(seed)
 
-    data_sim <-  P_0_data %>%
+    data_sim <-  P_0_data_filt %>%
       slice_sample(n = sample_size)
 
     est_out <- fit_estimators(data = as.data.frame(data_sim),
