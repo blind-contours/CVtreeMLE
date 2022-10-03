@@ -79,7 +79,6 @@ sim_results <- lapply(n_obs, function(sample_size) {
       slice_sample(n = sample_size)
 
     est_out <- fit_estimators(data = as.data.frame(data_sim),
-                              true_rule = true_rule,
                               covars = c("age", "sex", "bmi"),
                               exposures = c("m1", "m2"),
                               outcome = "outcome_obs",
