@@ -17,7 +17,6 @@ devtools::install(upgrade = "never")
 # simulation parameters
 n_sim <- 2 # number of simulations
 n_obs <- c(200, 350, 500, 750, 1000, 1500, 2000)
-true_rule <- "m1 > 4.15 & m2 > 5.17"
 
 # Establish globals ---------------------------
 
@@ -85,7 +84,7 @@ sim_results <- lapply(n_obs, function(sample_size) {
                               exposures = c("m1", "m2"),
                               outcome = "outcome_obs",
                               seed = seed,
-                              P_0_data = P_0_data)
+                              P_0_data = P_0_data_filt)
 
     results[[this_iter]] <- est_out
 
