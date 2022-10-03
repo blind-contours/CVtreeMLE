@@ -1,6 +1,5 @@
 
 fit_estimators <- function(data,
-                           true_rule,
                            covars,
                            exposures,
                            outcome,
@@ -37,37 +36,34 @@ fit_estimators <- function(data,
     rule_binary <- data %>%
       dplyr::transmute(A = ifelse(eval(parse(text = mix_decisions)), 1, 0))
 
-    true_rule_binary <- data %>%
-      dplyr::transmute(A = ifelse(eval(parse(text = true_rule)), 1, 0))
-
     rule_applied_P_0 <- P_0_data %>%
       dplyr::mutate(A = ifelse(eval(parse(text = mix_decisions)), 1, 0))
 
-    P_0_means <- rule_applied_P_0 %>%
-      group_by(A) %>%
-      summarise_at(vars(outcome_true), list(name = mean))
-
-    P_0_ATE <- P_0_means$name[2] - P_0_means$name[1]
-    DA_rule_bias <- ate - P_0_ATE
-
-    confusion_table <- table(true_rule_binary$A, rule_binary$A)
-
-    true_pos <- confusion_table[2,2] / sum(true_rule_binary$A)
-    true_neg <- confusion_table[1,1] / (length(true_rule_binary$A) -
-                                          sum(true_rule_binary$A))
-    false_pos <- confusion_table[1,2] / (length(true_rule_binary$A) -
-                                           sum(true_rule_binary$A))
-    false_neg <- confusion_table[2,1] / sum(true_rule_binary$A)
+    # P_0_means <- rule_applied_P_0 %>%
+    #   group_by(A) %>%
+    #   summarise_at(vars(outcome_true), list(name = mean))
+    #
+    # P_0_ATE <- P_0_means$name[2] - P_0_means$name[1]
+    # DA_rule_bias <- ate - P_0_ATE
+    #
+    # confusion_table <- table(true_rule_binary$A, rule_binary$A)
+    #
+    # true_pos <- confusion_table[2,2] / sum(true_rule_binary$A)
+    # true_neg <- confusion_table[1,1] / (length(true_rule_binary$A) -
+    #                                       sum(true_rule_binary$A))
+    # false_pos <- confusion_table[1,2] / (length(true_rule_binary$A) -
+    #                                        sum(true_rule_binary$A))
+    # false_neg <- confusion_table[2,1] / sum(true_rule_binary$A)
   }else{
     mixure_found_ind <- 0
     ate <- NULL
     lower <- NULL
     upper <- NULL
-    true_pos <- NULL
-    true_neg <- NULL
-    false_pos <- NULL
-    false_neg <- NULL
-    DA_rule_bias <- NULL
+    # true_pos <- NULL
+    # true_neg <- NULL
+    # false_pos <- NULL
+    # false_neg <- NULL
+    # DA_rule_bias <- NULL
     mix_decisions <- NULL
   }
 
@@ -75,11 +71,12 @@ fit_estimators <- function(data,
                   "ATE" = ate,
                   "Lower" = lower,
                   "Upper" = upper,
-                  "True Pos" = true_pos,
-                  "True Neg" = true_neg,
-                  "False Pos" = false_pos,
-                  "False Neg" = false_neg,
-                  "DA Rule Bias" = DA_rule_bias,
                   "DA Rule"= mix_decisions)
+                  # "True Pos" = true_pos,
+                  # "True Neg" = true_neg,
+                  # "False Pos" = false_pos,
+                  # "False Neg" = false_neg,
+                  # "DA Rule Bias" = DA_rule_bias,
+                  # "DA Rule"= mix_decisions)
   return(sim_out)
 }

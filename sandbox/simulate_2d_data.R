@@ -129,14 +129,10 @@ assign_exposures <- function(covars_w_exp_probs,
     ms[covars_w_exp_probs$Label == label ,] <- exposure_region_sample
   }
 
-  data <- cbind.data.frame(covars_w_exp_probs$Label,
-                           ms,
-                           covars_w_exp_probs$age,
-                           covars_w_exp_probs$bmi,
-                           covars_w_exp_probs$sex
-                           )
-  colnames(data) <- c("Label", "M1", "M2", "age", "bmi", "sex")
+  colnames(ms) <- c("m1", "m2")
 
+  data <- cbind.data.frame(covars_w_exp_probs,
+                           ms)
   return(data)
 
 }
@@ -164,18 +160,18 @@ assign_outcomes <- function(exposure_grid, c_matrix, data){
   empty_outcomes_confounded <- empty_outcomes + data$age + data$sex +
     rnorm(nrow(empty_outcomes), mean = 0, sd = 0.01)
 
+  empty_outcomes_no_error <- empty_outcomes + data$age + data$sex
 
   data_w_outcomes <- cbind.data.frame(data,
                                       empty_outcomes_confounded,
-                                      empty_outcomes,
+                                      empty_outcomes_no_error,
                                       t(as.data.frame(
                                         sapply(data$Label,
                                                str_split, pattern = " "))))
 
 
-  colnames(data_w_outcomes) <- c("region_label", "m1", "m2", "age", "bmi",
-                                 "sex", "outcome_obs", "outcome_true",
-                                 "region_1", "region_2")
+  colnames(data_w_outcomes)[(ncol(data_w_outcomes)-3):ncol(data_w_outcomes)] <-
+    c("outcome_obs", "outcome_true", "region_1", "region_2")
 
   data_w_outcomes$region_1 <- as.numeric(data_w_outcomes$region_1)
   data_w_outcomes$region_2 <- as.numeric(data_w_outcomes$region_2)
@@ -191,8 +187,8 @@ assign_outcomes <- function(exposure_grid, c_matrix, data){
 
 # Calc empirical truth treating each region as a threshold -----------------
 
-calc_empir_truth <- function(cube_outcomes){
-  n <- nrow(cube_outcomes)
+calc_empir_truth <- function(P_0_data_filt){
+  n <- nrow(P_0_data_filt)
 
   ATEs <- list()
   for (i in seq(n)) {
