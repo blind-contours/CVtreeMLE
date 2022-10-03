@@ -52,7 +52,7 @@ c_matrix <- matrix(c(0.2,0.3,0.2,0.5),
 
 exposure_results <- gen_exposures(mu = mu,
                                   sigma = sigma,
-                                  n = 5000000,
+                                  n = 10000000,
                                   n_cuts)
 
 exposures <- exposure_results$exposures_labeled
