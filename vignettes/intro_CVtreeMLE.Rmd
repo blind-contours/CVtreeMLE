@@ -131,7 +131,7 @@ niehs_results <- CVtreeMLE(data = as.data.frame(niehs_data),
                          n_folds = 10,
                          seed = seed,
                          parallel_cv = TRUE,
-                         family = "gaussian",
+                         family = "continuous",
                          num_cores = 7,
                          max_iter = 1)
 proc.time() - ptm
@@ -258,7 +258,7 @@ pooled_mixture_results %>%
   kableExtra::kbl(caption = "Consistent Pooled TMLE Mixture Results") %>%
   kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
 ```
-So here we see that, when using 5-fold CV, we detect 4 of thre 6 built in 
+So here we see that, when using 5-fold CV, we detect 4 of the 6 built-in 
 interactions. 
 
 ## Plotting Mixture Results

@@ -40,6 +40,7 @@
 #'                                             a = mix_comps,
 #'                                             w = W,
 #'                                             y = "y_scaled",
+#'                                             direction = "positive",
 #'                                             w_stack = w_stack,
 #'                                             fold = 1,
 #'                                             max_iter = 1,
