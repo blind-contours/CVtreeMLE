@@ -91,11 +91,11 @@ find_common_marginal_rules <- function(fold_rules,
       rule <-
         paste(
           var,
-          ">",
+          ">=",
           round(var_min_1, 5),
           "&",
           var,
-          "<",
+          "<=",
           round(var_max_1, 5)
         )
 

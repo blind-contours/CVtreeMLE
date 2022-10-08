@@ -86,7 +86,7 @@ compute_meta_marg_results <- function(v_fold_marginal_results,
 
     ref_max <- subset(ref_max, ref_rule == 1, select = max)
 
-    ref_rule <- paste(var, " > ", round(ref_min[[1]], 3), "&", var, "<",
+    ref_rule <- paste(var, " >= ", round(ref_min[[1]], 3), "&", var, "<=",
                       round(ref_max[[1]], 3))
 
     ## comp rule
@@ -105,7 +105,7 @@ compute_meta_marg_results <- function(v_fold_marginal_results,
 
     comp_max <- subset(comp_max, comp_rule == 1, select = max)
 
-    comp_rule <- paste(var, " > ", round(comp_min[[1]], 3), "&", var, "<",
+    comp_rule <- paste(var, " >= ", round(comp_min[[1]], 3), "&", var, "<=",
                        round(comp_max[[1]], 3))
 
     average_results <- cbind(

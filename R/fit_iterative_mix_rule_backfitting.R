@@ -9,6 +9,8 @@
 #' @param a Variable names in the mixture
 #' @param w Variable names in the covariates
 #' @param y Variable name for the outcome
+#' @param direction Positive/negative - max or min coefficient to keep in
+#' the ensemble
 #' @param w_stack Stack of algorithms made in SL 3 used in ensemble machine
 #' learning to fit Y|W
 #' @param fold Current fold in the cross-validation
@@ -50,6 +52,7 @@ fit_mix_rule_backfitting <- function(at,
                                      a,
                                      w,
                                      y,
+                                     direction,
                                      w_stack,
                                      fold,
                                      max_iter,
@@ -215,9 +218,15 @@ fit_mix_rule_backfitting <- function(at,
   rules <- rules[!is.na(rules$test), ]
   rules <- rules[!rules$test == 0, ]
 
-  rules <- rules %>%
-    dplyr::group_by(test) %>%
-    dplyr::top_n(1, abs(coefficient))
+  if (direction == "positive") {
+    rules <- rules %>%
+      dplyr::group_by(test) %>%
+      dplyr::slice_max(n = 1, coefficient)
+  }else{
+    rules <- rules %>%
+      dplyr::group_by(test) %>%
+      dplyr::slice_min(n = 1, coefficient)
+  }
 
   rules$fold <- fold
 

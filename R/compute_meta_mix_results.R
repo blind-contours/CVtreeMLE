@@ -77,7 +77,7 @@ meta_mix_results <- function(v_fold_mixture_results,
         summarise(max = max(!!(as.name(var))))
       var_max <- subset(var_max, intxn_rule == 1, select = max)
 
-      augmented_rule <- paste(var, ">", round(var_min, 3), "&", var, "<",
+      augmented_rule <- paste(var, ">=", round(var_min, 3), "&", var, "<=",
                               round(var_max, 3))
 
       new_rule <- append(new_rule, augmented_rule)

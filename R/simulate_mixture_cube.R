@@ -85,12 +85,12 @@ simulate_mixture_cube <- function(n_obs = 500,
   pvars <- stats::pnorm(rawvars)
 
   ## create a covariate
-  covars <- tibble(
-    age = rnorm(n, 37, 3),
-    bmi = rnorm(n, 20, 1),
-    sex = as.numeric(rbernoulli(n, 0.5))
-  )
 
+  age <- rnorm(n_obs, 37, 3)
+  bmi <- rnorm(n_obs, 20, 1)
+  sex <- as.numeric(rbernoulli(n_obs, 0.5))
+
+  covars <- data.frame(age, bmi, sex)
   ## probabilities
   b0i <- round(rnorm(8, 0.3, 0.01), 2)
   b1i <- round(rnorm(8, 0.4, 0.01), 2)
@@ -213,8 +213,8 @@ simulate_mixture_cube <- function(n_obs = 500,
         marginal_impact_betas[1] * m1_marg +
         marginal_impact_betas[2] * m2_marg +
         marginal_impact_betas[3] * m2_marg +
-        w +
-        w2 +
+        covars$age +
+        covars$sex +
         rnorm(length(res$rcat), mean = 0, sd = eps_sd))
 
     y <- ifelse(y > 0.50, 1, 0)
@@ -232,12 +232,12 @@ simulate_mixture_cube <- function(n_obs = 500,
       marginal_impact_betas[1] * m1_marg +
       marginal_impact_betas[2] * m2_marg +
       marginal_impact_betas[3] * m2_marg +
-      w +
-      w2 +
+      covars$age +
+      covars$sex +
       rnorm(length(res$rcat), mean = 0, sd = eps_sd)
   }
 
-  obs <- as.data.frame(cbind(w, w2, ms, y))
+  obs <- as.data.frame(cbind(covars, ms, y))
 
   return(obs)
 }

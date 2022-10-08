@@ -241,7 +241,7 @@ sim_results <- CVtreeMLE(data = sim_data,
                          parallel_cv = TRUE,
                          seed = 2333,
                          parallel_type = "multi_session",
-                         family = "gaussian",
+                         family = "continuous",
                          num_cores = 2)
 
 proc.time() - ptm

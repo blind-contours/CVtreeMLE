@@ -131,7 +131,7 @@ niehs_results <- CVtreeMLE(data = as.data.frame(niehs_data),
                          n_folds = 5,
                          seed = seed,
                          parallel_cv = TRUE,
-                         family = "gaussian",
+                         family = "continuous",
                          num_cores = 6,
                          max_iter = 1)
 proc.time() - ptm

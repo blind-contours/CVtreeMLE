@@ -171,10 +171,10 @@ assign_outcomes <- function(exposure_grid, c_matrix, data){
 
 
   colnames(data_w_outcomes)[(ncol(data_w_outcomes)-3):ncol(data_w_outcomes)] <-
-    c("outcome_obs", "outcome_true", "region_1", "region_2")
+    c("outcome_obs", "outcome_true", "region1", "region2")
 
-  data_w_outcomes$region_1 <- as.numeric(data_w_outcomes$region_1)
-  data_w_outcomes$region_2 <- as.numeric(data_w_outcomes$region_2)
+  data_w_outcomes$region1 <- as.numeric(data_w_outcomes$region1)
+  data_w_outcomes$region2 <- as.numeric(data_w_outcomes$region2)
 
   rownames(data_w_outcomes) <- NULL
 
@@ -187,28 +187,48 @@ assign_outcomes <- function(exposure_grid, c_matrix, data){
 
 # Calc empirical truth treating each region as a threshold -----------------
 
-calc_empir_truth <- function(P_0_data_filt){
-  n <- nrow(P_0_data_filt)
+calc_empir_truth <- function(data, rule){
+  data_A <- data %>%
+    dplyr::mutate(A = ifelse(eval(parse(text = rule)), 1, 0))
 
-  ATEs <- list()
-  for (i in seq(n)) {
-    rows_lower <- mean(cube_outcomes[1:i-1,]$Outcome)
-    rows_upper <- mean(cube_outcomes[i:n,]$Outcome)
-    ATEs[[i]] <- rows_upper - rows_lower
+  data_A$A_inv <- 1- data_A$A
+
+  all_regions <- colnames(data_A)[1:25]
+
+  if(nrow(table(data_A$A)) == 2) {
+
+  data_groups <- data_A %>%
+    group_by(A)
+
+  data_groups_list <- group_split(data_groups)
+  regions <- as.vector(unique(data_groups_list[[2]]$Label))
+  regions_inv <- as.vector(unique(data_groups_list[[1]]$Label))
+
+  if (length(regions) > 1) {
+    region_probs <- rowSums(data_A[, c(regions)])
+  }else{
+    region_probs <- data_A[, c(regions)]
   }
 
-  cube_outcomes_w_ates <- cbind.data.frame(cube_outcomes, "ATE" = unlist(ATEs))
+  if (length(regions_inv) > 1) {
+    region_comp_probs <- rowSums(data_A[, c(regions_inv)])
+  }else{
+    region_comp_probs <- data_A[, c(regions_inv)]
+  }
 
-  return(cube_outcomes_w_ates)
+  ave_region_outcome <-
+    mean(data_A$outcome_true * (data_A$A / (region_probs)))
+
+  ave_compl_outcome <-
+    mean(data_A$outcome_true * (data_A$A_inv / (region_comp_probs)))
+
+  ate <- ave_region_outcome - ave_compl_outcome
+
+  results_ate <- c(ave_region_outcome, ave_compl_outcome, ate)
+  }else{
+    results_ate <- c(NA, NA, NA)
+  }
+  return(results_ate)
 }
-
-
-
-
-
-
-
-
-
 
 

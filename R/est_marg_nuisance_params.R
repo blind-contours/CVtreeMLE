@@ -11,7 +11,7 @@
 #' @param w Vector of characters denoting covariates
 #' @param aw_stack Super Learner library for fitting Q (outcome mechanism)
 #' and g (treatment mechanism)
-#' @param family Binomial or gaussian
+#' @param family Binomial or continuous
 #' @param a Vector of characters that denote the mixture components
 #' @param marg_decisions List of rules found within the fold for each
 #' mixture component

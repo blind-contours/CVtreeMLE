@@ -29,7 +29,7 @@ est_mix_nuisance_params(
 \item{aw_stack}{Super Learner library for fitting Q (outcome mechanism) and
 g (treatment mechanism)}
 
-\item{family}{Binomial or gaussian}
+\item{family}{Binomial or continuous}
 
 \item{rules}{Dataframe of rules found during the PRE fitting process}
 

@@ -14,6 +14,7 @@ CVtreeMLE(
   w_stack = NULL,
   aw_stack = NULL,
   a_stack = NULL,
+  direction = "positive",
   n_folds,
   seed = 6442,
   family,
@@ -52,12 +53,17 @@ the iterative backfitting for \code{Y|A}, this should be an SL3 object.
 If not provided, \code{utils_create_sls} is used to create default
 decision tree estimators used in the ensemble.}
 
+\item{direction}{Positive or negative, whether to select the tree with the
+maximum (positive) coefficient attached to it in the ensemble or the
+minimum (negative). If positive, positive ATEs are given, if negative,
+negative ATEs are given.}
+
 \item{n_folds}{Number of cross-validation folds.}
 
 \item{seed}{Pass in a seed number for consistency of results. If not provided
 a default seed is generated.}
 
-\item{family}{Family ('binomial' or 'gaussian').}
+\item{family}{Family ('binomial' or 'continuous').}
 
 \item{parallel}{Use parallel processing if a backend is registered; enabled
 by default.}

@@ -73,8 +73,8 @@ common_mixture_rules <- function(group_list,
           summarise(max = max(!!(as.name(var))))
         var_max <- subset(var_max, intxn_rule == 1, select = max)
 
-        augmented_rule <- paste(var, ">", round(var_min, 3), "&", var,
-                                "<", round(var_max, 3))
+        augmented_rule <- paste(var, ">=", round(var_min, 3), "&", var,
+                                "<=", round(var_max, 3))
 
         new_rule <- append(new_rule, augmented_rule)
       }
@@ -122,8 +122,8 @@ common_mixture_rules <- function(group_list,
             summarise(max = max(!!(as.name(var))))
           var_max <- subset(var_max, all_folds == 1, select = max)
 
-          augmented_rule <- paste(var, ">", round(var_min, 3), "&",
-                                  var, "<", round(var_max, 3))
+          augmented_rule <- paste(var, ">=", round(var_min, 3), "&",
+                                  var, "<=", round(var_max, 3))
 
           new_rule <- append(new_rule, augmented_rule)
         }

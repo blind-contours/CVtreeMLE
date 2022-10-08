@@ -19,6 +19,10 @@
 #'  as exposures.
 #' @param y A character indicating which variable in the data to use as the
 #' outcome.
+#' @param direction Positive or negative, whether to select the tree with the
+#' maximum (positive) coefficient attached to it in the ensemble or the
+#' minimum (negative). If positive, positive ATEs are given, if negative,
+#' negative ATEs are given.
 #' @param a_stack Stack of estimators used in the Super Learner during
 #' the iterative backfitting for `Y|A`, this should be an SL3 object.
 #' If not provided, \code{utils_create_sls} is used to create default
@@ -34,7 +38,7 @@
 #' @param n_folds Number of cross-validation folds.
 #' @param seed Pass in a seed number for consistency of results. If not provided
 #' a default seed is generated.
-#' @param family Family ('binomial' or 'gaussian').
+#' @param family Family ('binomial' or 'continuous').
 #' @param max_iter Max number of iterations of iterative backfitting algorithm.
 #' Default is `5`.
 #' @param verbose If true, a message will be printed indicating what process
@@ -193,6 +197,7 @@ CVtreeMLE <- function(w,
                       w_stack = NULL,
                       aw_stack = NULL,
                       a_stack = NULL,
+                      direction = "positive",
                       n_folds,
                       seed = 6442,
                       family,
@@ -229,11 +234,15 @@ CVtreeMLE <- function(w,
   if (family == "binomial" &&
     (min(data[, y], na.rm = TRUE) < 0 || max(data[, y], na.rm = TRUE) > 1)) {
     stop("With binomial family Y must be bounded by [0, 1].
-         Specify family=\"gaussian\" otherwise.")
+         Specify family=\"continuous\" otherwise.")
   }
 
-  if (!family %in% c("binomial", "gaussian")) {
-    stop('Family must be either "binomial" or "gaussian".')
+  if (!family %in% c("binomial", "continuous")) {
+    stop('Family must be either "binomial" or "continuous".')
+  }
+
+  if (!direction %in% c("positive", "negative")) {
+    stop('Direction has to be "positive" or "negative".')
   }
 
   set.seed(seed)
@@ -317,6 +326,7 @@ CVtreeMLE <- function(w,
         a = a,
         w = w,
         y = y,
+        direction = direction,
         w_stack,
         fold = fold_k,
         max_iter,
@@ -661,6 +671,8 @@ CVtreeMLE <- function(w,
 
     ref_rules <- total_marginal_rules[
       str_detect(total_marginal_rules$`Variable Quantile`, "_1"), ]
+
+    # TODO: This breaks if there is "_1" in the exposure variable names - fix
 
     marginal_results <- marginal_results[order(rownames(marginal_results)), ]
     marginal_results <- cbind(marginal_results, non_ref_rules)

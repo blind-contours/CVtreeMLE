@@ -18,7 +18,7 @@ pull_out_rule_vars <- function(x, a) {
     if (length(hits) == 1) {
       hits <- 0
     } else {
-      hits <- paste(hits, collapse = "")
+      hits <- paste(hits, collapse = "-")
     }
     return(hits)
   } else {
@@ -51,6 +51,50 @@ round_rules <- function(rules) {
   rounded_rules <- unlist(rounded_rules)
   return(rounded_rules)
 }
+
+###################################################################
+#' @title Flip Negative Mixture Rules
+#' @param rules Row of absolute max rule results from pre
+#' @param at training data to evaluate rule on
+#' @param mix_comps mixture components
+#' @importFrom rlang .data
+flip_rule <- function(rules, at, mix_comps) {
+  rule <- rules$description
+  rule_split <- strsplit(rule, split = "&")[[1]]
+
+  new_rule <- list()
+
+  for (rule_i in rule_split) {
+
+    var <- mix_comps[str_detect(rule_i, mix_comps)]
+
+    intxn_data <- at %>%
+      mutate(rule_i_eva = ifelse(eval(parse(text = rule_i)), 0, 1))
+
+    var_min <-
+      intxn_data %>%
+      group_by(rule_i_eva) %>%
+      summarise(min = min(!!(as.name(var))))
+
+    var_min <- subset(var_min, rule_i_eva == 1, select = min)
+
+    var_max <-
+      intxn_data %>%
+      group_by(rule_i_eva) %>%
+      summarise(max = max(!!(as.name(var))))
+
+    var_max <- subset(var_max, rule_i_eva == 1, select = max)
+
+    augmented_rule <- paste(var, ">=", round(var_min, 3), "&", var,
+                            "<=", round(var_max, 3))
+
+    new_rule <- append(new_rule, augmented_rule)
+  }
+
+  inv_rule <- paste(new_rule, collapse = " | ")
+
+  return(inv_rule)
+  }
 
 ###################################################################
 #' @title Filter data based on fold

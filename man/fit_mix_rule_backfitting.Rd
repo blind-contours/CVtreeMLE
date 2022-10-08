@@ -10,6 +10,7 @@ fit_mix_rule_backfitting(
   a,
   w,
   y,
+  direction,
   w_stack,
   fold,
   max_iter,
@@ -26,6 +27,9 @@ fit_mix_rule_backfitting(
 \item{w}{Variable names in the covariates}
 
 \item{y}{Variable name for the outcome}
+
+\item{direction}{Positive/negative - max or min coefficient to keep in
+the ensemble}
 
 \item{w_stack}{Stack of algorithms made in SL 3 used in ensemble machine
 learning to fit Y|W}

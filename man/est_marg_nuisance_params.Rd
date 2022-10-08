@@ -28,7 +28,7 @@ est_marg_nuisance_params(
 \item{aw_stack}{Super Learner library for fitting Q (outcome mechanism)
 and g (treatment mechanism)}
 
-\item{family}{Binomial or gaussian}
+\item{family}{Binomial or continuous}
 
 \item{a}{Vector of characters that denote the mixture components}
 

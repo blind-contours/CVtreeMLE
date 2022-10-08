@@ -45,7 +45,7 @@ niehs_results <- CVtreeMLE(data = as.data.frame(niehs_data),
                          n_folds = 5,
                          seed = seed,
                          parallel_cv = TRUE,
-                         family = "gaussian",
+                         family = "continuous",
                          num_cores = 6,
                          max_iter = 1)
 proc.time() - ptm
@@ -79,7 +79,7 @@ pooled_mixture_results %>%
 
 ## ----plot_mixture_results_dot_whisker, fig.height = 3, fig.width = 8----------
 mixture_plots <- plot_mixture_results(
-  v_intxn_results = niehs_results$`V-Specific Mix Results`, 
+  v_intxn_results = niehs_results$`V-Specific Mix Results`,
   hjust = 0.8)
 mixture_plots$X5X7
 

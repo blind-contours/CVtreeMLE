@@ -4,7 +4,9 @@ fit_estimators <- function(data,
                            exposures,
                            outcome,
                            seed,
-                           P_0_data) {
+                           P_0_data,
+                           true_rule,
+                           true_ate) {
 
   sim_results <- CVtreeMLE(data = data,
                            w = covars,
@@ -12,7 +14,8 @@ fit_estimators <- function(data,
                            y = outcome,
                            n_folds = 2,
                            num_cores = 20,
-                           family = "gaussian",
+                           family = "continuous",
+                           direction = "positive",
                            parallel = TRUE,
                            parallel_cv = FALSE,
                            seed = seed)
@@ -33,50 +36,67 @@ fit_estimators <- function(data,
     ate <- mixture_results$`Mixture ATE`
     mix_decisions <- mixture_results$Union_Rule
 
+
+    DA_true_results <- calc_empir_truth(P_0_data, mix_decisions)
+    DA_P0_truth <- DA_true_results[3]
+
     rule_binary <- data %>%
       dplyr::transmute(A = ifelse(eval(parse(text = mix_decisions)), 1, 0))
 
     rule_applied_P_0 <- P_0_data %>%
       dplyr::mutate(A = ifelse(eval(parse(text = mix_decisions)), 1, 0))
 
-    # P_0_means <- rule_applied_P_0 %>%
-    #   group_by(A) %>%
-    #   summarise_at(vars(outcome_true), list(name = mean))
-    #
-    # P_0_ATE <- P_0_means$name[2] - P_0_means$name[1]
-    # DA_rule_bias <- ate - P_0_ATE
-    #
-    # confusion_table <- table(true_rule_binary$A, rule_binary$A)
-    #
-    # true_pos <- confusion_table[2,2] / sum(true_rule_binary$A)
-    # true_neg <- confusion_table[1,1] / (length(true_rule_binary$A) -
-    #                                       sum(true_rule_binary$A))
-    # false_pos <- confusion_table[1,2] / (length(true_rule_binary$A) -
-    #                                        sum(true_rule_binary$A))
-    # false_neg <- confusion_table[2,1] / sum(true_rule_binary$A)
+    true_rule_binary <- data %>%
+      dplyr::mutate(A = ifelse(eval(parse(text = true_rule)), 1, 0))
+
+    DA_rule_bias <- ate - DA_P0_truth
+    bias <- true_ate - ate
+
+    true_coverage = ifelse(
+      (lower <= true_ate & true_ate <= upper), 1,0
+    )
+
+    da_covererage = ifelse(
+      (lower <= DA_P0_truth & DA_P0_truth <= upper), 1,0
+    )
+
+    confusion_table <- table(true_rule_binary$A, rule_binary$A)
+
+    true_pos <- confusion_table[2,2] / sum(true_rule_binary$A)
+    true_neg <- confusion_table[1,1] / (length(true_rule_binary$A) -
+                                          sum(true_rule_binary$A))
+    false_pos <- confusion_table[1,2] / (length(true_rule_binary$A) -
+                                           sum(true_rule_binary$A))
+    false_neg <- confusion_table[2,1] / sum(true_rule_binary$A)
+
   }else{
     mixure_found_ind <- 0
     ate <- NULL
     lower <- NULL
     upper <- NULL
-    # true_pos <- NULL
-    # true_neg <- NULL
-    # false_pos <- NULL
-    # false_neg <- NULL
-    # DA_rule_bias <- NULL
+    true_pos <- NULL
+    true_neg <- NULL
+    false_pos <- NULL
+    false_neg <- NULL
+    DA_rule_bias <- NULL
     mix_decisions <- NULL
+    true_coverage <- NULL
+    da_covererage <- NULL
+    bias <- NULL
   }
 
   sim_out <- list("Mix ind" = mixure_found_ind,
                   "ATE" = ate,
                   "Lower" = lower,
                   "Upper" = upper,
-                  "DA Rule"= mix_decisions)
-                  # "True Pos" = true_pos,
-                  # "True Neg" = true_neg,
-                  # "False Pos" = false_pos,
-                  # "False Neg" = false_neg,
-                  # "DA Rule Bias" = DA_rule_bias,
-                  # "DA Rule"= mix_decisions)
+                  "DA Rule"= mix_decisions,
+                  "True Pos" = true_pos,
+                  "True Neg" = true_neg,
+                  "False Pos" = false_pos,
+                  "False Neg" = false_neg,
+                  "DA Rule Bias" = DA_rule_bias,
+                  "Bias" = bias,
+                  "True Cov" = true_coverage,
+                  "DA Cov" = da_covererage)
   return(sim_out)
 }

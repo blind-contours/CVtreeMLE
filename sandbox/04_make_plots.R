@@ -18,15 +18,6 @@ sim_results_3 <- readRDS(
   here("sandbox/data/CVtreeMLE_run_3.rds")
 )
 
-# combine simulation results into one big df with n_obs column
-sim_results <- names(sim_results) %>% map_dfr(
-  function(this_n) {
-    df <- sim_results[[this_n]]
-    n_num <- as.numeric(stringr::str_replace(this_n, "n_", ""))
-    cbind(n_obs = n_num, df)
-  }
-)
-
 
 sim_statistics <- sim_results %>%
   mutate(

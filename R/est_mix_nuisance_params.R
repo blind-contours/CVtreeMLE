@@ -13,7 +13,7 @@
 #'
 #' @param aw_stack Super Learner library for fitting Q (outcome mechanism) and
 #' g (treatment mechanism)
-#' @param family Binomial or gaussian
+#' @param family Binomial or continuous
 #' @param rules Dataframe of rules found during the PRE fitting process
 #' @param h_aw_trunc_lvl Truncation level of the clever covariate (induces more
 #'  bias to reduce variance)
