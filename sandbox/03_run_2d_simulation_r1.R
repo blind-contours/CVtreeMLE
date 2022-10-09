@@ -111,7 +111,6 @@ for (sample_size in n_obs) {
 
 
 # save results to file
-names(sim_results) <- paste("n", n_obs, sep = "_")
 timestamp <- str_replace_all(Sys.time(), " ", "_")
-saveRDS(object = sim_results,
+saveRDS(object = sim_results_df,
         file = here("sandbox/data", paste0("CVtreeMLE_", "run_1", ".rds")))
