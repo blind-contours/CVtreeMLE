@@ -36,7 +36,6 @@ fit_estimators <- function(data,
     ate <- mixture_results$`Mixture ATE`
     mix_decisions <- mixture_results$Union_Rule
 
-
     DA_true_results <- calc_empir_truth(P_0_data, mix_decisions)
     DA_P0_truth <- DA_true_results[3]
 
@@ -79,10 +78,12 @@ fit_estimators <- function(data,
     false_pos <- NULL
     false_neg <- NULL
     DA_rule_bias <- NULL
+    DA_P0_truth <- NULL
     mix_decisions <- NULL
     true_coverage <- NULL
     da_covererage <- NULL
     bias <- NULL
+    true_rule <- NULL
   }
 
   sim_out <- list("Mix ind" = mixure_found_ind,
@@ -95,8 +96,11 @@ fit_estimators <- function(data,
                   "False Pos" = false_pos,
                   "False Neg" = false_neg,
                   "DA Rule Bias" = DA_rule_bias,
+                  "DA Truth" = DA_P0_truth,
                   "Bias" = bias,
                   "True Cov" = true_coverage,
-                  "DA Cov" = da_covererage)
+                  "DA Cov" = da_covererage,
+                  "True ATE" = true_ate,
+                  "True Rule" = true_rule)
   return(sim_out)
 }

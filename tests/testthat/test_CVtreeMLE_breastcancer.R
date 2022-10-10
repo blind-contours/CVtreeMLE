@@ -25,7 +25,7 @@ w <- c("marg.adhesion", "epith.c.size", "bare.nuclei",
 
 a <- c("cl.thickness", "cell.size", "cell.shape")
 
-data <- data.frame(lapply(data, function(x) as.numeric(as.character(x))))
+data <- suppressWarnings(data.frame(lapply(data, function(x) as.numeric(as.character(x)))))
 
 data <- data %>%
   dplyr::mutate_if(is.numeric, ~ replace_na(., mean(., na.rm = TRUE)))

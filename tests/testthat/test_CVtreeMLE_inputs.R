@@ -3,6 +3,7 @@ library(testthat)
 library(sl3)
 library(partykit)
 library(pre)
+library(tidyr)
 
 
 # simulation code from ph 295, fall 2016 --
@@ -84,7 +85,7 @@ expect_error(cvtreemle_results <- CVtreeMLE(
   y = "y",
   a = c("a_1", "a_2"),
   n_folds = 2,
-  family = "gaussian",
+  family = "continuous",
   max_iter = 10,
   parallel = TRUE,
   verbose = FALSE
@@ -98,7 +99,7 @@ expect_error(cvtreemle_results <- CVtreeMLE(
   y = "y",
   a = c("a_1", "a_2"),
   n_folds = 2,
-  family = "gaussian",
+  family = "continuous",
   max_iter = 10,
   parallel = TRUE,
   verbose = FALSE

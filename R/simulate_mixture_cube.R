@@ -37,6 +37,7 @@
 #' @importFrom stats qlogis qnorm qunif rnorm runif
 #' @importFrom dplyr mutate
 #' @importFrom MASS mvrnorm
+#' @importFrom purrr rbernoulli
 #' @importFrom rlang :=
 #' @return obs: A data frame of the simulated data for the mixture cube.
 
@@ -88,7 +89,7 @@ simulate_mixture_cube <- function(n_obs = 500,
 
   age <- rnorm(n_obs, 37, 3)
   bmi <- rnorm(n_obs, 20, 1)
-  sex <- as.numeric(rbernoulli(n_obs, 0.5))
+  sex <- as.numeric(purrr::rbernoulli(n_obs, 0.5))
 
   covars <- data.frame(age, bmi, sex)
   ## probabilities

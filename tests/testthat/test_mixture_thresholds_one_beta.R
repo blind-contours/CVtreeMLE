@@ -3,6 +3,7 @@ library(testthat)
 library(sl3)
 library(pre)
 library(partykit)
+library(tidyr)
 
 
 data <- simulate_mixture_cube()
@@ -11,7 +12,7 @@ sls <- create_sls()
 w_stack <- sls$W_stack
 tree_stack <- sls$A_stack
 mix_comps <- c("M1", "M2", "M3")
-w <- c("w", "w2")
+w <- c("age", "sex", "bmi")
 data$y_scaled <- data$y
 
 example_output <- fit_mix_rule_backfitting(at = data,

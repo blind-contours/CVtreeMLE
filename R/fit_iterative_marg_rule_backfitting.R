@@ -41,7 +41,7 @@
 #'data <- simulate_mixture_cube()
 #'data$y_scaled <- data$y
 #'mix_comps <- c("M1", "M2", "M3")
-#'W <- c("w", "w2")
+#'W <- c("age", "sex", "bmi")
 #' sls <- create_sls()
 #' w_stack <- sls$W_stack
 #' tree_stack <- sls$A_stack

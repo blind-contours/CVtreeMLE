@@ -1,8 +1,19 @@
 library(CVtreeMLE)
+library(tidyr)
+
+# 1.  All mixtures lower than specified thresholds
+# 2.  M1 is higher but M2 and M3 are lower
+# 3.  M2 is higher but M1 and M3 are lower
+# 4.  M1 and M2 are higher and M3 is lower
+# 5.  M3 is higher and M1 and M2 are lower
+# 6.  M1 and M3 are higher and M2 is lower
+# 7.  M2 and M3 are higher and M1 is lower
+# 8.  All mixtures are higher than thresholds
+
 
 ate <- 6
 
-n_obs <- 500
+n_obs <- 10000
 splits <- c(0.99, 2.0, 2.5)
 mins <- c(0, 0, 0)
 maxs <- c(3, 4, 5)
@@ -17,7 +28,7 @@ eps_sd <- 0.01
 binary <- FALSE
 
 
-sim_data <- simulate_mixture_cube(
+sim_data_exp <- simulate_mixture_cube(
   n_obs = n_obs,
   splits = splits,
   mins = mins,
@@ -33,14 +44,11 @@ sim_data <- simulate_mixture_cube(
   binary = binary
 )
 
-expected_y <- subset(x = sim_data, M1 < 0.99 & M2 > 2.0 & M3 > 2.5, select = y)
+expected_y_exp <- subset(x = sim_data_exp, M1 < 0.99 & M2 > 2.0 & M3 > 2.5, select = y)
 
-expect_equal(mean(expected_y$y), ate, tolerance = 0.07)
+ate <- 0
 
-
-ate <- -2
-
-n_obs <- 1000
+n_obs <- 10000
 splits <- c(0.4, 2.2, 4)
 mins <- c(0, 0, 0)
 maxs <- c(3, 4, 5)
@@ -55,7 +63,7 @@ eps_sd <- 0.01
 binary <- FALSE
 
 
-sim_data <- simulate_mixture_cube(
+sim_data_unexp <- simulate_mixture_cube(
   n_obs = n_obs,
   splits = splits,
   mins = mins,
@@ -71,17 +79,7 @@ sim_data <- simulate_mixture_cube(
   binary = binary
 )
 
-# 1.  All mixtures lower than specified thresholds
-# 2.  M1 is higher but M2 and M3 are lower
-# 3.  M2 is higher but M1 and M3 are lower
-# 4.  M1 and M2 are higher and M3 is lower
-# 5.  M3 is higher and M1 and M2 are lower
-# 6.  M1 and M3 are higher and M2 is lower
-# 7.  M2 and M3 are higher and M1 is lower
-# 8.  All mixtures are higher than thresholds
-
-expected_y <- subset(x = sim_data, M1 >= 0.99 & M2 <= 2.0 & M3 <= 2.5,
-                     select = y)
+expected_y_unexp <- subset(x = sim_data_unexp, M1 < 0.99 & M2 > 2.0 & M3 > 2.5, select = y)
 
 
-expect_equal(mean(expected_y$y), ate, tolerance = 0.07)
+expect_equal(mean(expected_y_exp$y) - mean(expected_y_unexp$y) , 6, tolerance = 0.07)

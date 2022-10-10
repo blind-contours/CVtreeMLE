@@ -19,19 +19,14 @@ sim_results_3 <- readRDS(
 )
 
 
-sim_statistics <- sim_results %>%
-  mutate(
-    covers = ifelse(
-      (Lower <= psi_true & psi_true <= Upper), 1,0
-    )
-  ) %>%
+sim_statistics <- sim_results_1 %>%
   group_by(n_obs) %>%
   summarise(
-    est_bias =
-      mean(ATE) - psi_true,
+    est_bias = mean(Bias),
     est_sd = sd(ATE),
     est_MSE = est_bias^2 + est_sd^2,
-    CI_coverage = mean(covers),
+    DA_CI_coverage = mean(`DA Cov`),
+    Truth_CI_coverage = mean(`True Cov`),
     Mix_found = mean(`Mix ind`),
     True_pos = mean(`True Pos`),
     True_neg = mean(`True Neg`),
@@ -49,7 +44,6 @@ sim_statistics <- sim_results %>%
 sim_statistics_long <- sim_statistics %>%
   tidyr::gather(statistic, value, -c(n_obs))
 
-n_obs <- (cumsum(rep(sqrt(40), 6))^2) # sample sizes at root-n scale
 
 make_sim_statistics_plot <- function(sim_statistics_long, stats) {
   filtered_sim_stats <- sim_statistics_long %>%
@@ -70,7 +64,8 @@ make_sim_statistics_plot <- function(sim_statistics_long, stats) {
 
 CVtreeMLE_stats_plot <- make_sim_statistics_plot(
   sim_statistics_long,
-  stats = c("abs_bias", "est_sd", "sqrt_n_abs_bias", "est_MSE", "CI_coverage", "n_MSE")
+  stats = c("abs_bias", "est_sd",
+            "sqrt_n_abs_bias", "est_MSE", "DA_CI_coverage", "n_MSE")
 )
 
 CVtreeMLE_rule_stats_plot <- make_sim_statistics_plot(

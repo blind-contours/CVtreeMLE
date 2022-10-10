@@ -12,3 +12,4 @@
 ^sandbox$
 ^.lintr$
 ^codecov\.yml$
+^LICENSE\.md$
