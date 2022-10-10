@@ -11,8 +11,8 @@ library(CVtreeMLE)
 source(here("sandbox", "02_fit_estimators.R"))
 source(here("sandbox", "simulate_2d_data.R"))
 
-Sys.unsetenv("GITHUB_PAT")
-devtools::install(upgrade = "never")
+# Sys.unsetenv("GITHUB_PAT")
+# devtools::install(upgrade = "never")
 
 # simulation parameters
 n_sim <- 25 # number of simulations
@@ -84,11 +84,21 @@ for (sample_size in n_obs) {
 
   for(this_iter in seq_len(n_sim)) {
 
-    seed <- sample(1:10000,1)
-    set.seed(seed)
+    stop <- FALSE
+    while (stop == FALSE) {
 
-    data_sim <-  P_0_data_filt %>%
-      slice_sample(n = sample_size)
+      seed <- sample(1:10000,1)
+      set.seed(seed)
+
+      data_sim <-  P_0_data_filt %>%
+        slice_sample(n = sample_size)
+
+      n_true <- dim(data_sim[data_sim$Label == "5 5",])
+      if (n_true[1] != 0) {
+        stop <- TRUE
+      }
+
+    }
 
     est_out <- fit_estimators(data = as.data.frame(data_sim),
                               covars = c("age", "sex", "bmi"),
