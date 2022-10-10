@@ -19,12 +19,14 @@ sim_results_3 <- readRDS(
 )
 
 
-sim_statistics <- sim_results_1 %>%
+sim_statistics <- CVtreeMLE_run_1 %>%
   group_by(n_obs) %>%
   summarise(
     est_bias = mean(Bias),
+    est_da_bias = mean(`DA Rule Bias`),
     est_sd = sd(ATE),
-    est_MSE = est_bias^2 + est_sd^2,
+    est_true_MSE = est_bias^2 + est_sd^2,
+    est_da_MSE = est_da_bias^2 + est_sd^2,
     DA_CI_coverage = mean(`DA Cov`),
     Truth_CI_coverage = mean(`True Cov`),
     Mix_found = mean(`Mix ind`),
@@ -35,9 +37,12 @@ sim_statistics <- sim_results_1 %>%
 
   ) %>%
   mutate(
-    abs_bias = abs(est_bias),
-    sqrt_n_abs_bias = sqrt(n_obs) * abs(est_bias),
-    n_MSE = n_obs*est_MSE,
+    abs_true_bias = abs(est_bias),
+    abs_da_bias = abs(est_da_bias),
+    sqrt_n_abs_true_bias = sqrt(n_obs) * abs(est_bias),
+    sqrt_n_abs_da_bias = sqrt(n_obs) * abs(est_da_bias),
+    n_true_MSE = n_obs*est_true_MSE,
+    n_da_MSE = n_obs*est_da_MSE
   ) %>%
   ungroup
 
@@ -64,13 +69,18 @@ make_sim_statistics_plot <- function(sim_statistics_long, stats) {
 
 CVtreeMLE_stats_plot <- make_sim_statistics_plot(
   sim_statistics_long,
-  stats = c("abs_bias", "est_sd",
-            "sqrt_n_abs_bias", "est_MSE", "DA_CI_coverage", "n_MSE")
+  stats = c("abs_true_bias", "abs_da_bias",
+            "sqrt_n_abs_true_bias", "sqrt_n_abs_da_bias")
 )
 
 CVtreeMLE_rule_stats_plot <- make_sim_statistics_plot(
   sim_statistics_long,
   stats = c("Mix_found", "True_pos", "True_neg", "False_pos","False_neg")
+)
+
+CVtreeMLE_rule_stats_plot <- make_sim_statistics_plot(
+  sim_statistics_long,
+  stats = c("est_sd", "est_true_MSE", "est_da_MSE", "DA_CI_coverage","Truth_CI_coverage")
 )
 
 ggsave(
