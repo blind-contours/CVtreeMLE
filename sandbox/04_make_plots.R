@@ -2,9 +2,7 @@ library(tidyverse)
 library(here)
 library(ggpubr)
 library(purrr)
-library(tidry)
-
-psi_true <- 18
+library(tidyr)
 
 sim_results_1 <- readRDS(
   here("sandbox/data/CVtreeMLE_run_1.rds")
@@ -18,8 +16,14 @@ sim_results_3 <- readRDS(
   here("sandbox/data/CVtreeMLE_run_3.rds")
 )
 
+sim_results_4 <- readRDS(
+  here("sandbox/data/CVtreeMLE_run_4.rds")
+)
 
-sim_statistics <- CVtreeMLE_run_1 %>%
+sim_results <- rbind(sim_results_1, sim_results_2, sim_results_3, sim_results_4)
+
+
+sim_statistics <- sim_results %>%
   group_by(n_obs) %>%
   summarise(
     est_bias = mean(Bias),
@@ -50,7 +54,11 @@ sim_statistics_long <- sim_statistics %>%
   tidyr::gather(statistic, value, -c(n_obs))
 
 
-make_sim_statistics_plot <- function(sim_statistics_long, stats, labels,) {
+make_sim_statistics_plot <- function(sim_statistics_long,
+                                     stats,
+                                     labels,
+                                     color,
+                                     title) {
   filtered_sim_stats <- sim_statistics_long %>%
     filter(
       statistic %in% stats
@@ -67,7 +75,8 @@ make_sim_statistics_plot <- function(sim_statistics_long, stats, labels,) {
     theme(
       axis.text.x = element_text(angle=45, vjust=1, hjust=1)
     ) +
-    scale_x_sqrt(breaks=n_obs)  + labs(x = "Number Observations", title = "Bias Measures")
+    scale_x_sqrt(breaks=n_obs)  + labs(x = "Number Observations",
+                                       title = title)
 
 }
 
@@ -78,11 +87,13 @@ plot_labels <- c(
   "sqrt_n_abs_da_bias" = "Absolute Bias Compared to Data-Adaptive Truth Scaled by Root N"
 )
 
-CVtreeMLE_stats_plot <- make_sim_statistics_plot(
+CVtreeMLE_bias_plot <- make_sim_statistics_plot(
   sim_statistics_long,
   stats = c("abs_true_bias", "abs_da_bias",
             "sqrt_n_abs_true_bias", "sqrt_n_abs_da_bias"),
-  labels = plot_labels
+  labels = plot_labels,
+  color = "steelblue",
+  title = "Bias Measures"
 )
 
 plot_labels <- c(
@@ -93,15 +104,30 @@ plot_labels <- c(
   "False_neg" = "Rule Indicator False Negative Compared to Ground-Truth"
 )
 
-CVtreeMLE_rule_stats_plot <- make_sim_statistics_plot(
+CVtreeMLE_rule_plot <- make_sim_statistics_plot(
   sim_statistics_long,
   stats = c("Mix_found", "True_pos", "True_neg", "False_pos","False_neg"),
-  color = "orange"
+  labels = plot_labels,
+  color = "orange",
+  title = "Rule Coverage Measures"
+)
+
+plot_labels <- c(
+  "est_sd" = "Estimate Standard Deviation",
+  "est_true_MSE" = "MSE based on Ground-Truth Rule ATE",
+  "est_da_MSE" = "MSE based on Data-Adaptive Rule ATE",
+  "DA_CI_coverage" = "Data-Adaptive ATE Coverage",
+  "Truth_CI_coverage" = "Ground-Truth ATE Coverage"
 )
 
 CVtreeMLE_rule_stats_plot <- make_sim_statistics_plot(
   sim_statistics_long,
-  stats = c("est_sd", "est_true_MSE", "est_da_MSE", "DA_CI_coverage","Truth_CI_coverage")
+  stats = c("est_sd", "est_true_MSE",
+            "est_da_MSE", "DA_CI_coverage",
+            "Truth_CI_coverage"),
+  labels = plot_labels,
+  color = "darkgreen",
+  title = "MSE and Coverage Measures"
 )
 
 ggsave(

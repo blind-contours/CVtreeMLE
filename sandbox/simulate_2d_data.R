@@ -165,13 +165,14 @@ assign_outcomes <- function(exposure_grid, c_matrix, data){
   data_w_outcomes <- cbind.data.frame(data,
                                       empty_outcomes_confounded,
                                       empty_outcomes_no_error,
+                                      empty_outcomes,
                                       t(as.data.frame(
                                         sapply(data$Label,
                                                str_split, pattern = " "))))
 
 
-  colnames(data_w_outcomes)[(ncol(data_w_outcomes)-3):ncol(data_w_outcomes)] <-
-    c("outcome_obs", "outcome_true", "region1", "region2")
+  colnames(data_w_outcomes)[(ncol(data_w_outcomes)-4):ncol(data_w_outcomes)] <-
+    c("outcome_obs", "outcome_true", "outcome_exposures", "region1", "region2")
 
   data_w_outcomes$region1 <- as.numeric(data_w_outcomes$region1)
   data_w_outcomes$region2 <- as.numeric(data_w_outcomes$region2)

@@ -12,7 +12,7 @@ fit_estimators <- function(data,
                            w = covars,
                            a = exposures,
                            y = outcome,
-                           n_folds = 4,
+                           n_folds = 10,
                            num_cores = 20,
                            family = "continuous",
                            direction = "positive",
@@ -23,84 +23,135 @@ fit_estimators <- function(data,
   max_ate_index <- which.max(abs(
     sim_results$`Pooled TMLE Mixture Results`$`Mixture ATE`))
 
-  if (length(max_ate_index) == 1) {
-    mixure_found_ind <- 1
-  } else{
-    mixure_found_ind <- 0
-  }
+  ## tmle pooled results ------------------------
+  tmle_pooled_mixture_results <- sim_results$`Pooled TMLE Mixture Results`[max_ate_index,]
+  tmle_pooled_lower <- tmle_pooled_mixture_results$`Lower CI`
+  tmle_pooled_upper <- tmle_pooled_mixture_results$`Upper CI`
+  tmle_pooled_ate <- tmle_pooled_mixture_results$`Mixture ATE`
+  tmle_pooled_mix_decisions <- tmle_pooled_mixture_results$Union_Rule
 
-  if (mixure_found_ind == 1) {
-    mixture_results <- sim_results$`Pooled TMLE Mixture Results`[max_ate_index,]
-    lower <- mixture_results$`Lower CI`
-    upper <- mixture_results$`Upper CI`
-    ate <- mixture_results$`Mixture ATE`
-    mix_decisions <- mixture_results$Union_Rule
+  ## tmle v-specific results ------------------------
+  tmle_v_mixture_results <- sim_results$`V-Specific Mix Results`$`region1-region2`
+  tmle_v_fold_mixture_results <- tmle_v_mixture_results[tmle_v_mixture_results$fold != "Pooled",]
+  v_spec_mean_ate <- mean(tmle_v_fold_mixture_results$ate)
+  v_spec_mean_lower <- mean(tmle_v_fold_mixture_results$lower_ci)
+  v_spec_mean_upper <- mean(tmle_v_fold_mixture_results$upper_ci)
 
-    DA_true_results <- calc_empir_truth(P_0_data, mix_decisions)
-    DA_P0_truth <- DA_true_results[3]
+  ## pooled results ------------------------
+  v_pooled_mixture_results <- tmle_v_mixture_results[tmle_v_mixture_results$fold == "Pooled",]
+  v_pooled_ate <- v_pooled_mixture_results$ate
+  v_pooled_lower <- v_pooled_mixture_results$lower_ci
+  v_pooled_upper <- v_pooled_mixture_results$upper_ci
 
-    rule_binary <- data %>%
-      dplyr::transmute(A = ifelse(eval(parse(text = mix_decisions)), 1, 0))
 
-    rule_applied_P_0 <- P_0_data %>%
-      dplyr::mutate(A = ifelse(eval(parse(text = mix_decisions)), 1, 0))
+  ate_results <- list("tmle_pooled_ate" = tmle_pooled_ate,
+                      "v_spec_mean_ate" = v_spec_mean_ate,
+                      "v_pooled_ate" = v_pooled_ate)
 
-    true_rule_binary <- data %>%
-      dplyr::mutate(A = ifelse(eval(parse(text = true_rule)), 1, 0))
+  lower_ci_results <-  list("tmle_pooled_lower" = tmle_pooled_lower,
+                            "v_spec_mean_lower" = v_spec_mean_lower,
+                            "v_pooled_lower" = v_pooled_lower)
 
-    DA_rule_bias <- ate - DA_P0_truth
-    bias <- true_ate - ate
+  upper_ci_results <-  list("tmle_pooled_upper" = tmle_pooled_upper,
+                            "v_spec_mean_upper" = v_spec_mean_upper,
+                            "v_pooled_upper" = v_pooled_upper)
 
-    true_coverage = ifelse(
-      (lower <= true_ate & true_ate <= upper), 1,0
-    )
+  ## calc DA empirical truth ------------------------
+  da_true_results <- calc_empir_truth(P_0_data, tmle_pooled_mix_decisions)
+  da_p0_truth <- da_true_results[3]
 
-    da_covererage = ifelse(
-      (lower <= DA_P0_truth & DA_P0_truth <= upper), 1,0
-    )
+  tmle_pooled_da_bias <- da_p0_truth - tmle_pooled_ate
+  tmle_pooled_gt_bias <- true_ate - tmle_pooled_ate
 
-    confusion_table <- table(true_rule_binary$A, rule_binary$A)
+  tmle_v_rule_spec_ates <- do.call(rbind,
+                              lapply(X = tmle_v_fold_mixture_results$mix_rule,
+                                     calc_empir_truth, data = P_0_data))
 
-    true_pos <- confusion_table[2,2] / sum(true_rule_binary$A)
-    true_neg <- confusion_table[1,1] / (length(true_rule_binary$A) -
-                                          sum(true_rule_binary$A))
-    false_pos <- confusion_table[1,2] / (length(true_rule_binary$A) -
-                                           sum(true_rule_binary$A))
-    false_neg <- confusion_table[2,1] / sum(true_rule_binary$A)
+  v_spec_da_mean_bias <- mean(tmle_v_fold_mixture_results$ate -
+                             tmle_v_rule_spec_ates[,3])
 
-  }else{
-    mixure_found_ind <- 0
-    ate <- NULL
-    lower <- NULL
-    upper <- NULL
-    true_pos <- NULL
-    true_neg <- NULL
-    false_pos <- NULL
-    false_neg <- NULL
-    DA_rule_bias <- NULL
-    DA_P0_truth <- NULL
-    mix_decisions <- NULL
-    true_coverage <- NULL
-    da_covererage <- NULL
-    bias <- NULL
-    true_rule <- NULL
-  }
+  v_spec_gt_mean_bias <- mean(tmle_v_fold_mixture_results$ate -
+                               true_ate)
 
-  sim_out <- list("Mix ind" = mixure_found_ind,
-                  "ATE" = ate,
-                  "Lower" = lower,
-                  "Upper" = upper,
-                  "DA Rule"= mix_decisions,
-                  "True Pos" = true_pos,
-                  "True Neg" = true_neg,
-                  "False Pos" = false_pos,
-                  "False Neg" = false_neg,
-                  "DA Rule Bias" = DA_rule_bias,
-                  "DA Truth" = DA_P0_truth,
-                  "Bias" = bias,
-                  "True Cov" = true_coverage,
-                  "DA Cov" = da_covererage,
-                  "True ATE" = true_ate,
-                  "True Rule" = true_rule)
+  v_pooled_da_bias <- v_pooled_mixture_results$ate - da_p0_truth
+  v_pooled_gt_bias <- v_pooled_mixture_results$ate - true_ate
+
+  bias_results <- list("tmle_pooled_da_bias" = tmle_pooled_da_bias,
+                       "tmle_pooled_gt_bias" = tmle_pooled_gt_bias,
+                       "v_spec_da_mean_bias" = v_spec_da_mean_bias,
+                       "v_spec_gt_mean_bias" = v_spec_gt_mean_bias,
+                       "v_pooled_da_bias" = v_pooled_da_bias,
+                       "v_pooled_gt_bias" = v_pooled_gt_bias)
+
+  ## calc DA empirical truth ------------------------
+
+  rule_binary <- data %>%
+    dplyr::transmute(A = ifelse(eval(parse(text = tmle_pooled_mix_decisions)), 1, 0))
+
+  rule_applied_P_0 <- P_0_data %>%
+    dplyr::mutate(A = ifelse(eval(parse(text = tmle_pooled_mix_decisions)), 1, 0))
+
+  true_rule_binary <- data %>%
+    dplyr::mutate(A = ifelse(eval(parse(text = true_rule)), 1, 0))
+
+
+  confusion_table <- table(true_rule_binary$A, rule_binary$A)
+
+  true_pos <- confusion_table[2,2] / sum(true_rule_binary$A)
+  true_neg <- confusion_table[1,1] / (length(true_rule_binary$A) -
+                                        sum(true_rule_binary$A))
+  false_pos <- confusion_table[1,2] / (length(true_rule_binary$A) -
+                                         sum(true_rule_binary$A))
+  false_neg <- confusion_table[2,1] / sum(true_rule_binary$A)
+
+  conf_table_results <- list("True Pos" = true_pos,
+                             "True Neg" = true_neg,
+                             "False Pos" = false_pos,
+                             "False Neg" = false_neg)
+
+  ## Coverage results --------------------------
+
+  tmle_pooled_gt_coverage = ifelse(
+    (tmle_pooled_lower <= true_ate & true_ate <= tmle_pooled_upper), 1,0
+  )
+
+  tmle_pooled_da_coverage = ifelse(
+    (tmle_pooled_lower <= da_p0_truth & da_p0_truth <= tmle_pooled_upper), 1,0
+  )
+
+  v_spec_mean_da_cov <- mean(ifelse((tmle_v_fold_mixture_results$lower_ci
+               <= round(tmle_v_rule_spec_ates[,3],2) & round(tmle_v_rule_spec_ates[,3],2)
+               <= tmle_v_fold_mixture_results$upper_ci), 1, 0))
+
+  v_spec_mean_gt_cov <- mean(ifelse((tmle_v_fold_mixture_results$lower_ci
+                                     <= true_ate & true_ate
+                                     <= tmle_v_fold_mixture_results$upper_ci), 1, 0))
+
+  pooled_da_cov <- ifelse(
+    (v_pooled_lower <= true_ate & true_ate <= v_pooled_upper), 1,0
+  )
+
+  pooled_gt_cov <- ifelse(
+    (v_pooled_lower <= da_p0_truth & da_p0_truth <= v_pooled_upper), 1,0
+  )
+
+
+
+  coverage_results <- list("tmle_pooled_gt_coverage" = tmle_pooled_gt_coverage,
+                           "tmle_pooled_da_coverage" = tmle_pooled_da_coverage,
+                           "v_spec_mean_da_cov" = v_spec_mean_da_cov,
+                           "v_spec_mean_gt_cov" = v_spec_mean_gt_cov,
+                           "pooled_da_cov" = pooled_da_cov,
+                           "pooled_gt_cov" = pooled_gt_cov
+                           )
+
+
+sim_out <- c(ate_results,
+             lower_ci_results,
+             upper_ci_results,
+             bias_results,
+             conf_table_results,
+             coverage_results)
+
   return(sim_out)
 }

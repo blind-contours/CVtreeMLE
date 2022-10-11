@@ -8,9 +8,10 @@ library(tidyr)
 
 seed <- 6442
 set.seed(seed)
-data <- simulate_mixture_cube(subspace_assoc_strength_betas = c(0.1, 0.1, 0.2,
+data <- simulate_mixture_cube(n_obs = 1000,
+                              subspace_assoc_strength_betas = c(0.1, 0.1, 0.2,
                                                                 0.3, 0.4, 0.7,
-                                                                0.8, 2.5))
+                                                                0.8, 10))
 
 sls <- create_sls()
 w_stack <- sls$W_stack
@@ -26,7 +27,7 @@ example_output <- fit_mix_rule_backfitting(at = data,
                                              direction = "positive",
                                              w_stack = w_stack,
                                              fold = 1,
-                                             max_iter = 2,
+                                             max_iter = 4,
                                              verbose = FALSE,
                                              parallel = FALSE,
                                              seed = seed)
@@ -35,4 +36,4 @@ mixture_rules <- example_output$rules
 
 expect_true(mixture_rules[
   which.max(mixture_rules$coefficient), "test"] ==
-  "M1M2M3")
+  "M1-M2-M3")
