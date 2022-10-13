@@ -4,6 +4,8 @@ library(ggpubr)
 library(purrr)
 library(tidyr)
 
+n_obs <- c(200, 350, 500, 750, 1000, 1500, 2000, 3000)
+
 sim_results_1 <- readRDS(
   here("sandbox/data/CVtreeMLE_run_1.rds")
 )
@@ -26,14 +28,27 @@ sim_results <- rbind(sim_results_1, sim_results_2, sim_results_3, sim_results_4)
 sim_statistics <- sim_results %>%
   group_by(n_obs) %>%
   summarise(
-    est_bias = mean(Bias),
-    est_da_bias = mean(`DA Rule Bias`),
-    est_sd = sd(ATE),
-    est_true_MSE = est_bias^2 + est_sd^2,
-    est_da_MSE = est_da_bias^2 + est_sd^2,
-    DA_CI_coverage = mean(`DA Cov`),
-    Truth_CI_coverage = mean(`True Cov`),
-    Mix_found = mean(`Mix ind`),
+    tmle_pooled_da_bias = abs(mean(tmle_pooled_da_bias)),
+    tmle_pooled_gt_bias = abs(mean(tmle_pooled_gt_bias)),
+    v_spec_da_mean_bias = abs(mean(v_spec_da_mean_bias)),
+    v_spec_gt_mean_bias = abs(mean(v_spec_gt_mean_bias)),
+    v_pooled_da_bias = abs(mean(v_pooled_da_bias)),
+    v_pooled_gt_bias = abs(mean(v_pooled_gt_bias)),
+    tmle_pooled_sd = sd(tmle_pooled_ate),
+    v_spec_mean_sd = sd(v_spec_mean_ate),
+    v_pooled_mean_sd = sd(v_pooled_ate),
+    tmle_pooled_da_mse = tmle_pooled_da_bias^2 + tmle_pooled_sd^2,
+    tmle_pooled_gt_mse = tmle_pooled_gt_bias^2 + tmle_pooled_sd^2,
+    v_spec_da_mean_mse = v_spec_da_mean_bias^2 + v_spec_mean_sd^2,
+    v_spec_gt_mean_mse = v_spec_gt_mean_bias^2 + v_spec_mean_sd^2,
+    v_pooled_da_mse = v_pooled_da_bias^2 + v_pooled_mean_sd^2,
+    v_pooled_gt_mse = v_pooled_gt_bias^2 + v_pooled_mean_sd^2,
+    tmle_pooled_gt_coverage = mean(tmle_pooled_gt_coverage),
+    tmle_pooled_da_coverage = mean(tmle_pooled_da_coverage),
+    v_spec_mean_da_cov = mean(v_spec_mean_da_cov),
+    v_spec_mean_gt_cov = mean(v_spec_mean_gt_cov),
+    pooled_da_cov = mean(pooled_da_cov),
+    pooled_gt_cov = mean(pooled_gt_cov),
     True_pos = mean(`True Pos`),
     True_neg = mean(`True Neg`),
     False_pos = mean(`False Pos`),
@@ -41,12 +56,18 @@ sim_statistics <- sim_results %>%
 
   ) %>%
   mutate(
-    abs_true_bias = abs(est_bias),
-    abs_da_bias = abs(est_da_bias),
-    sqrt_n_abs_true_bias = sqrt(n_obs) * abs(est_bias),
-    sqrt_n_abs_da_bias = sqrt(n_obs) * abs(est_da_bias),
-    n_true_MSE = n_obs*est_true_MSE,
-    n_da_MSE = n_obs*est_da_MSE
+    sqrt_n_abs_tmle_pooled_da_bias = sqrt(n_obs) * tmle_pooled_da_bias,
+    sqrt_n_abs_tmle_pooled_gt_bias = sqrt(n_obs) * tmle_pooled_gt_bias,
+    sqrt_n_abs_v_spec_da_mean_bias = sqrt(n_obs) * v_spec_da_mean_bias,
+    sqrt_n_abs_v_spec_gt_mean_bias = sqrt(n_obs) * v_spec_gt_mean_bias,
+    sqrt_n_abs_v_pooled_da_bias = sqrt(n_obs) * v_pooled_da_bias,
+    sqrt_n_abs_v_pooled_gt_bias = sqrt(n_obs) * v_pooled_gt_bias,
+    n_tmle_pooled_da_mse = n_obs*tmle_pooled_da_mse,
+    n_tmle_pooled_gt_mse = n_obs*tmle_pooled_gt_mse,
+    n_v_spec_da_mean_mse = n_obs*v_spec_da_mean_mse,
+    n_v_spec_gt_mean_mse = n_obs*v_spec_gt_mean_mse,
+    n_v_pooled_da_mse = n_obs*v_pooled_da_mse,
+    n_v_spec_mean_gt_cov = n_obs*v_spec_mean_gt_cov,
   ) %>%
   ungroup
 
@@ -81,23 +102,23 @@ make_sim_statistics_plot <- function(sim_statistics_long,
 }
 
 plot_labels <- c(
-  "abs_true_bias" = "Absolute Bias Compared to Truth",
-  "abs_da_bias" = "Absolute Bias Compared to Data-Adaptive Truth",
-  "sqrt_n_abs_true_bias" = "Absolute Bias Compared to Truth Scaled by Root N",
-  "sqrt_n_abs_da_bias" = "Absolute Bias Compared to Data-Adaptive Truth Scaled by Root N"
+  "tmle_pooled_da_bias" = "Pooled TMLE Bias Compared to Data-Adaptive Rule ATE",
+  "tmle_pooled_gt_bias" = "Pooled TMLE Bias Compared to Ground-Truth Rule ATE",
+  "v_spec_da_mean_bias" = "Mean V-Specific TMLE Bias Compared to Data-Adaptive Rule ATE",
+  "v_spec_gt_mean_bias" = "Mean V-Specific TMLE Bias Compared to Ground-Truth Rule ATE",
+  "v_pooled_da_bias" = "Harmonic Mean Bias Compared to Data-Adaptive Rule ATE",
+  "v_pooled_gt_bias" = "Harmonic Mean Bias Compared to Ground-Truth Rule ATE"
 )
 
 CVtreeMLE_bias_plot <- make_sim_statistics_plot(
   sim_statistics_long,
-  stats = c("abs_true_bias", "abs_da_bias",
-            "sqrt_n_abs_true_bias", "sqrt_n_abs_da_bias"),
+  stats = names(plot_labels),
   labels = plot_labels,
   color = "steelblue",
   title = "Bias Measures"
 )
 
 plot_labels <- c(
-  "Mix_found" = "Proportion Mixture Rule Found",
   "True_pos" = "Rule Indicator True Positive Compared to Ground-Truth",
   "True_neg" = "Rule Indicator True Negative Compared to Ground-Truth",
   "False_pos" = "Rule Indicator False Positive Compared to Ground-Truth",
@@ -106,7 +127,7 @@ plot_labels <- c(
 
 CVtreeMLE_rule_plot <- make_sim_statistics_plot(
   sim_statistics_long,
-  stats = c("Mix_found", "True_pos", "True_neg", "False_pos","False_neg"),
+  stats = names(plot_labels),
   labels = plot_labels,
   color = "orange",
   title = "Rule Coverage Measures"

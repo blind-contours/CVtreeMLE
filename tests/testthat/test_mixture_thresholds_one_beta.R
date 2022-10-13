@@ -6,7 +6,7 @@ library(partykit)
 library(tidyr)
 
 
-data <- simulate_mixture_cube()
+data <- simulate_mixture_cube(n_obs =  1000)
 
 sls <- create_sls()
 w_stack <- sls$W_stack
@@ -22,7 +22,7 @@ example_output <- fit_mix_rule_backfitting(at = data,
                                              direction = "positive",
                                              w_stack = w_stack,
                                              fold = 1,
-                                             max_iter = 1,
+                                             max_iter = 4,
                                              verbose = FALSE,
                                              parallel = FALSE,
                                              seed = 6442)
@@ -30,4 +30,4 @@ example_output <- fit_mix_rule_backfitting(at = data,
 mixture_rules <- example_output$rules
 
 expect_true(mixture_rules[
-  which.max(mixture_rules$coefficient), "test"] == "M1M2M3")
+  which.max(mixture_rules$coefficient), "test"] == "M1-M2-M3")
