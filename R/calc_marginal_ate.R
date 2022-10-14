@@ -123,21 +123,21 @@ calc_marginal_ate <- function(marginal_data,
                                            qbar_0w = marg_mix$qbar_0w)
 
     ## back-scale Y
-    qbar_aw_star <- scale_to_original(scaled_vals = flux_results$qbar_aw_star,
-                                     max_orig = max(marg_mix[y]),
-                                     min_orig = min(marg_mix[y]))
+    # qbar_aw_star <- scale_to_original(scaled_vals = flux_results$qbar_aw_star,
+    #                                  max_orig = max(marg_mix[y]),
+    #                                  min_orig = min(marg_mix[y]))
+    #
+    # qbar_0w_star <- scale_to_original(scaled_vals = flux_results$qbar_0w_star,
+    #                                  max_orig = max(marg_mix[y]),
+    #                                  min_orig = min(marg_mix[y]))
+    #
+    # qbar_1w_star <- scale_to_original(scaled_vals = flux_results$qbar_1w_star,
+    #                                  max_orig = max(marg_mix[y]),
+    #                                  min_orig = min(marg_mix[y]))
 
-    qbar_0w_star <- scale_to_original(scaled_vals = flux_results$qbar_0w_star,
-                                     max_orig = max(marg_mix[y]),
-                                     min_orig = min(marg_mix[y]))
-
-    qbar_1w_star <- scale_to_original(scaled_vals = flux_results$qbar_1w_star,
-                                     max_orig = max(marg_mix[y]),
-                                     min_orig = min(marg_mix[y]))
-
-    marg_mix$qbar_aw_star <- qbar_aw_star
-    marg_mix$qbar_0w_star <- qbar_0w_star
-    marg_mix$qbar_1w_star <- qbar_1w_star
+    marg_mix$qbar_aw_star <- flux_results$qbar_aw_star
+    marg_mix$qbar_0w_star <- flux_results$qbar_0w_star
+    marg_mix$qbar_1w_star <- flux_results$qbar_1w_star
 
     ate_results <- calc_ate_estimates(data = marg_mix,
                                       ate_var = "marg_ATE",

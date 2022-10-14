@@ -14,6 +14,7 @@
 #' mixture components
 #' @param at Training data
 #' @param w A vector of characters indicating variables that are covariates
+#' @param y The outcome variable name
 #' @param w_stack Stack of algorithms made in SL 3 used in ensemble machine
 #' learning to fit Y|W
 #' @param tree_stack Stack of algorithms made in SL for the decision tree
@@ -62,6 +63,7 @@
 fit_marg_rule_backfitting <- function(mix_comps,
                                                 at,
                                                 w,
+                                                y,
                                                 w_stack,
                                                 tree_stack,
                                                 fold,
@@ -90,7 +92,7 @@ fit_marg_rule_backfitting <- function(mix_comps,
     task <- sl3::make_sl3_Task(
       data = at,
       covariates = covars_m,
-      outcome = "y_scaled",
+      outcome = y,
       outcome_type = "continuous"
     )
 
@@ -110,7 +112,7 @@ fit_marg_rule_backfitting <- function(mix_comps,
     task <- sl3::make_sl3_Task(
       data = at,
       covariates = target_m,
-      outcome = "y_scaled",
+      outcome = y,
       outcome_type = "continuous"
     )
 
@@ -138,7 +140,7 @@ fit_marg_rule_backfitting <- function(mix_comps,
       task_offset <- sl3::sl3_Task$new(
         data = at,
         covariates = covars_m,
-        outcome = "y_scaled",
+        outcome = y,
         outcome_type = "continuous",
         offset = "Qbar_M_W_initial"
       )
@@ -146,7 +148,7 @@ fit_marg_rule_backfitting <- function(mix_comps,
       task_no_offset <- sl3::sl3_Task$new(
         data = at_no_offset,
         covariates = covars_m,
-        outcome = "y_scaled",
+        outcome = y,
         outcome_type = "continuous",
         offset = "Qbar_M_W_initial"
       )
@@ -162,7 +164,7 @@ fit_marg_rule_backfitting <- function(mix_comps,
       task <- sl3::make_sl3_Task(
         data = at,
         covariates = target_m,
-        outcome = "y_scaled",
+        outcome = y,
         outcome_type = "continuous",
         offset = "Qbar_ne_M_W_initial"
       )
@@ -170,7 +172,7 @@ fit_marg_rule_backfitting <- function(mix_comps,
       task_no_offset <- sl3::make_sl3_Task(
         data = at_no_offset,
         covariates = target_m,
-        outcome = "y_scaled",
+        outcome = y,
         outcome_type = "continuous",
         offset = "Qbar_ne_M_W_initial"
       )
@@ -238,11 +240,10 @@ fit_marg_rule_backfitting <- function(mix_comps,
     }
     rules <- as.data.frame(cbind(rules, fold, target_m, quantile))
 
-    backfit_resids <- (at$y_scaled - glmtree_model_preds_offset)^2
+    backfit_resids <- (at[,y] - glmtree_model_preds_offset)^2
     backfit_rmse <- sqrt(mean(backfit_resids))
 
     rules$RMSE <- backfit_rmse
-
 
     marg_decisions[[i]] <- rules
     models[[target_m]] <- selected_learner$fit_object

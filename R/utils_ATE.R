@@ -156,17 +156,20 @@ calc_clever_covariate <- function(ghat_1_w,
 #'  avoid numerical instability issues.
 #' @export
 fit_least_fav_submodel <- function(h_aw, data, qbar_aw, qbar_1w, qbar_0w) {
+
+  data$y_scaled <- scale_to_unit(data[y])[[1]]
+
   logit_update <-
     stats::glm(
-      y_scaled ~ -1 + h_aw + offset(qlogis(bound_precision(qbar_aw))),
+      y_scaled ~ -1 + h_aw + offset(qlogis(bound_precision(scale_to_unit(qbar_aw)))),
       family = "quasibinomial",
       data = data
     )
 
   epsilon <- logit_update$coef
-  qbar_aw_star <- plogis(qlogis(bound_precision(qbar_aw)) + epsilon * h_aw)
-  qbar_1w_star <- plogis(qlogis(bound_precision(qbar_1w)) + epsilon * h_aw)
-  qbar_0w_star <- plogis(qlogis(bound_precision(qbar_0w)) + epsilon * h_aw)
+  qbar_aw_star <- qbar_aw + epsilon * h_aw
+  qbar_1w_star <- qbar_1w + epsilon * h_aw
+  qbar_0w_star <- qbar_0w + epsilon * h_aw
 
   return(list("qbar_aw_star" = qbar_aw_star,
               "qbar_1w_star" = qbar_1w_star,

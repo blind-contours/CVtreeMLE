@@ -97,34 +97,34 @@ calc_mixtures_ate <- function(input_mix_rules,
       mix_rule_data <- do.call(rbind, unlist(intxn_rule_data_list,
                                              recursive = FALSE))
 
-      flux_results <- fit_least_fav_submodel(mix_rule_data$h_aw,
-                                             mix_rule_data,
-                                             mix_rule_data$qbar_aw,
-                                             mix_rule_data$qbar_1w,
-                                             mix_rule_data$qbar_0w)
+      flux_results <- fit_least_fav_submodel(h_aw = mix_rule_data$h_aw,
+                                             data = mix_rule_data,
+                                             qbar_aw = mix_rule_data$qbar_aw,
+                                             qbar_1w = mix_rule_data$qbar_1w,
+                                             qbar_0w = mix_rule_data$qbar_0w)
 
-      qbar_aw_star <- flux_results$qbar_aw_star
-      qbar_1w_star <- flux_results$qbar_1w_star
-      qbar_0w_star <- flux_results$qbar_0w_star
+      mix_rule_data$qbar_aw_star <- flux_results$qbar_aw_star
+      mix_rule_data$qbar_1w_star <- flux_results$qbar_1w_star
+      mix_rule_data$qbar_0w_star <- flux_results$qbar_0w_star
 
-      ## back-scale Y
-      mix_rule_data$qbar_aw_star <- scale_to_original(scaled_vals =
-                                                        qbar_aw_star,
-                                        max_orig =
-                                          max(mix_rule_data[outcome]),
-                                        min(mix_rule_data[outcome]))
-
-      mix_rule_data$qbar_0w_star <- scale_to_original(scaled_vals =
-                                                        qbar_0w_star,
-                                        max_orig =
-                                          max(mix_rule_data[outcome]),
-                                        min(mix_rule_data[outcome]))
-
-      mix_rule_data$qbar_1w_star <- scale_to_original(scaled_vals =
-                                                        qbar_1w_star,
-                                        max_orig =
-                                          max(mix_rule_data[outcome]),
-                                        min(mix_rule_data[outcome]))
+      # ## back-scale Y
+      # mix_rule_data$qbar_aw_star <- scale_to_original(scaled_vals =
+      #                                                   qbar_aw_star,
+      #                                   max_orig =
+      #                                     max(mix_rule_data[outcome]),
+      #                                   min(mix_rule_data[outcome]))
+      #
+      # mix_rule_data$qbar_0w_star <- scale_to_original(scaled_vals =
+      #                                                   qbar_0w_star,
+      #                                   max_orig =
+      #                                     max(mix_rule_data[outcome]),
+      #                                   min(mix_rule_data[outcome]))
+      #
+      # mix_rule_data$qbar_1w_star <- scale_to_original(scaled_vals =
+      #                                                   qbar_1w_star,
+      #                                   max_orig =
+      #                                     max(mix_rule_data[outcome]),
+      #                                   min(mix_rule_data[outcome]))
 
       ate_results <- calc_ate_estimates(data = mix_rule_data,
                                         ate_var = "mix_ate",

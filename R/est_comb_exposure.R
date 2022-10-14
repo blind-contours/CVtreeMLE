@@ -38,7 +38,7 @@
 
 est_comb_exposure <- function(at,
                               av,
-                              y = "y_scaled",
+                              y,
                               w,
                               marg_rule_train,
                               marg_rule_valid,
@@ -58,22 +58,22 @@ est_comb_exposure <- function(at,
     av_mc <- av
 
     at_marg_comb <-
-      cbind(marg_rule_train, at_mc[w], at_mc["y_scaled"])
+      cbind(marg_rule_train, at_mc[w], at_mc[y])
 
     av_marg_comb <-
-      cbind(marg_rule_valid, av_mc[w], av_mc["y_scaled"])
+      cbind(marg_rule_valid, av_mc[w], av_mc[y])
 
     task_at <- sl3::make_sl3_Task(
       data = at_marg_comb,
       covariates = c(colnames(marg_rule_train), w),
-      outcome = "y_scaled",
+      outcome = y,
       outcome_type = family
     )
 
     task_av <- sl3::make_sl3_Task(
       data = av_marg_comb,
       covariates = c(colnames(marg_rule_valid), w),
-      outcome = "y_scaled",
+      outcome = y,
       outcome_type = family
     )
 
@@ -86,10 +86,10 @@ est_comb_exposure <- function(at,
 
     sl_fit <- suppressWarnings(discrete_sl$train(task_at))
 
-    qbar_aw <- bound_precision(sl_fit$predict(task_av))
-    qbar_aw <- scale_to_original(scaled_vals = qbar_aw,
-                                 max_orig = max(at_mc[y]),
-                                 min_orig = min(at_mc[y]))
+    qbar_aw <- sl_fit$predict(task_av)
+    # qbar_aw <- scale_to_original(scaled_vals = qbar_aw,
+    #                              max_orig = max(at_mc[y]),
+    #                              min_orig = min(at_mc[y]))
 
     av_marg_comb$qbar_aw_combo <- qbar_aw
     av_marg_comb$y_scaled <- av_mc$y_scaled

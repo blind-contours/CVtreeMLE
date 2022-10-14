@@ -134,22 +134,40 @@ CVtreeMLE_rule_plot <- make_sim_statistics_plot(
 )
 
 plot_labels <- c(
-  "est_sd" = "Estimate Standard Deviation",
-  "est_true_MSE" = "MSE based on Ground-Truth Rule ATE",
-  "est_da_MSE" = "MSE based on Data-Adaptive Rule ATE",
-  "DA_CI_coverage" = "Data-Adaptive ATE Coverage",
-  "Truth_CI_coverage" = "Ground-Truth ATE Coverage"
+  "tmle_pooled_gt_coverage" = "Pooled TMLE Ground-Truth ATE Coverage",
+  "tmle_pooled_da_coverage" = "Pooled TMLE Data-Adaptive ATE Coverage",
+  "v_spec_mean_da_cov" = "Average Fold Specific Data-Adaptive ATE Coverage",
+  "v_spec_mean_gt_cov" = "Average Fold Specific Ground-Truth ATE Coverage",
+  "pooled_da_cov" = "Harmonic Pooled Data-Adaptive Coverage",
+  "pooled_gt_cov" =  "Harmonic Pooled Ground-Truth Coverage"
 )
 
-CVtreeMLE_rule_stats_plot <- make_sim_statistics_plot(
+CVtreeMLE_cov_plot <- make_sim_statistics_plot(
   sim_statistics_long,
-  stats = c("est_sd", "est_true_MSE",
-            "est_da_MSE", "DA_CI_coverage",
-            "Truth_CI_coverage"),
+  stats = names(plot_labels),
   labels = plot_labels,
   color = "darkgreen",
-  title = "MSE and Coverage Measures"
+  title = "Coverage Measures"
 )
+
+plot_labels <- c(
+  "tmle_pooled_da_mse" = "Pooled TMLE MSE for Data-Adaptive Rule ATE",
+  "tmle_pooled_gt_mse" = "Pooled TMLE MSE for Ground-Truth ATE",
+  "v_spec_da_mean_mse" = "V-Specific TMLE MSE for Data-Adaptive Rule ATE",
+  "v_spec_gt_mean_mse" = "V-Specific TMLE MSE for Ground-Truth Rule ATE",
+  "v_pooled_da_mse" = "Harmonic Pooled MSE for Data-Adaptive Rule ATE",
+  "v_pooled_gt_mse" = "Harmonic Pooled MSE for Ground-Truth Rule ATE"
+)
+
+CVtreeMLE_mse_plot <- make_sim_statistics_plot(
+  sim_statistics_long,
+  stats = names(plot_labels),
+  labels = plot_labels,
+  color = "darkgreen",
+  title = "MSE Measures"
+)
+
+
 
 ggsave(
   here('sandbox/plots/CVtreeMLE_stats.png'),

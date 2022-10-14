@@ -9,6 +9,7 @@ fit_marg_rule_backfitting(
   mix_comps,
   at,
   w,
+  y,
   w_stack,
   tree_stack,
   fold,
@@ -25,6 +26,8 @@ mixture components}
 \item{at}{Training data}
 
 \item{w}{A vector of characters indicating variables that are covariates}
+
+\item{y}{The outcome variable name}
 
 \item{w_stack}{Stack of algorithms made in SL 3 used in ensemble machine
 learning to fit Y|W}

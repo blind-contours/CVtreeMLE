@@ -9,6 +9,7 @@
 #' @param at Training data
 #' @param av Validation data
 #' @param w Vector of characters denoting covariates
+#' @param y Outcome variable
 #' @param aw_stack Super Learner library for fitting Q (outcome mechanism)
 #' and g (treatment mechanism)
 #' @param family Binomial or continuous
@@ -34,6 +35,7 @@
 est_marg_nuisance_params <- function(at,
                                      av,
                                      w,
+                                     y,
                                      aw_stack,
                                      family,
                                      a,
@@ -135,7 +137,7 @@ est_marg_nuisance_params <- function(at,
         task_at <- sl3::make_sl3_Task(
           data = at_data,
           covariates = c(w, "a"),
-          outcome = "y_scaled",
+          outcome = y,
           outcome_type = family,
           folds = 2
         )
@@ -147,21 +149,21 @@ est_marg_nuisance_params <- function(at,
         task_av <- sl3::make_sl3_Task(
           data = av_data,
           covariates = c(w, "a"),
-          outcome = "y_scaled",
+          outcome = y,
           outcome_type = family
         )
 
         task_av_1 <- sl3::make_sl3_Task(
           data = x_m1,
           covariates = c(w, "a"),
-          outcome = "y_scaled",
+          outcome = y,
           outcome_type = family
         )
 
         task_av_0 <- sl3::make_sl3_Task(
           data = x_m0,
           covariates = c(w, "a"),
-          outcome = "y_scaled",
+          outcome = y,
           outcome_type = family
         )
 
@@ -175,9 +177,9 @@ est_marg_nuisance_params <- function(at,
 
         sl_fit <- suppressWarnings(discrete_sl$train(task_at))
 
-        q_bar_aw <- bound_precision(sl_fit$predict(task_av))
-        q_bar_1w <- bound_precision(sl_fit$predict(task_av_1))
-        q_bar_0w <- bound_precision(sl_fit$predict(task_av_0))
+        q_bar_aw <- sl_fit$predict(task_av)
+        q_bar_1w <- sl_fit$predict(task_av_1)
+        q_bar_0w <- sl_fit$predict(task_av_0)
 
         av_data$qbar_aw <- q_bar_aw
         av_data$qbar_1w <- q_bar_1w
