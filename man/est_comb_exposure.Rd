@@ -8,7 +8,7 @@ thresholds identified in the fold.}
 est_comb_exposure(
   at,
   av,
-  y = "y_scaled",
+  y,
   w,
   marg_rule_train,
   marg_rule_valid,

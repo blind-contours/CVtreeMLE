@@ -10,7 +10,7 @@
 #' across the folds
 #' @param input_mix_data Nuisance parameter data for mixture rules found
 #' across the folds
-#' @param outcome Character indicating the outcome variable
+#' @param y Character indicating the outcome variable
 #' @param n_folds Number of folds used in cross-validation
 #' @importFrom data.table rbindlist
 #' @importFrom dplyr group_by
@@ -25,7 +25,7 @@
 
 calc_v_fold_mixtures_ate <- function(input_mix_rules,
                                      input_mix_data,
-                                     outcome,
+                                     y,
                                      n_folds) {
   input_mix_rules <- unlist(input_mix_rules, recursive = FALSE)
   input_mix_data <- unlist(input_mix_data, recursive = FALSE)
@@ -52,6 +52,7 @@ calc_v_fold_mixtures_ate <- function(input_mix_rules,
 
       flux_results <- fit_least_fav_submodel(
         h_aw = mix_data$h_aw,
+        y = y,
         data = mix_data,
         qbar_aw = mix_data$qbar_aw,
         qbar_1w = mix_data$qbar_1w,
@@ -84,12 +85,12 @@ calc_v_fold_mixtures_ate <- function(input_mix_rules,
       ate_results <- calc_ate_estimates(
         data = mix_data,
         ate_var = "mix_ate",
-        outcome = outcome,
+        y = y,
         p_adjust_n = length(input_mix_data),
         v_fold = TRUE
       )
 
-      sqrd_resids <- (mix_data$qbar_aw_star - mix_data[outcome])^2
+      sqrd_resids <- (mix_data$qbar_aw_star - mix_data[y])^2
       rmse <- sqrt(mean(sqrd_resids[, 1], na.rm = TRUE))
 
       ate <- round(ate_results$ate, 3)
