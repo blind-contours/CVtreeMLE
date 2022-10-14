@@ -8,6 +8,7 @@ est_mix_nuisance_params(
   at,
   av,
   w,
+  y,
   no_mix_rules,
   aw_stack,
   family,
@@ -23,6 +24,8 @@ est_mix_nuisance_params(
 \item{av}{Validation data}
 
 \item{w}{Vector of characters denoting covariates}
+
+\item{y}{The outcome variable}
 
 \item{no_mix_rules}{TRUE/FALSE indicator for if no mixture rules were found}
 

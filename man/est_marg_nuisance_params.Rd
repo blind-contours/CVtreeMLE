@@ -8,6 +8,7 @@ est_marg_nuisance_params(
   at,
   av,
   w,
+  y,
   aw_stack,
   family,
   a,
@@ -24,6 +25,8 @@ est_marg_nuisance_params(
 \item{av}{Validation data}
 
 \item{w}{Vector of characters denoting covariates}
+
+\item{y}{Outcome variable}
 
 \item{aw_stack}{Super Learner library for fitting Q (outcome mechanism)
 and g (treatment mechanism)}

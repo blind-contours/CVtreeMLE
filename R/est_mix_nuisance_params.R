@@ -9,6 +9,7 @@
 #' @param at Training data
 #' @param av Validation data
 #' @param w Vector of characters denoting covariates
+#' @param y The outcome variable
 #' @param no_mix_rules TRUE/FALSE indicator for if no mixture rules were found
 #'
 #' @param aw_stack Super Learner library for fitting Q (outcome mechanism) and
@@ -30,6 +31,7 @@
 est_mix_nuisance_params <- function(at,
                                     av,
                                     w,
+                                    y,
                                     no_mix_rules,
                                     aw_stack,
                                     family,
@@ -96,7 +98,7 @@ est_mix_nuisance_params <- function(at,
         task_at <- sl3::make_sl3_Task(
           data = at_mix,
           covariates = c(w, "A_mix"),
-          outcome = "y_scaled",
+          outcome = y,
           outcome_type = family,
           folds = 2
         )
@@ -108,21 +110,21 @@ est_mix_nuisance_params <- function(at,
         task_av <- sl3::make_sl3_Task(
           data = av_mix,
           covariates = c(w, "A_mix"),
-          outcome = "y_scaled",
+          outcome = y,
           outcome_type = family
         )
 
         task_av_1 <- sl3::make_sl3_Task(
           data = x_m1,
           covariates = c(w, "A_mix"),
-          outcome = "y_scaled",
+          outcome = y,
           outcome_type = family
         )
 
         task_av_0 <- sl3::make_sl3_Task(
           data = x_m0,
           covariates = c(w, "A_mix"),
-          outcome = "y_scaled",
+          outcome = y,
           outcome_type = family
         )
 
@@ -136,11 +138,11 @@ est_mix_nuisance_params <- function(at,
 
         sl_fit <- suppressWarnings(discrete_sl$train(task_at))
 
-        sl_fit$predict(task_av)
+        # sl_fit$predict(task_av)
 
-        qbar_aw <- bound_precision(sl_fit$predict(task_av))
-        qbar_1w <- bound_precision(sl_fit$predict(task_av_1))
-        qbar_0w <- bound_precision(sl_fit$predict(task_av_0))
+        qbar_aw <- sl_fit$predict(task_av)
+        qbar_1w <- sl_fit$predict(task_av_1)
+        qbar_0w <- sl_fit$predict(task_av_0)
 
         ## add Qbar to the AV dataset
         av_mix$qbar_aw <- qbar_aw

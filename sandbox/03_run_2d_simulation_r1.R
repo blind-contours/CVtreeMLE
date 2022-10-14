@@ -11,8 +11,8 @@ library(CVtreeMLE)
 source(here("sandbox", "02_fit_estimators.R"))
 source(here("sandbox", "simulate_2d_data.R"))
 
-# Sys.unsetenv("GITHUB_PAT")
-# devtools::install(upgrade = "never")
+Sys.unsetenv("GITHUB_PAT")
+devtools::install(upgrade = "never")
 
 # simulation parameters
 n_sim <- 5 # number of simulations

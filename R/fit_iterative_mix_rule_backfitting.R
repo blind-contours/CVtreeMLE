@@ -70,8 +70,10 @@ fit_mix_rule_backfitting <- function(at,
   pre_boot_list <- list()
 
   task <- sl3::make_sl3_Task(
-    data = at, covariates = w,
-    outcome = "y_scaled", outcome_type = "continuous"
+    data = at,
+    covariates = w,
+    outcome = y,
+    outcome_type = "continuous"
   )
 
   discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(sl3::loss_squared_error)
@@ -88,7 +90,7 @@ fit_mix_rule_backfitting <- function(at,
   at <- cbind(at, qbar_w_initial)
 
   formula <-
-    as.formula(paste("y_scaled", "~", paste(a, collapse = "+")))
+    as.formula(paste(y, "~", paste(a, collapse = "+")))
 
   pre_model_t0 <- pre::pre(formula,
                            data = at,
@@ -120,8 +122,9 @@ fit_mix_rule_backfitting <- function(at,
     iter <- iter + 1
 
     task <- sl3::make_sl3_Task(
-      data = at, covariates = w,
-      outcome = "y_scaled",
+      data = at,
+      covariates = w,
+      outcome = y,
       outcome_type = "continuous",
       offset = "qbar_aw_initial"
     )
@@ -131,7 +134,7 @@ fit_mix_rule_backfitting <- function(at,
     sl_fit_backfit_no_offset <- sl3::sl3_Task$new(
       data = at_no_offset,
       covariates = w,
-      outcome = "y_scaled",
+      outcome = y,
       outcome_type = "continuous",
       offset = "qbar_aw_initial"
     )
@@ -231,7 +234,7 @@ fit_mix_rule_backfitting <- function(at,
 
   rules$fold <- fold
 
-  backfit_resids <- (at$y_scaled - pre_model_preds_offset)^2
+  backfit_resids <- (at[,y] - pre_model_preds_offset)^2
   backfit_rmse <- sqrt(mean(backfit_resids))
 
   rules$RMSE <- backfit_rmse

@@ -269,12 +269,12 @@ CVtreeMLE <- function(w,
 
   if (family == "binomial") {
     ## create the CV folds
-    data[, "y_scaled"] <- data[y]
-    data$folds <- create_cv_folds(n_folds, data$y_scaled)
+    # data[, "y_scaled"] <- data[y]
+    data$folds <- create_cv_folds(n_folds, data[,y])
   } else {
-    data[, "y_scaled"] <- scale_to_unit(data[y])
+    # data[, "y_scaled"] <- scale_to_unit(data[y])
     ## create the CV folds
-    data$folds <- create_cv_folds(n_folds, data$y_scaled)
+    data$folds <- create_cv_folds(n_folds, data[,y])
   }
 
   if (parallel == TRUE) {
@@ -381,6 +381,7 @@ CVtreeMLE <- function(w,
       mix_comps = a,
       at = at,
       w = w,
+      y = y,
       w_stack = w_stack,
       tree_stack = a_stack,
       fold = fold_k,
@@ -459,6 +460,7 @@ CVtreeMLE <- function(w,
       at = at,
       av = av,
       w = w,
+      y = y,
       no_mix_rules = no_mix_rules,
       aw_stack = aw_stack,
       family = family,
@@ -476,6 +478,7 @@ CVtreeMLE <- function(w,
       at = at,
       av = av,
       w = w,
+      y = y,
       aw_stack = aw_stack,
       family = family,
       a = a,
