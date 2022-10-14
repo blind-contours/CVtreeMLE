@@ -4,7 +4,7 @@
 \alias{calc_v_fold_mixtures_ate}
 \title{Calculate the ATE for V-fold specific rules}
 \usage{
-calc_v_fold_mixtures_ate(input_mix_rules, input_mix_data, outcome, n_folds)
+calc_v_fold_mixtures_ate(input_mix_rules, input_mix_data, y, n_folds)
 }
 \arguments{
 \item{input_mix_rules}{List of dataframes of rules found for a mixture
@@ -13,7 +13,7 @@ across the folds}
 \item{input_mix_data}{Nuisance parameter data for mixture rules found
 across the folds}
 
-\item{outcome}{Character indicating the outcome variable}
+\item{y}{Character indicating the outcome variable}
 
 \item{n_folds}{Number of folds used in cross-validation}
 }

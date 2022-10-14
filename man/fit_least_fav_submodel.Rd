@@ -4,13 +4,15 @@
 \alias{fit_least_fav_submodel}
 \title{Least Favorable Submodel}
 \usage{
-fit_least_fav_submodel(h_aw, data, qbar_aw, qbar_1w, qbar_0w)
+fit_least_fav_submodel(h_aw, data, y, qbar_aw, qbar_1w, qbar_0w)
 }
 \arguments{
-\item{h_aw}{\code{numeric} vector of values for the clever covariate
-used in the fluctuation model}
+\item{h_aw}{\code{numeric} vector of values for the clever covariate}
 
 \item{data}{dataframe that includes treatement/exposure}
+
+\item{y}{Outcome variable
+used in the fluctuation model}
 
 \item{qbar_aw}{Initial predictions for Y|A,W - A being observed A}
 

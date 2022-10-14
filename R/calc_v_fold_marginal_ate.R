@@ -118,6 +118,7 @@ calc_v_fold_marginal_ate <- function(marginal_data,
 
     flux_results <- fit_least_fav_submodel(h_aw = marg_mix$h_aw,
                                            data = marg_mix,
+                                           y = y,
                                            qbar_aw = marg_mix$qbar_aw,
                                            qbar_1w = marg_mix$qbar_1w,
                                            qbar_0w = marg_mix$qbar_0w)
@@ -141,7 +142,7 @@ calc_v_fold_marginal_ate <- function(marginal_data,
 
     ate_results <- calc_ate_estimates(data = marg_mix,
                                       ate_var = "marg_ate",
-                                      outcome = y,
+                                      y = y,
                                       p_adjust_n = length(marg_data))
 
     sqrd_resids <- (marg_mix$qbar_aw_star - marg_mix[y])^2

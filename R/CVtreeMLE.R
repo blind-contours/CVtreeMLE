@@ -574,7 +574,7 @@ CVtreeMLE <- function(w,
     mixture_results <- calc_mixtures_ate(
       input_mix_rules = mix_rules,
       input_mix_data = mix_data,
-      outcome = y,
+      y = y,
       n_folds = n_folds,
       no_mixture_rules = no_mixture_rules
     )
@@ -588,7 +588,7 @@ CVtreeMLE <- function(w,
     v_fold_mixture_results <- calc_v_fold_mixtures_ate(
       input_mix_rules = mix_rules,
       input_mix_data = mix_data,
-      outcome = y,
+      y = y,
       n_folds = n_folds
       )
 

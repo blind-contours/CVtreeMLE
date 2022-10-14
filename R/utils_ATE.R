@@ -5,7 +5,7 @@
 
 #' @param data Data frame that includes treatement/exposure
 #' @param ate_var Variable that the ATE is assigned to in `data`
-#' @param outcome Variable name in `data` for the raw outcome
+#' @param y Variable name in `data` for the raw outcome
 #' @param p_adjust_n Number repeated measures to adjust p-value
 #' @param v_fold TRUE/FALSE whether to calculate v-fold specific ATE estimates
 #'
@@ -15,7 +15,7 @@
 #' @export
 calc_ate_estimates <- function(data,
                                ate_var,
-                               outcome,
+                               y,
                                p_adjust_n,
                                v_fold = FALSE) {
 
@@ -34,7 +34,7 @@ calc_ate_estimates <- function(data,
   }
 
   ics <- base::by(data, data$folds, function(data) {
-    result <- data["h_aw"] * (data[outcome] - data["qbar_aw_star"]) +
+    result <- data["h_aw"] * (data[y] - data["qbar_aw_star"]) +
       data["qbar_1w_star"] - data["qbar_0w_star"] - data["thetas"]
     result
   })
@@ -143,6 +143,7 @@ calc_clever_covariate <- function(ghat_1_w,
 #' favorable submodel in the TMLE update step
 #'
 #' @param h_aw \code{numeric} vector of values for the clever covariate
+#' @param y Outcome variable
 #' used in the fluctuation model
 #' @param data dataframe that includes treatement/exposure
 #' @param qbar_aw Initial predictions for Y|A,W - A being observed A
@@ -155,7 +156,7 @@ calc_clever_covariate <- function(ghat_1_w,
 #'  the returned values are bounded to machine precision. This is intended to
 #'  avoid numerical instability issues.
 #' @export
-fit_least_fav_submodel <- function(h_aw, data, qbar_aw, qbar_1w, qbar_0w) {
+fit_least_fav_submodel <- function(h_aw, data, y, qbar_aw, qbar_1w, qbar_0w) {
 
   data$y_scaled <- scale_to_unit(data[y])[[1]]
 

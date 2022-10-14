@@ -12,8 +12,8 @@
 #' @param input_mix_rules List of dataframes of rules found for a mixture
 #' across the folds
 #' @param input_mix_data Nuisance parameter data for mixture rules found
+#' @param y Outcome variable
 #' across the folds
-#' @param outcome Character indicating the outcome variable
 #' @param n_folds Number of folds used in cross-validation
 #' @param no_mixture_rules TRUE/FALSE whether no mixture rules were found
 #' across all the folds
@@ -42,7 +42,7 @@
 
 calc_mixtures_ate <- function(input_mix_rules,
                               input_mix_data,
-                              outcome,
+                              y,
                               n_folds,
                               no_mixture_rules) {
 
@@ -98,6 +98,7 @@ calc_mixtures_ate <- function(input_mix_rules,
                                              recursive = FALSE))
 
       flux_results <- fit_least_fav_submodel(h_aw = mix_rule_data$h_aw,
+                                             y = y,
                                              data = mix_rule_data,
                                              qbar_aw = mix_rule_data$qbar_aw,
                                              qbar_1w = mix_rule_data$qbar_1w,
@@ -128,11 +129,11 @@ calc_mixtures_ate <- function(input_mix_rules,
 
       ate_results <- calc_ate_estimates(data = mix_rule_data,
                                         ate_var = "mix_ate",
-                                        outcome = outcome,
+                                        y = y,
                                         p_adjust_n = length(group_list))
 
       ## calculate RMSE for Y| A = rule i, W
-      sqrd_resids <- (mix_rule_data$qbar_aw_star - mix_rule_data[outcome])^2
+      sqrd_resids <- (mix_rule_data$qbar_aw_star - mix_rule_data[y])^2
       rmse <- sqrt(mean(sqrd_resids[, 1]))
 
       mixture_results$`Mixture ATE`[group] <- round(ate_results$ate, 3)

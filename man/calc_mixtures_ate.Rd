@@ -7,7 +7,7 @@
 calc_mixtures_ate(
   input_mix_rules,
   input_mix_data,
-  outcome,
+  y,
   n_folds,
   no_mixture_rules
 )
@@ -16,10 +16,10 @@ calc_mixtures_ate(
 \item{input_mix_rules}{List of dataframes of rules found for a mixture
 across the folds}
 
-\item{input_mix_data}{Nuisance parameter data for mixture rules found
-across the folds}
+\item{input_mix_data}{Nuisance parameter data for mixture rules found}
 
-\item{outcome}{Character indicating the outcome variable}
+\item{y}{Outcome variable
+across the folds}
 
 \item{n_folds}{Number of folds used in cross-validation}
 

@@ -4,14 +4,14 @@
 \alias{calc_ate_estimates}
 \title{Calculate the ATE and variance estimates}
 \usage{
-calc_ate_estimates(data, ate_var, outcome, p_adjust_n, v_fold = FALSE)
+calc_ate_estimates(data, ate_var, y, p_adjust_n, v_fold = FALSE)
 }
 \arguments{
 \item{data}{Data frame that includes treatement/exposure}
 
 \item{ate_var}{Variable that the ATE is assigned to in \code{data}}
 
-\item{outcome}{Variable name in \code{data} for the raw outcome}
+\item{y}{Variable name in \code{data} for the raw outcome}
 
 \item{p_adjust_n}{Number repeated measures to adjust p-value}
 
