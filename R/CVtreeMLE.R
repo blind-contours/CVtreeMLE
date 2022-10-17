@@ -19,6 +19,9 @@
 #'  as exposures.
 #' @param y A character indicating which variable in the data to use as the
 #' outcome.
+#' @param fit_marginals TRUE/FALSE whether or not to find cut-points at
+#' ATEs for each data-adaptive level of the dose-response relationship for
+#' each individual exposure. Default is FALSE.
 #' @param direction Positive or negative, whether to select the tree with the
 #' maximum (positive) coefficient attached to it in the ensemble or the
 #' minimum (negative). If positive, positive ATEs are given, if negative,
@@ -197,6 +200,7 @@ CVtreeMLE <- function(w,
                       w_stack = NULL,
                       aw_stack = NULL,
                       a_stack = NULL,
+                      fit_marginals = FALSE,
                       direction = "positive",
                       n_folds,
                       seed = 6442,
@@ -371,59 +375,73 @@ CVtreeMLE <- function(w,
           Determine if Partitioning Nodes Exist-----")
   }
 
-  fold_marginal_rules <- furrr::future_map(unique(data$folds),
-                                               function(fold_k) {
+  if (fit_marginals == TRUE) {
+    fold_marginal_rules <- furrr::future_map(unique(data$folds),
+                                             function(fold_k) {
 
-    at <- data[data$folds != fold_k, ]
-    av <- data[data$folds == fold_k, ]
+                                               at <- data[
+                                                 data$folds != fold_k, ]
+                                               av <- data[
+                                                 data$folds == fold_k, ]
 
-    marg_decisions <- fit_marg_rule_backfitting(
-      mix_comps = a,
-      at = at,
-      w = w,
-      y = y,
-      w_stack = w_stack,
-      tree_stack = a_stack,
-      fold = fold_k,
-      max_iter = max_iter,
-      verbose = verbose,
-      parallel_cv = parallel_cv,
-      seed = seed
-    )
+                                               marg_decisions <-
+                                                 fit_marg_rule_backfitting(
+                                                 mix_comps = a,
+                                                 at = at,
+                                                 w = w,
+                                                 y = y,
+                                                 w_stack = w_stack,
+                                                 tree_stack = a_stack,
+                                                 fold = fold_k,
+                                                 max_iter = max_iter,
+                                                 verbose = verbose,
+                                                 parallel_cv = parallel_cv,
+                                                 seed = seed
+                                               )
 
-    marg_decisions
-  }, .options = furrr::furrr_options(seed = seed, packages = c("CVtreeMLE",
-                                                               "partykit",
-                                                               "sl3")))
+                                               marg_decisions
+                                             }, .options =
+                                               furrr::furrr_options(
+                                                 seed = seed,
+                                                 packages = c("CVtreeMLE",
+                                                              "partykit","sl3")
+                                                 ))
 
-  marginal_rules <- purrr::map(fold_marginal_rules,
-                               c("marginal_df"))
+    marginal_rules <- purrr::map(fold_marginal_rules,
+                                 c("marginal_df"))
 
-  marginal_models <- purrr::map(fold_marginal_rules,
-                               c("models"))
+    marginal_models <- purrr::map(fold_marginal_rules,
+                                  c("models"))
 
-  marginal_rules <- do.call(rbind, marginal_rules)
+    marginal_rules <- do.call(rbind, marginal_rules)
 
-  filt_fold_marginal_rules <- filter_marginal_rules(marginal_rules, n_folds)
-  filt_fold_marginal_rules$rules <- round_rules(filt_fold_marginal_rules$rules)
-  marginal_RMSE <- calc_marginal_rule_rmses(data = filt_fold_marginal_rules)
+    filt_fold_marginal_rules <- filter_marginal_rules(marginal_rules, n_folds)
+    filt_fold_marginal_rules$rules <- round_rules(filt_fold_marginal_rules$rules)
+    marginal_RMSE <- calc_marginal_rule_rmses(data = filt_fold_marginal_rules)
 
-  backfit_model_RMSEs <- rbind(marginal_RMSE, mixture_RMSE)
+    backfit_model_RMSEs <- rbind(marginal_RMSE, mixture_RMSE)
 
-  if (dim(filt_fold_marginal_rules)[1] == 0) {
+    if (dim(filt_fold_marginal_rules)[1] == 0) {
+      no_marginal_rules <- TRUE
+    } else {
+      no_marginal_rules <- FALSE
+    }
+
+    if (verbose) {
+      print("Marginal results found")
+      print(filt_fold_marginal_rules)
+    }
+
+  }else{
+    backfit_model_RMSEs <- mixture_RMSE
     no_marginal_rules <- TRUE
-  } else {
-    no_marginal_rules <- FALSE
   }
+
 
   if (no_marginal_rules == TRUE && no_mixture_rules == TRUE) {
     return("No Mixture or Marginal Rules Found")
   }
 
-  if (verbose) {
-    print("Marginal results found")
-    print(filt_fold_marginal_rules)
-  }
 
   # Estimate nuisance parameters ---------------------------
 
@@ -697,6 +715,7 @@ CVtreeMLE <- function(w,
     v_fold_marginal_results_w_pooled <- NULL
     ref_rules <- NULL
   }
+
 
   results_list <- list(
     "Model RMSEs" = backfit_model_RMSEs,
