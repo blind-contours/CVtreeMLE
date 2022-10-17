@@ -157,10 +157,10 @@ assign_outcomes <- function(exposure_grid, c_matrix, data){
     empty_outcomes[data$Label == label ,] <- outcome_val
   }
 
-  empty_outcomes_confounded <- empty_outcomes + data$age + data$sex +
+  empty_outcomes_confounded <- empty_outcomes + 0.2*data$age + 0.4*data$sex +
     rnorm(nrow(empty_outcomes), mean = 0, sd = 0.01)
 
-  empty_outcomes_no_error <- empty_outcomes + data$age + data$sex
+  empty_outcomes_no_error <- empty_outcomes + 0.2*data$age + 0.4*data$sex
 
   data_w_outcomes <- cbind.data.frame(data,
                                       empty_outcomes_confounded,

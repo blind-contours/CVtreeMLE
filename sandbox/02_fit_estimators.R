@@ -12,7 +12,7 @@ fit_estimators <- function(data,
                            w = covars,
                            a = exposures,
                            y = outcome,
-                           n_folds = 10,
+                           n_folds = 2,
                            num_cores = 20,
                            family = "continuous",
                            direction = "positive",
@@ -120,7 +120,7 @@ fit_estimators <- function(data,
   )
 
   v_spec_mean_da_cov <- mean(ifelse((tmle_v_fold_mixture_results$lower_ci
-               <= round(tmle_v_rule_spec_ates[,3],2) & round(tmle_v_rule_spec_ates[,3],2)
+               <= tmle_v_rule_spec_ates[,3] & tmle_v_rule_spec_ates[,3]
                <= tmle_v_fold_mixture_results$upper_ci), 1, 0))
 
   v_spec_mean_gt_cov <- mean(ifelse((tmle_v_fold_mixture_results$lower_ci
@@ -134,8 +134,6 @@ fit_estimators <- function(data,
   pooled_gt_cov <- ifelse(
     (v_pooled_lower <= da_p0_truth & da_p0_truth <= v_pooled_upper), 1,0
   )
-
-
 
   coverage_results <- list("tmle_pooled_gt_coverage" = tmle_pooled_gt_coverage,
                            "tmle_pooled_da_coverage" = tmle_pooled_da_coverage,
@@ -151,7 +149,9 @@ sim_out <- c(ate_results,
              upper_ci_results,
              bias_results,
              conf_table_results,
-             coverage_results)
+             coverage_results,
+             "true_ate" = true_ate,
+             "da rule" = tmle_pooled_mix_decisions)
 
   return(sim_out)
 }
