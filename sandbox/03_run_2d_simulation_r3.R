@@ -16,7 +16,7 @@ source(here("sandbox", "simulate_2d_data.R"))
 
 # simulation parameters
 n_sim <- 20 # number of simulations
-n_obs <- c(200, 350, 500, 750, 1000, 1500, 2000, 3000)
+n_obs <- c(200, 350, 500, 750, 1000, 1500, 2000, 3000, 5000)
 
 # Establish globals ---------------------------
 
