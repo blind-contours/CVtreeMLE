@@ -15,7 +15,7 @@ source(here("sandbox", "simulate_2d_data.R"))
 # devtools::install(upgrade = "never")
 
 # simulation parameters
-n_sim <- 10 # number of simulations
+n_sim <- 20 # number of simulations
 n_obs <- c(200, 350, 500, 750, 1000, 1500, 2000, 3000)
 
 # Establish globals ---------------------------

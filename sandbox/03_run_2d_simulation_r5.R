@@ -11,12 +11,12 @@ library(CVtreeMLE)
 source(here("sandbox", "02_fit_estimators.R"))
 source(here("sandbox", "simulate_2d_data.R"))
 
-# Sys.unsetenv("GITHUB_PAT")
-# devtools::install(upgrade = "never")
+Sys.unsetenv("GITHUB_PAT")
+devtools::install(upgrade = "never")
 
 # simulation parameters
 n_sim <- 20 # number of simulations
-n_obs <- c(200, 350, 500, 750, 1000, 1500, 2000, 3000)
+n_obs <- c(200, 350, 500, 750, 1000, 1500, 2000, 3000, 5000)
 
 # Establish globals ---------------------------
 
@@ -85,7 +85,6 @@ for (sample_size in n_obs) {
   for(this_iter in seq_len(n_sim)) {
 
     stop <- FALSE
-
     while (stop == FALSE) {
 
       seed <- sample(1:10000,1)
@@ -124,4 +123,4 @@ for (sample_size in n_obs) {
 # save results to file
 timestamp <- str_replace_all(Sys.time(), " ", "_")
 saveRDS(object = sim_results_df,
-        file = here("sandbox/data", paste0("CVtreeMLE_", "run_4", ".rds")))
+        file = here("sandbox/data", paste0("CVtreeMLE_", "run_5", ".rds")))
