@@ -10,7 +10,7 @@ Authors@R:
            comment = c(ORCID = "0000-0002-5515-6307"))
 Description: A methodology for mixed exposure analysis that leverages
     data-adaptive target parameters, CV-TMLE, and decision trees.
-License: MIT
+License: MIT + file LICENSE
 Depends: 
     R (>= 2.10)
 Imports: 

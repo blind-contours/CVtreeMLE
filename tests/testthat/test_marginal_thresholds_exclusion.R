@@ -20,11 +20,11 @@ w_stack <- sls$W_stack
 tree_stack <- sls$A_stack
 mix_comps <- c("M1", "M2", "M3", "M4")
 w <- c("sex", "age", "bmi")
-data$y_scaled <- data$y
 
 example_output <- fit_marg_rule_backfitting(mix_comps = mix_comps,
                                                       at = data,
                                                       w = w,
+                                                      y = "y",
                                                       w_stack = w_stack,
                                                       tree_stack = tree_stack,
                                                       fold = 1,
