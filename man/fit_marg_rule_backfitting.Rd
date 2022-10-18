@@ -71,15 +71,15 @@ difference while controlling for covariates.
 }
 \examples{
 data <- simulate_mixture_cube()
-data$y_scaled <- data$y
 mix_comps <- c("M1", "M2", "M3")
-W <- c("age", "sex", "bmi")
+w <- c("age", "sex", "bmi")
 sls <- create_sls()
 w_stack <- sls$W_stack
 tree_stack <- sls$A_stack
 example_output <- fit_marg_rule_backfitting(mix_comps = mix_comps,
                                                      at = data,
-                                                     w = W,
+                                                     w = w,
+                                                     y = "y",
                                                      w_stack = w_stack,
                                                      tree_stack = tree_stack,
                                                      fold = 1,

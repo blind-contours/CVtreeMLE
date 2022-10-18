@@ -64,7 +64,6 @@ to partition the space in M.
 }
 \examples{
 data <- simulate_mixture_cube()
-data$y_scaled <- data$y
 mix_comps <- c("M1", "M2", "M3")
 W <- c("age", "sex", "bmi")
 sls <- create_sls()
@@ -73,7 +72,7 @@ tree_stack <- sls$A_stack
 example_output <- fit_mix_rule_backfitting(at = data,
                                             a = mix_comps,
                                             w = W,
-                                            y = "y_scaled",
+                                            y = "y",
                                             direction = "positive",
                                             w_stack = w_stack,
                                             fold = 1,

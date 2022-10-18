@@ -14,6 +14,7 @@ CVtreeMLE(
   w_stack = NULL,
   aw_stack = NULL,
   a_stack = NULL,
+  fit_marginals = FALSE,
   direction = "positive",
   n_folds,
   seed = 6442,
@@ -52,6 +53,10 @@ estimators used in the ensemble.}
 the iterative backfitting for \code{Y|A}, this should be an SL3 object.
 If not provided, \code{utils_create_sls} is used to create default
 decision tree estimators used in the ensemble.}
+
+\item{fit_marginals}{TRUE/FALSE whether or not to find cut-points at
+ATEs for each data-adaptive level of the dose-response relationship for
+each individual exposure. Default is FALSE.}
 
 \item{direction}{Positive or negative, whether to select the tree with the
 maximum (positive) coefficient attached to it in the ensemble or the
