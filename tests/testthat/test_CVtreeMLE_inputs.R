@@ -3,7 +3,6 @@ library(testthat)
 library(sl3)
 library(partykit)
 library(pre)
-library(tidyr)
 
 
 # simulation code from ph 295, fall 2016 --

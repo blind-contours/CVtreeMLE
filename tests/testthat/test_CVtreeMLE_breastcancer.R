@@ -6,7 +6,6 @@ library(pre)
 library(xml2)
 library(sl3)
 library(dplyr)
-library(tidyr)
 
 data(BreastCancer, package = "mlbench")
 data <- BreastCancer
@@ -20,15 +19,12 @@ table(data$y)
 
 y <- "y"
 
-w <- c("marg.adhesion", "epith.c.size", "bare.nuclei",
+w <- c("marg.adhesion", "epith.c.size",
        "bl.cromatin", "normal.nucleoli", "mitoses")
 
 a <- c("cl.thickness", "cell.size", "cell.shape")
 
 data <- suppressWarnings(data.frame(lapply(data, function(x) as.numeric(as.character(x)))))
-
-data <- data %>%
-  dplyr::mutate_if(is.numeric, ~ replace_na(., mean(., na.rm = TRUE)))
 
 data <- data[colnames(data) != "class"]
 

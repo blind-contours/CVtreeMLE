@@ -3,7 +3,6 @@ library(testthat)
 library(sl3)
 library(pre)
 library(partykit)
-library(tidyr)
 
 
 data <- simulate_mixture_cube(n_obs =  1000)

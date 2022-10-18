@@ -1,5 +1,4 @@
 library(CVtreeMLE)
-library(tidyr)
 
 # 1.  All mixtures lower than specified thresholds
 # 2.  M1 is higher but M2 and M3 are lower

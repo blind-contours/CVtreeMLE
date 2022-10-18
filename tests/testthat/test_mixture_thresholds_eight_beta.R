@@ -3,7 +3,6 @@ library(testthat)
 library(sl3)
 library(pre)
 library(partykit)
-library(tidyr)
 
 
 seed <- 6442
