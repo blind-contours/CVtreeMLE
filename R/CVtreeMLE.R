@@ -434,7 +434,12 @@ CVtreeMLE <- function(w,
 
   }else{
     backfit_model_RMSEs <- mixture_RMSE
+    filt_fold_marginal_rules <- data.frame(matrix(ncol = 2, nrow = 0))
+    x <- c("rule", "fold")
+    colnames(filt_fold_marginal_rules) <- x
     no_marginal_rules <- TRUE
+    marginal_rules <- NULL
+    marginal_models <- NULL
   }
 
 

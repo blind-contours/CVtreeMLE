@@ -52,9 +52,10 @@ est_marg_nuisance_params <- function(at,
 
   marginal_data <- list()
 
-  marg_decisions_groups <- marginal_group_split(marg_decisions)
-
   if (no_marg_rules == FALSE) {
+
+    marg_decisions_groups <- marginal_group_split(marg_decisions)
+
     for (i in seq(marg_decisions_groups)) {
       at_c <- at
       av_c <- av
