@@ -22,7 +22,7 @@ sim_results_4 <- readRDS(
   here("sandbox/data/CVtreeMLE_run_4.rds")
 )
 
-sim_results <- rbind(sim_results_1, sim_results_2, sim_results_3)
+sim_results <- rbind(sim_results_1, sim_results_2, sim_results_3, sim_results_4)
 
 
 sim_statistics <- sim_results %>%
