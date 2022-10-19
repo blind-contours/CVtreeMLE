@@ -8,8 +8,8 @@ library(dplyr)
 library(foreach)
 
 library(CVtreeMLE)
-source(here("sandbox", "02_fit_estimators.R"))
-source(here("sandbox", "simulate_2d_data.R"))
+# source(here("sandbox", "02_fit_estimators.R"))
+# source(here("sandbox", "simulate_2d_data.R"))
 
 # Sys.unsetenv("GITHUB_PAT")
 # devtools::install(upgrade = "never")
