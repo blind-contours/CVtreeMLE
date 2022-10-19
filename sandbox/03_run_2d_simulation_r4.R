@@ -81,11 +81,11 @@ sim_results_df <- data.frame()
 for (sample_size in n_obs) {
   # get results in parallel
   results <- list()
+  print(sample_size)
 
   for(this_iter in seq_len(n_sim)) {
-
+    print(this_iter)
     stop <- FALSE
-
     while (stop == FALSE) {
 
       seed <- sample(1:10000,1)
@@ -119,7 +119,6 @@ for (sample_size in n_obs) {
   results_out <- bind_rows(results, .id = "sim_iter")
   sim_results_df <- rbind(sim_results_df, results_out)
 }
-
 
 # save results to file
 timestamp <- str_replace_all(Sys.time(), " ", "_")

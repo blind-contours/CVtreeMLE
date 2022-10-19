@@ -81,9 +81,10 @@ sim_results_df <- data.frame()
 for (sample_size in n_obs) {
   # get results in parallel
   results <- list()
+  print(sample_size)
 
   for(this_iter in seq_len(n_sim)) {
-
+    print(this_iter)
     stop <- FALSE
     while (stop == FALSE) {
 

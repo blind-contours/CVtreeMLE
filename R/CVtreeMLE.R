@@ -690,13 +690,13 @@ CVtreeMLE <- function(w,
 
     # Parse out ref results ---------------------------
     non_ref_rules <- total_marginal_rules[
-      !str_detect(total_marginal_rules$`Variable Quantile`, "_1"), ]
+      !stringr::str_detect(total_marginal_rules$`Variable Quantile`, "_1"), ]
 
     non_ref_rules <- non_ref_rules[
       order(non_ref_rules$`Variable Quantile`), ]
 
     ref_rules <- total_marginal_rules[
-      str_detect(total_marginal_rules$`Variable Quantile`, "_1"), ]
+      stringr::str_detect(total_marginal_rules$`Variable Quantile`, "_1"), ]
 
     # TODO: This breaks if there is "_1" in the exposure variable names - fix
 

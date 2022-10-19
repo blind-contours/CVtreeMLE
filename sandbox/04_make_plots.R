@@ -167,7 +167,22 @@ CVtreeMLE_mse_plot <- make_sim_statistics_plot(
   title = "MSE Measures"
 )
 
+plot_labels <- c(
+  "sqrt_n_abs_tmle_pooled_da_bias" = "Square Root Scaled Pooled TMLE Bias Compared to Data-Adaptive Rule ATE",
+  "sqrt_n_abs_tmle_pooled_gt_bias" = "Square Root Scaled Pooled TMLE Bias Compared to Ground-Truth Rule ATE",
+  "sqrt_n_abs_v_spec_da_mean_bias" = "Square Root Scaled Mean V-Specific TMLE Bias Compared to Data-Adaptive Rule ATE",
+  "sqrt_n_abs_v_spec_gt_mean_bias" = "Square Root Scaled Mean V-Specific TMLE Bias Compared to Ground-Truth Rule ATE",
+  "sqrt_n_abs_v_pooled_da_bias" = "Square Root Scaled Harmonic Mean Bias Compared to Data-Adaptive Rule ATE",
+  "sqrt_n_abs_v_pooled_gt_bias" = "Square Root ScaledHarmonic Mean Bias Compared to Ground-Truth Rule ATE"
+)
 
+CVtreeMLE_bias_scaled_plot <- make_sim_statistics_plot(
+  sim_statistics_long,
+  stats = names(plot_labels),
+  labels = plot_labels,
+  color = "orange",
+  title = "MSE Measures"
+)
 
 ggsave(
   here('sandbox/plots/CVtreeMLE_stats.png'),
