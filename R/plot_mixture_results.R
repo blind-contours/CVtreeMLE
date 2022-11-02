@@ -14,7 +14,6 @@ plot_mixture_results <- function(v_intxn_results, hjust) {
     intxn_results$lower_ci <- round(as.numeric(intxn_results$lower_ci), 3)
     intxn_results$upper_ci <- round(as.numeric(intxn_results$upper_ci), 3)
 
-    # intxn_results$fold <- rownames(intxn_results)
     title <- paste("Interaction for:", unique(intxn_results$variables))
     text_size <- 12
     line_size <- 2

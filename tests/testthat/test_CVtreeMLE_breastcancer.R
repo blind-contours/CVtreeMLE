@@ -24,7 +24,9 @@ w <- c("marg.adhesion", "epith.c.size",
 
 a <- c("cl.thickness", "cell.size", "cell.shape")
 
-data <- suppressWarnings(data.frame(lapply(data, function(x) as.numeric(as.character(x)))))
+data <- suppressWarnings(data.frame(lapply(data,
+                                           function(x) as.numeric(
+                                             as.character(x)))))
 
 data <- data[colnames(data) != "class"]
 
@@ -51,5 +53,3 @@ expect_true(
 
 expect_true(
   class(breast_cancr_results$`Pooled TMLE Mixture Results`) == "data.frame")
-
-

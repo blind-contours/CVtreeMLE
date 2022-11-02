@@ -225,7 +225,7 @@ fit_mix_rule_backfitting <- function(at,
     rules <- rules %>%
       dplyr::group_by(test) %>%
       dplyr::slice_max(n = 1, coefficient)
-  }else{
+  }else {
     rules <- rules %>%
       dplyr::group_by(test) %>%
       dplyr::slice_min(n = 1, coefficient)
@@ -233,7 +233,7 @@ fit_mix_rule_backfitting <- function(at,
 
   rules$fold <- fold
 
-  backfit_resids <- (at[,y] - pre_model_preds_offset)^2
+  backfit_resids <- (at[, y] - pre_model_preds_offset)^2
   backfit_rmse <- sqrt(mean(backfit_resids))
 
   rules$RMSE <- backfit_rmse

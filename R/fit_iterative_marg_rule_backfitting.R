@@ -240,7 +240,7 @@ fit_marg_rule_backfitting <- function(mix_comps,
     }
     rules <- as.data.frame(cbind(rules, fold, target_m, quantile))
 
-    backfit_resids <- (at[,y] - glmtree_model_preds_offset)^2
+    backfit_resids <- (at[, y] - glmtree_model_preds_offset)^2
     backfit_rmse <- sqrt(mean(backfit_resids))
 
     rules$RMSE <- backfit_rmse

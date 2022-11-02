@@ -270,19 +270,10 @@ CVtreeMLE <- function(w,
     aw_stack <- sls$AW_stack
   }
 
-
-  if (family == "binomial") {
-    ## create the CV folds
-    # data[, "y_scaled"] <- data[y]
-    data$folds <- create_cv_folds(n_folds, data[,y])
-  } else {
-    # data[, "y_scaled"] <- scale_to_unit(data[y])
-    ## create the CV folds
-    data$folds <- create_cv_folds(n_folds, data[,y])
-  }
+  data$folds <- create_cv_folds(n_folds, data[, y])
 
   if (parallel == TRUE) {
-    if( parallel_type == "multi_session" ) {
+    if(parallel_type == "multi_session") {
     future::plan(future::multisession,
                  workers = num_cores,
                  gc = TRUE)
@@ -322,7 +313,6 @@ CVtreeMLE <- function(w,
                                               function(fold_k) {
 
     at <- data[data$folds != fold_k, ]
-    av <- data[data$folds == fold_k, ]
 
     rules <-
       fit_mix_rule_backfitting(
@@ -381,8 +371,6 @@ CVtreeMLE <- function(w,
 
                                                at <- data[
                                                  data$folds != fold_k, ]
-                                               av <- data[
-                                                 data$folds == fold_k, ]
 
                                                marg_decisions <-
                                                  fit_marg_rule_backfitting(
@@ -404,7 +392,8 @@ CVtreeMLE <- function(w,
                                                furrr::furrr_options(
                                                  seed = seed,
                                                  packages = c("CVtreeMLE",
-                                                              "partykit","sl3")
+                                                              "partykit", "sl3"
+                                                              )
                                                  ))
 
     marginal_rules <- purrr::map(fold_marginal_rules,
@@ -672,10 +661,11 @@ CVtreeMLE <- function(w,
                               n_folds = n_folds)
 
     v_fold_marginal_results_w_pooled <- do.call(rbind,
-                                                v_fold_marginal_results_w_pooled)
+                                                v_fold_marginal_results_w_pooled
+                                                )
 
-    v_fold_marginal_results_w_pooled$var <- stringr::str_extract(string =
-                                        v_fold_marginal_results_w_pooled$Comparison,
+    v_fold_marginal_results_w_pooled$var <- stringr::str_extract(
+      string = v_fold_marginal_results_w_pooled$Comparison,
                                       pattern = paste(a, collapse = "|"))
 
     # Create union marginals rules ---------------------------
@@ -715,7 +705,7 @@ CVtreeMLE <- function(w,
 
     marginal_rules <- marginal_rules[!sapply(marginal_rules, is.null)]
     marginal_rules <- do.call(rbind, marginal_rules)
-  }else{
+  }else {
     marginal_results <- NULL
     v_fold_marginal_results_w_pooled <- NULL
     ref_rules <- NULL

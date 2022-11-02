@@ -13,7 +13,7 @@ plot_marginal_results <- function(v_marginal_results,
   plot_list <- list()
 
   for (var in mix_comps) {
-    marg_data <- v_marginal_results[v_marginal_results$var == var,]
+    marg_data <- v_marginal_results[v_marginal_results$var == var, ]
     if (length(marg_data) != 0) {
       marg_data$`Marginal ATE` <- round(as.numeric(marg_data$`Marginal ATE`), 3)
       marg_data$`Lower CI` <- round(as.numeric(marg_data$`Lower CI`), 3)

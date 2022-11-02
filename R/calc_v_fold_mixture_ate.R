@@ -63,25 +63,6 @@ calc_v_fold_mixtures_ate <- function(input_mix_rules,
       mix_data$qbar_1w_star <- flux_results$qbar_1w_star
       mix_data$qbar_0w_star <- flux_results$qbar_0w_star
 
-      # ## back-scale Y
-      # mix_data$qbar_aw_star <- scale_to_original(
-      #   scaled_vals = qbar_aw_star,
-      #   max_orig = max(mix_data[outcome]),
-      #   min(mix_data[outcome])
-      # )
-      #
-      # mix_data$qbar_0w_star <- scale_to_original(
-      #   scaled_vals = qbar_0w_star,
-      #   max_orig = max(mix_data[outcome]),
-      #   min(mix_data[outcome])
-      # )
-      #
-      # mix_data$qbar_1w_star <- scale_to_original(
-      #   scaled_vals = qbar_1w_star,
-      #   max_orig = max(mix_data[outcome]),
-      #   min(mix_data[outcome])
-      # )
-
       ate_results <- calc_ate_estimates(
         data = mix_data,
         ate_var = "mix_ate",

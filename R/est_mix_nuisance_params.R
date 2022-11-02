@@ -138,8 +138,6 @@ est_mix_nuisance_params <- function(at,
 
         sl_fit <- suppressWarnings(discrete_sl$train(task_at))
 
-        # sl_fit$predict(task_av)
-
         qbar_aw <- sl_fit$predict(task_av)
         qbar_1w <- sl_fit$predict(task_av_1)
         qbar_0w <- sl_fit$predict(task_av_0)

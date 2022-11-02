@@ -143,7 +143,6 @@ fit_estimators <- function(data,
                            "pooled_gt_cov" = pooled_gt_cov
                            )
 
-
 sim_out <- c(ate_results,
              lower_ci_results,
              upper_ci_results,
@@ -151,6 +150,8 @@ sim_out <- c(ate_results,
              conf_table_results,
              coverage_results,
              "true_ate" = true_ate,
+             "true_pooled_da_ate" = da_p0_truth,
+             "true_fold_da_ate" = mean(tmle_v_rule_spec_ates[,3]),
              "da rule" = tmle_pooled_mix_decisions)
 
   return(sim_out)
