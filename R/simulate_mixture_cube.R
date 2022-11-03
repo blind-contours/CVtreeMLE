@@ -88,9 +88,11 @@ simulate_mixture_cube <- function(n_obs = 500,
   ## create a covariate
 
   age <- rnorm(n_obs, 37, 3)
+  # age <- (age - mean(age)) / sd(age)
   bmi <- rnorm(n_obs, 20, 1)
+  # bmi <- (bmi - mean(bmi)) / sd(bmi)
   sex <- as.numeric(purrr::rbernoulli(n_obs, 0.5))
-
+  # sex <- (sex - mean(sex)) / sd(sex)
   covars <- data.frame(age, bmi, sex)
   ## probabilities
   b0i <- round(rnorm(8, 0.3, 0.01), 2)
@@ -200,6 +202,10 @@ simulate_mixture_cube <- function(n_obs = 500,
   m1_marg <- ifelse(m1_marg > splits[1], 1, 0)
   m2_marg <- ifelse(m2_marg > splits[2], 1, 0)
   m3_marg <- ifelse(m3_marg > splits[3], 1, 0)
+
+  covars$age <- (covars$age - mean(covars$age)) / sd(covars$age)
+  covars$bmi <- (covars$bmi - mean(covars$bmi)) / sd(covars$bmi)
+  covars$sex <- (covars$sex - mean(covars$sex)) / sd(covars$sex)
 
   if (binary == TRUE) {
     y <-

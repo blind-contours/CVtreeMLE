@@ -188,47 +188,58 @@ assign_outcomes <- function(exposure_grid, c_matrix, data){
 
 # Calc empirical truth treating each region as a threshold -----------------
 
-calc_empir_truth <- function(data, rule){
-  data_A <- data %>%
-    dplyr::mutate(A = ifelse(eval(parse(text = rule)), 1, 0))
+calc_empir_truth <- function(data, rule, exposure_dim){
+  if (exposure_dim == 2) {
 
-  data_A$A_inv <- 1- data_A$A
+    data_A <- data %>%
+      dplyr::mutate(A = ifelse(eval(parse(text = rule)), 1, 0))
 
-  all_regions <- colnames(data_A)[1:25]
+    data_A$A_inv <- 1- data_A$A
 
-  if(nrow(table(data_A$A)) == 2) {
+    all_regions <- colnames(data_A)[1:25]
 
-  data_groups <- data_A %>%
-    group_by(A)
+    if(nrow(table(data_A$A)) == 2) {
 
-  data_groups_list <- group_split(data_groups)
-  regions <- as.vector(unique(data_groups_list[[2]]$Label))
-  regions_inv <- as.vector(unique(data_groups_list[[1]]$Label))
+    data_groups <- data_A %>%
+      group_by(A)
 
-  if (length(regions) > 1) {
-    region_probs <- rowSums(data_A[, c(regions)])
-  }else{
-    region_probs <- data_A[, c(regions)]
-  }
+    data_groups_list <- group_split(data_groups)
+    regions <- as.vector(unique(data_groups_list[[2]]$Label))
+    regions_inv <- as.vector(unique(data_groups_list[[1]]$Label))
 
-  if (length(regions_inv) > 1) {
-    region_comp_probs <- rowSums(data_A[, c(regions_inv)])
-  }else{
-    region_comp_probs <- data_A[, c(regions_inv)]
-  }
+    if (length(regions) > 1) {
+      region_probs <- rowSums(data_A[, c(regions)])
+    }else{
+      region_probs <- data_A[, c(regions)]
+    }
 
-  ave_region_outcome <-
-    mean(data_A$outcome_true * (data_A$A / (region_probs)))
+    if (length(regions_inv) > 1) {
+      region_comp_probs <- rowSums(data_A[, c(regions_inv)])
+    }else{
+      region_comp_probs <- data_A[, c(regions_inv)]
+    }
 
-  ave_compl_outcome <-
-    mean(data_A$outcome_true * (data_A$A_inv / (region_comp_probs)))
+    ave_region_outcome <-
+      mean(data_A$outcome_true * (data_A$A / (region_probs)))
 
-  ate <- ave_region_outcome - ave_compl_outcome
+    ave_compl_outcome <-
+      mean(data_A$outcome_true * (data_A$A_inv / (region_comp_probs)))
 
-  results_ate <- c(ave_region_outcome, ave_compl_outcome, ate)
-  }else{
-    results_ate <- c(NA, NA, NA)
-  }
+    ate <- ave_region_outcome - ave_compl_outcome
+
+    results_ate <- ate
+    }else{
+      results_ate <- NA
+    }
+
+    }else{
+      data_A <- data %>%
+        dplyr::mutate(A = ifelse(eval(parse(text = rule)), 1, 0))
+
+      region_ave_outcome <- mean(subset(data_A, A == 1)$y)
+      nonregion_ave_outcome <- mean(subset(data_A, A == 0)$y)
+      results_ate <- region_ave_outcome - nonregion_ave_outcome
+    }
   return(results_ate)
 }
 
