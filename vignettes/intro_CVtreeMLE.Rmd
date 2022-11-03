@@ -72,7 +72,7 @@ library(dplyr)
 library(ggplot2)
 library(purrr)
 
-seed <- 5454432
+seed <- 5454433
 set.seed(seed)
 ```
 
@@ -129,12 +129,13 @@ niehs_results <- CVtreeMLE(data = as.data.frame(niehs_data),
                          a = c(paste("X", seq(7), sep = "")),
                          y = "Y",
                          fit_marginals = TRUE,
-                         n_folds = 10,
+                         n_folds = 5,
                          seed = seed,
                          parallel_cv = FALSE,
+                         parallel = FALSE,
                          family = "continuous",
-                         num_cores = 7,
-                         max_iter = 1)
+                         num_cores = 5,
+                         max_iter = 5)
 proc.time() - ptm
 ```
 
@@ -175,7 +176,7 @@ this so-called interaction:
 ```{r fold_specific_mixture_results}
 vfold_mixture_results <- niehs_results$`V-Specific Mix Results`
 
-vfold_mixture_results$X5X7 %>%
+vfold_mixture_results$`X5-X7` %>%
   kableExtra::kbl(caption = "X5 and X7 Interaction") %>%
   kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
 ```
