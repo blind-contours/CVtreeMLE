@@ -22,4 +22,4 @@
 module load r/4.0.3
 
 ### for foreach+doSNOW ###
-R CMD BATCH --no-save ../03_run_3d_simulation_r1.R 2D_run1.Rout
+R CMD BATCH --no-save ../03_run_3d_simulation_r1.R 3D_run1.Rout
