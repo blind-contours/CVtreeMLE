@@ -25,8 +25,8 @@ n <- 500000
 
 
 P_0_data <- simulate_mixture_cube(n_obs = n,
-                      subspace_assoc_strength_betas = c(0.1, 0.2, 0.2, 5,
-                                                        0.5, 0.4, 0.3, 0.1))
+                                  subspace_assoc_strength_betas = c(0.1, 0.2, 0.2, 5,
+                                                                    0.5, 0.4, 0.3, 0.1))
 true_rule <- "M3 <= 2.5 & M1 >= 0.99 & M2 >= 2.0"
 
 P_0_data_ate_eval <- P_0_data %>%
@@ -73,8 +73,7 @@ for (sample_size in n_obs) {
   sim_results_df <- rbind(sim_results_df, results_out)
 }
 
-
 # save results to file
 timestamp <- str_replace_all(Sys.time(), " ", "_")
 saveRDS(object = sim_results_df,
-        file = here("sandbox/data", paste0("3D_CVtreeMLE_", "run_1", ".rds")))
+        file = here("sandbox/data", paste0("3D_CVtreeMLE_", "run_5", ".rds")))

@@ -64,9 +64,15 @@ sim_statistics <- sim_results %>%
     True_neg = mean(`True Neg`),
     False_pos = mean(`False Pos`),
     False_neg = mean(`False Neg`),
-
-  ) %>%
-  mutate(
+    tmle_pooled_sd = sd(tmle_pooled_ate),
+    v_spec_mean_sd = sd(v_spec_mean_ate),
+    v_pooled_mean_sd = sd(v_pooled_ate),
+    tmle_pooled_da_z_bias = tmle_pooled_da_bias/tmle_pooled_sd,
+    tmle_pooled_gt_z_bias = tmle_pooled_gt_bias/tmle_pooled_sd,
+    v_spec_da_z_bias = v_spec_da_mean_bias/v_spec_mean_sd,
+    v_spec_gt_z_bias = v_spec_gt_mean_bias/v_spec_mean_sd,
+    v_pooled_da_z_bias = v_pooled_da_bias /v_pooled_mean_sd,
+    v_pooled_gt_z_bias = v_pooled_gt_bias /v_pooled_mean_sd,
     sqrt_n_abs_tmle_pooled_da_bias = sqrt(n_obs) * abs_tmle_pooled_da_bias,
     sqrt_n_abs_tmle_pooled_gt_bias = sqrt(n_obs) * abs_tmle_pooled_gt_bias,
     sqrt_n_abs_v_spec_da_mean_bias = sqrt(n_obs) * abs_v_spec_da_mean_bias,
@@ -78,9 +84,8 @@ sim_statistics <- sim_results %>%
     n_v_spec_da_mean_mse = n_obs*v_spec_da_mean_mse,
     n_v_spec_gt_mean_mse = n_obs*v_spec_gt_mean_mse,
     n_v_pooled_da_mse = n_obs*v_pooled_da_mse,
-    n_v_spec_mean_gt_cov = n_obs*v_spec_mean_gt_cov,
-  ) %>%
-  ungroup
+    n_v_spec_mean_gt_cov = n_obs*v_spec_mean_gt_cov)
+
 
 sim_statistics_long <- sim_statistics %>%
   tidyr::gather(statistic, value, -c(n_obs))
@@ -94,21 +99,6 @@ make_sim_statistics_plot <- function(sim_statistics_long,
     filter(
       statistic %in% stats
     )
-
-  # ggplot(filtered_sim_stats, aes(n_obs, value)) +
-  #   geom_point(color = color) +
-  #   geom_line(color = color, size = 1) +
-  #   geom_point(color= color) +
-  #   facet_wrap("statistic",
-  #              scales = "free_y",
-  #              labeller = as_labeller(labels)) +
-  #   theme_bw() +
-  #   theme(
-  #     axis.text.x = element_text(size = 15, angle=45, vjust=1, hjust=1)
-  #   ) +
-  #   theme(text = element_text(size = 20)) +
-  #   scale_x_sqrt(breaks=n_obs)  + labs(x = "Number Observations",
-  #                                      title = title)
 
   ggplot(filtered_sim_stats, aes(x=n_obs,
                                  y=value,
@@ -124,27 +114,26 @@ make_sim_statistics_plot <- function(sim_statistics_long,
 
 }
 
-make_density_plot <- function(sim_statistics_long,
-                                     stats,
-                                     labels) {
+make_density_plot <- function(sim_statistics,
+                                     z_stat,
+                                     label) {
 
-  filtered_sim_stats <- sim_statistics_long %>%
-    filter(
-      statistic %in% stats
-    )
 
-  ggplot(filtered_sim_stats, aes(x = value,
-                                 fill = factor(statistic, labels = labels))) +
-    geom_density(alpha = 0.5) +
-    labs(fill="Estimator") +
-    xlab("Bias Z-Score") +
-    ylab("Density") +
-    scale_color_viridis(discrete = TRUE) +
-    ggtitle("Popularity of American names in the previous 30 years") +
+  sim_statistics$n_obs <- as.factor(sim_statistics$n_obs)
+
+  ggplot(sim_statistics, aes(x=eval(parse(text = z_stat)), color=n_obs, fill=n_obs)) +
+    geom_density(alpha=0.4) +
+    scale_fill_viridis(discrete=TRUE) +
+    scale_color_viridis(discrete=TRUE) +
     theme_ipsum() +
-    ylab("Bias") +
-    xlab("Number Observations") +
-    ggtitle(title)
+    theme(
+      legend.position="left",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    ) +
+    ggtitle(label) +
+    xlab("Z-Score Standardized Bias (Bias/SD)") +
+    ylab("Probability")
 
 }
 
@@ -268,10 +257,8 @@ plot_labels <- c(
 )
 
 
-make_density_plot(sim_statistics_long, stats = c("tmle_pooled_da_z_bias",
-                                                        "tmle_pooled_gt_z_bias",
-                                                        "Normal"),
-                  label = c("Normal Mean 0, SD 1","Pooled TMLE (DA)", "Pooled TMLE (GT)" ))
+make_density_plot(sim_statistics, z_stat = "tmle_pooled_da_z_bias",
+                  label = "Pooled TMLE (DA)")
 
 
 make_density_plot(sim_statistics_long_w_norm, stats = c("v_spec_da_z_bias",
