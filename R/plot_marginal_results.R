@@ -56,7 +56,9 @@ plot_marginal_results <- function(v_marginal_results,
                            vjust = 0,
                            colour = "#3C3C3C",
                            nudge_x = 0,
-                           nudge_y = 0.0)
+                           nudge_y = 0.0) +
+        viridis::scale_color_viridis(discrete = TRUE) +
+        hrbrthemes::theme_ipsum()
 
 
       plot_list[[var]] <- plot
