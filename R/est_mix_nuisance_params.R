@@ -78,15 +78,10 @@ est_mix_nuisance_params <- function(at,
           outcome_type = "binomial"
         )
 
-        discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(
-          sl3::loss_loglik_binomial)
+        sl <- sl3::Lrnr_sl$new(learners = aw_stack,
+                               metalearner = sl3::Lrnr_nnls$new())
 
-        discrete_sl <- sl3::Lrnr_sl$new(
-          learners = aw_stack,
-          metalearner = discrete_sl_metalrn,
-        )
-
-        sl_fit <- suppressWarnings(discrete_sl$train(task_at))
+        sl_fit <- suppressWarnings(sl$train(task_at))
 
         ghat_1w <- sl_fit$predict(task_av)
 
@@ -128,15 +123,10 @@ est_mix_nuisance_params <- function(at,
           outcome_type = family
         )
 
-        discrete_sl_metalrn <- sl3::Lrnr_cv_selector$new(
-          sl3::loss_squared_error)
+        sl <- sl3::Lrnr_sl$new(learners = aw_stack,
+                               metalearner = sl3::Lrnr_nnls$new())
 
-        discrete_sl <- sl3::Lrnr_sl$new(
-          learners = aw_stack,
-          metalearner = discrete_sl_metalrn,
-        )
-
-        sl_fit <- suppressWarnings(discrete_sl$train(task_at))
+        sl_fit <- suppressWarnings(sl$train(task_at))
 
         qbar_aw <- sl_fit$predict(task_av)
         qbar_1w <- sl_fit$predict(task_av_1)

@@ -128,13 +128,13 @@ niehs_results <- CVtreeMLE(data = as.data.frame(niehs_data),
                          w = c("Z", "Z2", "Z3"),
                          a = c(paste("X", seq(7), sep = "")),
                          y = "Y",
-                         fit_marginals = TRUE,
-                         n_folds = 5,
+                         fit_marginals = FALSE,
+                         n_folds = 10,
                          seed = seed,
-                         parallel_cv = FALSE,
-                         parallel = FALSE,
+                         parallel_cv = TRUE,
+                         parallel = TRUE,
                          family = "continuous",
-                         num_cores = 5,
+                         num_cores = 7,
                          max_iter = 5)
 proc.time() - ptm
 ```
@@ -276,7 +276,7 @@ each mixture rule found.
 mixture_plots <- plot_mixture_results(
   v_intxn_results = niehs_results$`V-Specific Mix Results`,
   hjust = 0.8)
-mixture_plots$X5X7
+mixture_plots$`X1-X7`
 ```
 
 The goal of this plot is to give users a visual inspection of how consistent 

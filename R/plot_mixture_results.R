@@ -42,7 +42,9 @@ plot_mixture_results <- function(v_intxn_results, hjust) {
       ggplot2::theme(text = text_theme, axis.text = axis_text_theme,
                      legend.position = "none") +
       ggplot2::geom_text(size = 4, hjust = hjust, vjust = 0,
-                         colour = "#3C3C3C", nudge_x = -0, nudge_y = 0.0)
+                         colour = "#3C3C3C", nudge_x = -0, nudge_y = 0.0) +
+      viridis::scale_color_viridis(discrete = TRUE) +
+      hrbrthemes::theme_ipsum()
 
     plot_list[[i]] <- plot
   }

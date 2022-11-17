@@ -10,15 +10,27 @@
 
 create_sls <- function() {
 
-  mean_lrnr <- sl3::Lrnr_mean$new()
+  # mean_lrnr <- sl3::Lrnr_mean$new()
   lrnr_ranger <- sl3::Lrnr_ranger$new()
   lrnr_glm <- sl3::make_learner(sl3::Lrnr_glm)
   lrnr_elasticnet <- sl3::make_learner(sl3::Lrnr_glmnet, alpha = .5)
-  lrnr_xgboost <- sl3::Lrnr_xgboost$new()
+  lrnr_xgboost <- sl3::make_learner(sl3::Lrnr_xgboost)
 
-  learners <- c(mean_lrnr, lrnr_glm,
+  grid_params <- list(
+    max_depth = c(3, 5, 8),
+    eta = c(0.001, 0.1, 0.3),
+    nrounds = 100
+  )
+
+  grid <- expand.grid(grid_params, KEEP.OUT.ATTRS = FALSE)
+
+  xgb_learners <- apply(grid, MARGIN = 1, function(tuning_params) {
+    do.call(sl3::Lrnr_xgboost$new, as.list(tuning_params))
+  })
+
+  learners <- c(lrnr_glm,
                 lrnr_ranger, lrnr_elasticnet,
-                lrnr_xgboost)
+                xgb_learners)
 
   w_stack <- sl3::make_learner(sl3::Stack, learners)
   aw_stack <- sl3::make_learner(sl3::Stack, learners)

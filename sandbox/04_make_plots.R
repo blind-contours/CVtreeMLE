@@ -4,6 +4,7 @@ library(ggpubr)
 library(purrr)
 library(tidyr)
 library(hrbrthemes)
+library(viridis)
 
 n_obs <- c(200, 350, 500, 750, 1000, 1500, 2000, 3000, 5000)
 
@@ -27,7 +28,7 @@ sim_results_5 <- readRDS(
   here("sandbox/data/CVtreeMLE_run_5.rds")
 )
 
-sim_results <- rbind(sim_results_2, sim_results_3)
+sim_results <- rbind(sim_results_1, sim_results_2, sim_results_3)
 
 
 sim_statistics <- sim_results %>%
@@ -104,7 +105,7 @@ make_sim_statistics_plot <- function(sim_statistics_long,
                                  y=value,
                                  group=statistic,
                                  color=statistic)) +
-    geom_line(position = position_jitter(w=0.02, h=0.01)) +
+    geom_line(position = position_jitter(w=0.0, h=0.0)) +
     scale_color_viridis(discrete = TRUE) +
     ggtitle("Popularity of American names in the previous 30 years") +
     theme_ipsum() +
@@ -144,7 +145,7 @@ plot_labels <- c(
   "abs_v_pooled_da_bias" = "Harmonic Pooled (DA)"
 )
 
-CVtreeMLE_bias_plot <- make_sim_statistics_plot(
+CVtreeMLE_DA_bias_plot <- make_sim_statistics_plot(
   sim_statistics_long,
   stats = names(plot_labels),
   labels = plot_labels,
@@ -155,7 +156,7 @@ plot_labels <- c("abs_tmle_pooled_gt_bias" = "Pooled TMLE (GT)",
                  "abs_v_spec_gt_mean_bias" = "Mean Fold TMLE (GT)",
                  "abs_v_pooled_gt_bias" = "Harmonic Pooled (GT)")
 
-CVtreeMLE_bias_plot <- make_sim_statistics_plot(
+CVtreeMLE_GT_bias_plot <- make_sim_statistics_plot(
   sim_statistics_long,
   stats = names(plot_labels),
   labels = plot_labels,
@@ -183,7 +184,7 @@ plot_labels <- c(
   "v_spec_mean_da_cov" = "Mean Fold (DA)"
 )
 
-CVtreeMLE_cov_plot <- make_sim_statistics_plot(
+CVtreeMLE_DA_cov_plot <- make_sim_statistics_plot(
   sim_statistics_long,
   stats = names(plot_labels),
   labels = plot_labels,
@@ -194,7 +195,7 @@ plot_labels <- c("tmle_pooled_gt_coverage" = "Pooled TMLE (GT)",
                  "v_spec_mean_gt_cov" = "Mean Fold (GT)",
                  "v_pooled_gt_cov" =  "Harmonic Pooled (GT)")
 
-CVtreeMLE_cov_plot <- make_sim_statistics_plot(
+CVtreeMLE_GT_cov_plot <- make_sim_statistics_plot(
   sim_statistics_long,
   stats = names(plot_labels),
   labels = plot_labels,
@@ -208,7 +209,7 @@ plot_labels <- c(
   "v_pooled_da_mse" = "Harmonic Pooled (DA)"
 )
 
-CVtreeMLE_mse_plot <- make_sim_statistics_plot(
+CVtreeMLE_DA_mse_plot <- make_sim_statistics_plot(
   sim_statistics_long,
   stats = names(plot_labels),
   labels = plot_labels,
@@ -221,7 +222,7 @@ plot_labels <- c(
   "v_pooled_gt_mse" = "Harmonic Pooled (GT)"
 )
 
-CVtreeMLE_mse_plot <- make_sim_statistics_plot(
+CVtreeMLE_GT_mse_plot <- make_sim_statistics_plot(
   sim_statistics_long,
   stats = names(plot_labels),
   labels = plot_labels,
@@ -261,15 +262,12 @@ make_density_plot(sim_statistics, z_stat = "tmle_pooled_da_z_bias",
                   label = "Pooled TMLE (DA)")
 
 
-make_density_plot(sim_statistics_long_w_norm, stats = c("v_spec_da_z_bias",
-                                                        "v_spec_gt_z_bias",
-                                                        "Normal"),
-                  label = c("Normal Mean 0, SD 1","Mean Fold TMLE (DA)", "Mean Fold TMLE (GT)" ))
+make_density_plot(sim_statistics, z_stat = "v_spec_da_z_bias",
+                  label = c("Mean Fold TMLE (DA)"))
 
-make_density_plot(sim_statistics_long_w_norm, stats = c("v_pooled_da_z_bias",
-                                                        "v_pooled_gt_z_bias",
-                                                        "Normal"),
-                  label = c("Normal Mean 0, SD 1","Harmonic Pooled TMLE (DA)", "Harmonic Pooled TMLE (GT)" ))
+make_density_plot(sim_statistics, z_stat = "v_pooled_da_z_bias",
+                  label = c("Harmonic Pooled (DA)"))
+
 
 
 ggsave(
