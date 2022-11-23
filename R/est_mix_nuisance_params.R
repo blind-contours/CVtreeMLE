@@ -95,7 +95,7 @@ est_mix_nuisance_params <- function(at,
           covariates = c(w, "A_mix"),
           outcome = y,
           outcome_type = family,
-          folds = 2
+          folds = 10
         )
 
         x_m1 <- x_m0 <- av_mix

@@ -10,11 +10,17 @@
 
 create_sls <- function() {
 
-  # mean_lrnr <- sl3::Lrnr_mean$new()
+  mean_lrnr <- sl3::Lrnr_mean$new()
   lrnr_ranger <- sl3::Lrnr_ranger$new()
   lrnr_glm <- sl3::make_learner(sl3::Lrnr_glm)
   lrnr_elasticnet <- sl3::make_learner(sl3::Lrnr_glmnet, alpha = .5)
   lrnr_xgboost <- sl3::make_learner(sl3::Lrnr_xgboost)
+  lrnr_earth <- sl3::make_learner(sl3::Lrnr_earth, degree = 3)
+  hal_contin_lrnr <- Lrnr_hal9001$new(n_folds = 5,
+                                      fit_type = "glmnet",
+                                      yolo = FALSE)
+
+  cv_hal_contin_lrnr <- Lrnr_cv$new(hal_contin_lrnr, full_fit = TRUE)
 
   grid_params <- list(
     max_depth = c(3, 5, 8),
@@ -28,12 +34,15 @@ create_sls <- function() {
     do.call(sl3::Lrnr_xgboost$new, as.list(tuning_params))
   })
 
+  # learners <- c(mean_lrnr, cv_hal_contin_lrnr)
   learners <- c(lrnr_glm,
                 lrnr_ranger, lrnr_elasticnet,
                 xgb_learners)
 
   w_stack <- sl3::make_learner(sl3::Stack, learners)
-  aw_stack <- sl3::make_learner(sl3::Stack, learners)
+  aw_stack <- sl3::make_learner(sl3::Stack, c(learners, lrnr_earth))
+  e_stack <- sl3::make_learner(sl3::Stack, c(learners, lrnr_earth))
+  psi_z_stack <- sl3::make_learner(sl3::Stack, c(learners, lrnr_earth))
 
   lrnr_glmtree_001 <- sl3::Lrnr_glmtree$new(alpha = 0.05,
                                        maxdepth = 2,
@@ -79,5 +88,7 @@ create_sls <- function() {
 
   return(list("W_stack" = w_stack,
               "AW_stack" = aw_stack,
-              "A_stack" = tree_stack))
+              "A_stack" = tree_stack,
+              "E_stack" = e_stack,
+              "Psi_Z_stack" = psi_z_stack))
 }

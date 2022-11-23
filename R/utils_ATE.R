@@ -162,7 +162,7 @@ fit_least_fav_submodel <- function(h_aw, data, y, qbar_aw, qbar_1w, qbar_0w) {
 
   logit_update <-
     stats::glm(
-      y_scaled ~ -1 + h_aw + offset(scale_to_unit(qbar_aw)),
+      y_scaled ~ -1 + h_aw + offset(scale_to_unit(vals = qbar_aw)),
       family = "quasibinomial",
       data = data
     )
@@ -174,5 +174,6 @@ fit_least_fav_submodel <- function(h_aw, data, y, qbar_aw, qbar_1w, qbar_0w) {
 
   return(list("qbar_aw_star" = qbar_aw_star,
               "qbar_1w_star" = qbar_1w_star,
-              "qbar_0w_star" = qbar_0w_star))
+              "qbar_0w_star" = qbar_0w_star,
+              "epsilon" = epsilon))
 }

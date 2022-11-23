@@ -9,11 +9,14 @@ in each leaf of best fitting tree}
 CVtreeMLE(
   w,
   a,
+  z,
   y,
   data,
   w_stack = NULL,
   aw_stack = NULL,
   a_stack = NULL,
+  psi_z_stack = NULL,
+  e_stack = NULL,
   fit_marginals = FALSE,
   direction = "positive",
   n_folds,
@@ -33,6 +36,9 @@ as baseline covariates.}
 
 \item{a}{A character vector indicating which variables in the data to use
 as exposures.}
+
+\item{z}{A character vector indicating which variables in the data to use
+as mediators.}
 
 \item{y}{A character indicating which variable in the data to use as the
 outcome.}

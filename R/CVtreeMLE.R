@@ -17,6 +17,8 @@
 #'  as baseline covariates.
 #' @param a A character vector indicating which variables in the data to use
 #'  as exposures.
+#' @param z A character vector indicating which variables in the data to use
+#'  as mediators.
 #' @param y A character indicating which variable in the data to use as the
 #' outcome.
 #' @param fit_marginals TRUE/FALSE whether or not to find cut-points at
@@ -195,11 +197,14 @@
 
 CVtreeMLE <- function(w,
                       a,
+                      z,
                       y,
                       data,
                       w_stack = NULL,
                       aw_stack = NULL,
                       a_stack = NULL,
+                      psi_z_stack = NULL,
+                      e_stack = NULL,
                       fit_marginals = FALSE,
                       direction = "positive",
                       n_folds,
@@ -222,6 +227,13 @@ CVtreeMLE <- function(w,
           converting to numeric to avoid issues in different factors
           between training and validation folds")
     data[, w] <- sapply(data[, w], as.numeric)
+  }
+
+  if (any(sapply(data[, z], is.factor))) {
+    print("Factor variable detected in the mediator space,
+          converting to numeric to avoid issues in different factors
+          between training and validation folds")
+    data[, z] <- sapply(data[, z], as.numeric)
   }
 
   # Ensure that Y is numeric; e.g. can't be a factor.
@@ -270,6 +282,16 @@ CVtreeMLE <- function(w,
     aw_stack <- sls$AW_stack
   }
 
+  if (is.null(psi_z_stack)) {
+    sls <- create_sls()
+    psi_z_stack <- sls$Psi_Z_stack
+  }
+
+  if (is.null(e_stack)) {
+    sls <- create_sls()
+    e_stack <- sls$E_stack
+  }
+
   data$folds <- create_cv_folds(n_folds, data[, y])
 
   if (parallel == TRUE) {
@@ -294,6 +316,8 @@ CVtreeMLE <- function(w,
   fold_results_marg_directions <- list()
 
   mix_fold_data <- list()
+  mix_fold_nde_data <- list()
+  mix_fold_nie_data <- list()
   mix_fold_directions <- list()
 
   fold_results_marginal_data <- list()
@@ -437,9 +461,6 @@ CVtreeMLE <- function(w,
   }
 
 
-  # Estimate nuisance parameters ---------------------------
-
-
   if (verbose) {
     print("-----Starting Fitting Estimators to the Rules Determined to Calculate
           the Average Treatment Effects of Terminal Nodes in Trees-----")
@@ -466,6 +487,8 @@ CVtreeMLE <- function(w,
       no_marg_rules <- FALSE
     }
 
+    # Estimate nuisance parameters for ATE ---------------------------
+
     fold_results_mix_rules[[paste("Fold", fold_k)]] <- rules
 
     mix_nuisance_params <- est_mix_nuisance_params(
@@ -485,20 +508,66 @@ CVtreeMLE <- function(w,
 
     mix_fold_data[[paste("Fold", fold_k)]] <- mix_interaction_data
 
+    if (!is.null(z)) {
 
-    marg_nuisance_params <- est_marg_nuisance_params(
-      at = at,
-      av = av,
-      w = w,
-      y = y,
-      aw_stack = aw_stack,
-      family = family,
-      a = a,
-      no_marg_rules = no_marg_rules,
-      marg_decisions = marg_decisions,
-      parallel_cv = parallel_cv,
-      seed = seed
-    )
+      # Estimate nuisance parameters for NDE ---------------------------
+
+      mix_nuisance_params_nde <- est_mix_nuisance_params_nde(
+        at = at,
+        av = av,
+        w = w,
+        z = z,
+        y = y,
+        no_mix_rules = no_mix_rules,
+        aw_stack = aw_stack,
+        psi_z_stack = psi_z_stack,
+        family = family,
+        rules = rules,
+        parallel_cv = parallel_cv,
+        seed = seed
+      )
+
+      mix_interaction_data_nde <- mix_nuisance_params_nde$data
+
+      mix_fold_nde_data[[paste("Fold", fold_k)]] <- mix_interaction_data_nde
+
+      # Estimate nuisance parameters for NIE ---------------------------
+
+      mix_nuisance_params_nie <- est_mix_nuisance_params_nie(
+        at = at,
+        av = av,
+        w = w,
+        z = z,
+        y = y,
+        no_mix_rules = no_mix_rules,
+        aw_stack = aw_stack,
+        psi_z_stack = psi_z_stack,
+        family = family,
+        rules = rules,
+        parallel_cv = parallel_cv,
+        seed = seed
+      )
+
+      mix_interaction_data_nie <- mix_nuisance_params_nie$data
+
+      mix_fold_nie_data[[paste("Fold", fold_k)]] <- mix_interaction_data_nie
+
+    }
+
+
+  marg_nuisance_params <- est_marg_nuisance_params(
+    at = at,
+    av = av,
+    w = w,
+    y = y,
+    aw_stack = aw_stack,
+    family = family,
+    a = a,
+    no_marg_rules = no_marg_rules,
+    marg_decisions = marg_decisions,
+    parallel_cv = parallel_cv,
+    seed = seed
+  )
 
     non_ref_rules <- marg_decisions[marg_decisions$quantile > 1, ]
 
@@ -550,6 +619,8 @@ CVtreeMLE <- function(w,
     results_list <- list(
       fold_results_mix_rules,
       mix_fold_data,
+      mix_fold_nde_data,
+      mix_fold_nie_data,
       fold_results_marg_rules,
       fold_results_marginal_data,
       fold_results_marginal_combo_data
@@ -558,15 +629,18 @@ CVtreeMLE <- function(w,
     names(results_list) <- c(
       "mix rules",
       "mix data",
+      "mix data nde",
+      "mix data nie",
       "marg rules",
       "marg data",
       "marg combo data")
 
     results_list
+    # }
 
 
   }, .options = furrr::furrr_options(seed = seed, packages = c("CVtreeMLE",
-                                                              "sl3")))
+  "sl3")))
 
   # Aggregate results ---------------------------
 
@@ -574,6 +648,8 @@ CVtreeMLE <- function(w,
   marginal_rules <- purrr::map(results, c("marg rules"))
 
   mix_data <- purrr::map(results, c("mix data"))
+  mix_data_nde <- purrr::map(results, c("mix data nde"))
+  mix_data_nie <- purrr::map(results, c("mix data nie"))
   mix_rules <- purrr::map(results, c("mix rules"))
 
   marg_combo_data <- purrr::map(results, c("marg combo data"))
@@ -612,20 +688,91 @@ CVtreeMLE <- function(w,
 
     # Create union mixture rules ---------------------------
 
-      mixture_results <- common_mixture_rules(group_list,
-                                                 data = data,
-                                                 mix_comps = a,
-                                                 mixture_results,
-                                                 n_folds = n_folds,
-                                                 no_mixture_rules
+    mixture_results <- common_mixture_rules(group_list,
+                                               data = data,
+                                               mix_comps = a,
+                                               mixture_results,
+                                               n_folds = n_folds,
+                                               no_mixture_rules
     )
 
-    mix_rules <- unlist(mix_rules, recursive = FALSE, use.names = FALSE)
-    mix_rules <- mix_rules[!sapply(mix_rules, is.null)]
-    mix_rules <-
-      data.table::rbindlist(mix_rules)
+    mix_rules_cleaned <- unlist(mix_rules, recursive = FALSE, use.names = FALSE)
+    mix_rules_cleaned <- mix_rules_cleaned[!sapply(mix_rules_cleaned, is.null)]
+    mix_rules_cleaned <-
+      data.table::rbindlist(mix_rules_cleaned)
 
+    if (!is.null(z)) {
 
+      # Calculate Pooled NDE ---------------------------
+
+      nde_mixture_results <- calc_mixtures_nde(
+        input_mix_rules = mix_rules,
+        input_mix_data = mix_data_nde,
+        y = y,
+        n_folds = n_folds
+      )
+
+      nde_mixture_data_list <- nde_mixture_results$mixture_data_list
+      nde_mixture_results <- nde_mixture_results$results
+
+      # Calculate Union Rule for NDE ---------------------------
+
+      nde_mixture_results <- common_mixture_rules(group_list,
+                                              data = data,
+                                              mix_comps = a,
+                                              nde_mixture_results,
+                                              n_folds = n_folds,
+                                              no_mixture_rules
+      )
+
+      # Calculate V-fold NDE results ---------------------------
+
+      v_fold_mixture_results_nde <- calc_v_fold_mixtures_nde(
+        input_mix_rules = mix_rules,
+        input_mix_data = mix_data_nde,
+        y = y,
+        n_folds = n_folds
+      )
+
+      # Calculate Pooled NIE results ---------------------------
+
+      nie_mixture_results <- calc_mixtures_nie(
+        input_mix_rules = mix_rules,
+        input_mix_data = mix_data_nie,
+        y = y,
+        n_folds = n_folds
+      )
+
+      nie_mixture_data_list <- nie_mixture_results$mixture_data_list
+      nie_mixture_results <- nie_mixture_results$results
+
+      nie_mixture_results <- common_mixture_rules(group_list,
+                                                  data = data,
+                                                  mix_comps = a,
+                                                  nie_mixture_results,
+                                                  n_folds = n_folds,
+                                                  no_mixture_rules
+      )
+
+      # Calculate V-fold NIE results ---------------------------
+
+      v_fold_mixture_results_nie <- calc_v_fold_mixtures_nie(
+        input_mix_rules = mix_rules,
+        input_mix_data = mix_data_nie,
+        y = y,
+        n_folds = n_folds
+      )
+
+    } else {
+      nie_mixture_results <- NA
+      nde_mixture_results <- NA
+      mixture_rules <- NA
+      nie_mixture_data_list <- NA
+      nde_mixture_data_list <- NA
+      v_fold_mixture_results_nie <- NA
+      v_fold_mixture_results_nde <- NA
+
+    }
   } else {
     mixture_results <- NA
     mixture_rules <- NA
@@ -716,8 +863,12 @@ CVtreeMLE <- function(w,
     "Model RMSEs" = backfit_model_RMSEs,
     "Pooled TMLE Marginal Results" = marginal_results,
     "V-Specific Marg Results" = v_fold_marginal_results_w_pooled,
-    "Pooled TMLE Mixture Results" = mixture_results,
-    "V-Specific Mix Results" = v_fold_mixture_results_w_pooled,
+    "Pooled TMLE Mixture Results ATE" = mixture_results,
+    "Pooled TMLE Mixture Results NDE" = nde_mixture_results,
+    "Pooled TMLE Mixture Results NIE" = nie_mixture_results,
+    "V-Specific Mix Results ATE" = v_fold_mixture_results_w_pooled,
+    "V-Specific Mix Results NDE" = v_fold_mixture_results_nde,
+    "V-Specific Mix Results NIE" = v_fold_mixture_results_nie,
     "Pooled Marginal Refs" = ref_rules,
     "Mixture Rules" = mix_rules,
     "Marginal Rules" = marginal_rules,
