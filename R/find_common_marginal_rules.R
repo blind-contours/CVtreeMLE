@@ -32,7 +32,6 @@ find_common_marginal_rules <- function(fold_rules,
                                        mix_comps,
                                        marginal_results,
                                        n_folds) {
-
   fold_rules <- unlist(fold_rules, recursive = FALSE)
   fold_rules <- fold_rules[!sapply(fold_rules, is.null)]
 
@@ -74,7 +73,6 @@ find_common_marginal_rules <- function(fold_rules,
       mutate("all_folds" := ifelse(eval(parse(text = marginal_rule)), 1, 0))
 
     if (dim(table(fold_rules_df$all_folds)) == 2) {
-
       var_min_1 <-
         fold_rules_df %>%
         dplyr::group_by(all_folds) %>%
@@ -110,17 +108,21 @@ find_common_marginal_rules <- function(fold_rules,
     }
   }
 
-  total_marginal_results <- as.data.frame(cbind(unlist(var_quantiles),
-                                                unlist(marg_rules),
-                                                unlist(mins),
-                                                unlist(maxs),
-                                                unlist(fold_proportions)))
+  total_marginal_results <- as.data.frame(cbind(
+    unlist(var_quantiles),
+    unlist(marg_rules),
+    unlist(mins),
+    unlist(maxs),
+    unlist(fold_proportions)
+  ))
 
-  colnames(total_marginal_results) <- c("Variable Quantile",
-                                        "Marginal Rules",
-                                        "Min",
-                                        "Max",
-                                        "Proportion in Fold")
+  colnames(total_marginal_results) <- c(
+    "Variable Quantile",
+    "Marginal Rules",
+    "Min",
+    "Max",
+    "Proportion in Fold"
+  )
 
 
   return(total_marginal_results)

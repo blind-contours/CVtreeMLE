@@ -28,11 +28,13 @@ evaluate_marginal_rules <- function(data,
     for (i in seq(nrow(marg_decisions))) {
       target_marg_rule <- marg_decisions$rules[i]
       rule_name <- base::paste(marg_decisions$target_m[i], "marg_rule",
-                               marg_decisions$quantile[i], sep = "_")
+        marg_decisions$quantile[i],
+        sep = "_"
+      )
 
       vec <- data %>%
         dplyr::mutate(!!(rule_name) :=
-                        ifelse(eval(parse(text = target_marg_rule)), 1, 0)) %>%
+          ifelse(eval(parse(text = target_marg_rule)), 1, 0)) %>%
         dplyr::select(!!rule_name)
 
       marg_additive_data[[i]] <- vec

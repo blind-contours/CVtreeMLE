@@ -45,32 +45,34 @@
 #' sls <- create_sls()
 #' w_stack <- sls$W_stack
 #' tree_stack <- sls$A_stack
-#' example_output <- fit_marg_rule_backfitting(mix_comps = mix_comps,
-#'                                                      at = data,
-#'                                                      w = w,
-#'                                                      y = "y",
-#'                                                      w_stack = w_stack,
-#'                                                      tree_stack = tree_stack,
-#'                                                      fold = 1,
-#'                                                      max_iter = 1,
-#'                                                      verbose = FALSE,
-#'                                                      parallel_cv = FALSE,
-#'                                                      seed = 6442)
+#' example_output <- fit_marg_rule_backfitting(
+#'   mix_comps = mix_comps,
+#'   at = data,
+#'   w = w,
+#'   y = "y",
+#'   w_stack = w_stack,
+#'   tree_stack = tree_stack,
+#'   fold = 1,
+#'   max_iter = 1,
+#'   verbose = FALSE,
+#'   parallel_cv = FALSE,
+#'   seed = 6442
+#' )
 #'
 #' @export
 
 
 fit_marg_rule_backfitting <- function(mix_comps,
-                                                at,
-                                                w,
-                                                y,
-                                                w_stack,
-                                                tree_stack,
-                                                fold,
-                                                max_iter,
-                                                verbose,
-                                                parallel_cv,
-                                                seed) {
+                                      at,
+                                      w,
+                                      y,
+                                      w_stack,
+                                      tree_stack,
+                                      fold,
+                                      max_iter,
+                                      verbose,
+                                      parallel_cv,
+                                      seed) {
   if (parallel_cv == TRUE) {
     future::plan(future::sequential, gc = TRUE)
   }
@@ -181,7 +183,8 @@ fit_marg_rule_backfitting <- function(mix_comps,
 
       glmtree_model_preds_offset <- glmtree_fit_offset$predict(task)
       glmtree_model_preds_no_offset <- glmtree_fit_offset$predict(
-        task_no_offset)
+        task_no_offset
+      )
 
       at[, "Qbar_M_W_now"] <- glmtree_model_preds_no_offset
 
@@ -192,7 +195,8 @@ fit_marg_rule_backfitting <- function(mix_comps,
       at$Qbar_M_W_initial <- at$Qbar_M_W_now
 
       selected_learner <- glmtree_fit_offset$learner_fits[[
-        which(glmtree_fit_offset$coefficients == 1)]]
+        which(glmtree_fit_offset$coefficients == 1)
+      ]]
 
       if (verbose) {
         if (iter == 1) {
@@ -251,7 +255,8 @@ fit_marg_rule_backfitting <- function(mix_comps,
 
   marg_decisions <- do.call(rbind, marg_decisions)
 
-  return(list("marginal_df" = marg_decisions,
-              "models" = models
-              ))
+  return(list(
+    "marginal_df" = marg_decisions,
+    "models" = models
+  ))
 }

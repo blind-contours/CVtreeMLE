@@ -60,23 +60,34 @@ simulate_mixture_cube <- function(n_obs = 500,
                                   splits = c(0.99, 2.0, 2.5),
                                   mins = c(0, 0, 0),
                                   maxs = c(3, 4, 5),
-                                  mu =  c(0, 0, 0),
-                                  sigma =  matrix(c(1, 0.5, 0.8, 0.5,
-                                                    1, 0.7, 0.8, 0.7, 1),
-                                                  nrow = 3, ncol = 3),
-                                  w1_betas =  c(0.0, 0.01, 0.03, 0.06, 0.1,
-                                                0.05, 0.2, 0.04),
-                                  w2_betas =  c(0.0, 0.04, 0.01, 0.07, 0.15,
-                                                0.1, 0.1, 0.04),
-                                  mix_subspace_betas = c(0.00, 0.08, 0.05, 0.01,
-                                                         0.05, 0.033, 0.07,
-                                                         0.09),
-                                  subspace_assoc_strength_betas = c(1, 1, 1, 1,
-                                                                    1, 1, 1, 7),
-                                  marginal_impact_betas =  c(0, 0, 0),
+                                  mu = c(0, 0, 0),
+                                  sigma = matrix(
+                                    c(
+                                      1, 0.5, 0.8, 0.5,
+                                      1, 0.7, 0.8, 0.7, 1
+                                    ),
+                                    nrow = 3, ncol = 3
+                                  ),
+                                  w1_betas = c(
+                                    0.0, 0.01, 0.03, 0.06, 0.1,
+                                    0.05, 0.2, 0.04
+                                  ),
+                                  w2_betas = c(
+                                    0.0, 0.04, 0.01, 0.07, 0.15,
+                                    0.1, 0.1, 0.04
+                                  ),
+                                  mix_subspace_betas = c(
+                                    0.00, 0.08, 0.05, 0.01,
+                                    0.05, 0.033, 0.07,
+                                    0.09
+                                  ),
+                                  subspace_assoc_strength_betas = c(
+                                    1, 1, 1, 1,
+                                    1, 1, 1, 7
+                                  ),
+                                  marginal_impact_betas = c(0, 0, 0),
                                   eps_sd = 0.01,
                                   binary = FALSE) {
-
   barck_trans <- function(x, max, min) {
     x * (max - min) + min
   }
@@ -110,19 +121,21 @@ simulate_mixture_cube <- function(n_obs = 500,
 
     gen_denominator <- function(index, b0i, b1i, b3i, covars) {
       1 + exp(b0i[index] + (b1i[index] * age) + (b2i[index] * bmi) +
-                (b3i[index] * sex))
+        (b3i[index] * sex))
     }
 
     gen_probs <- function(index, b0i, b1i, b3i, covars, denominator) {
       exp(b0i[index] + (b1i[index] * age) + (b2i[index] * bmi) +
-            (b3i[index] * sex)) / (1 + denominator)
+        (b3i[index] * sex)) / (1 + denominator)
     }
 
     denominator <- sum(sapply(seq(from = 1, to = 8),
-                              FUN = gen_denominator, b0i, b1i, b3i, covars))
+      FUN = gen_denominator, b0i, b1i, b3i, covars
+    ))
 
     probs <- sapply(seq(from = 1, to = 8),
-                    FUN = gen_probs, b0i, b1i, b3i, covars, denominator)
+      FUN = gen_probs, b0i, b1i, b3i, covars, denominator
+    )
 
     probs_list[[i]] <- probs
   }
@@ -188,10 +201,11 @@ simulate_mixture_cube <- function(n_obs = 500,
     subspace_data <- cbind(m1_sec, m2_sec, m3_sec)
 
     ms[res$rcat == paste("p", i, sep = ""), ] <- subspace_data[res$rcat ==
-                                                                 paste("p",
-                                                                       i,
-                                                                       sep =
-                                                                         ""), ]
+      paste("p",
+        i,
+        sep =
+          ""
+      ), ]
   }
 
   unifvars <- qunif(pvars, min = 0, max = 1)

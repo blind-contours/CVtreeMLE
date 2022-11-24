@@ -39,7 +39,6 @@ calc_v_fold_marginal_ate <- function(marginal_data,
                                      marginal_rules,
                                      y,
                                      n_folds) {
-
   marg_data <- unlist(marginal_data, recursive = FALSE)
   marg_data <- unlist(marg_data, recursive = FALSE)
 
@@ -73,7 +72,8 @@ calc_v_fold_marginal_ate <- function(marginal_data,
         index <- index + 1
         comp_row <- comparisons[k, ]
         comp_label <- paste(comp_row$var_quant_group, reference_quant,
-                            sep = "-")
+          sep = "-"
+        )
         rule_comparison <- comp_row$rules
         rule_reference <- reference_rule
         comp_labels[[index]] <- comp_label
@@ -116,12 +116,14 @@ calc_v_fold_marginal_ate <- function(marginal_data,
       break
     }
 
-    flux_results <- fit_least_fav_submodel(h_aw = marg_mix$h_aw,
-                                           data = marg_mix,
-                                           y = y,
-                                           qbar_aw = marg_mix$qbar_aw,
-                                           qbar_1w = marg_mix$qbar_1w,
-                                           qbar_0w = marg_mix$qbar_0w)
+    flux_results <- fit_least_fav_submodel(
+      h_aw = marg_mix$h_aw,
+      data = marg_mix,
+      y = y,
+      qbar_aw = marg_mix$qbar_aw,
+      qbar_1w = marg_mix$qbar_1w,
+      qbar_0w = marg_mix$qbar_0w
+    )
 
     # ## back-scale Y
     # qbar_aw_star <- scale_to_original(scaled_vals = flux_results$qbar_aw_star,
@@ -140,10 +142,12 @@ calc_v_fold_marginal_ate <- function(marginal_data,
     marg_mix$qbar_0w_star <- flux_results$qbar_0w_star
     marg_mix$qbar_1w_star <- flux_results$qbar_1w_star
 
-    ate_results <- calc_ate_estimates(data = marg_mix,
-                                      ate_var = "marg_ate",
-                                      y = y,
-                                      p_adjust_n = length(marg_data))
+    ate_results <- calc_ate_estimates(
+      data = marg_mix,
+      ate_var = "marg_ate",
+      y = y,
+      p_adjust_n = length(marg_data)
+    )
 
     sqrd_resids <- (marg_mix$qbar_aw_star - marg_mix[y])^2
     rmse <- sqrt(mean(sqrd_resids[, 1]))
@@ -161,6 +165,8 @@ calc_v_fold_marginal_ate <- function(marginal_data,
 
   marginal_results <- cbind(marginal_results, rule_comparisons)
 
-  return(list(marginal_results = marginal_results,
-              data = updated_marginal_data))
+  return(list(
+    marginal_results = marginal_results,
+    data = updated_marginal_data
+  ))
 }

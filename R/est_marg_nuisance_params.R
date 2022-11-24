@@ -41,7 +41,7 @@ est_marg_nuisance_params <- function(at,
                                      a,
                                      no_marg_rules,
                                      marg_decisions,
-                                     h_aw_trunc_lvl = 10,
+                                     h_aw_trunc_lvl = h_aw_trunc_lvl,
                                      parallel_cv,
                                      seed) {
   if (parallel_cv == TRUE) {
@@ -53,7 +53,6 @@ est_marg_nuisance_params <- function(at,
   marginal_data <- list()
 
   if (no_marg_rules == FALSE) {
-
     marg_decisions_groups <- marginal_group_split(marg_decisions)
 
     for (i in seq(marg_decisions_groups)) {
@@ -85,12 +84,16 @@ est_marg_nuisance_params <- function(at,
         target_m_row <- quant_comparisons[j, ]
 
         at_c_comp_data <- at_c %>%
-          dplyr::mutate("a" := ifelse(eval(parse(text =
-                                                   target_m_row$rules)), 1, 0))
+          dplyr::mutate("a" := ifelse(eval(parse(
+            text =
+              target_m_row$rules
+          )), 1, 0))
 
         av_c_comp_data <- av_c %>%
-          dplyr::mutate("a" := ifelse(eval(parse(text =
-                                                   target_m_row$rules)), 1, 0))
+          dplyr::mutate("a" := ifelse(eval(parse(
+            text =
+              target_m_row$rules
+          )), 1, 0))
 
         at_c_comp_data <- at_c_comp_data[at_c_comp_data[, "a"] == 1, ]
         av_c_comp_data <- at_c_comp_data[at_c_comp_data[, "a"] == 1, ]
@@ -114,18 +117,22 @@ est_marg_nuisance_params <- function(at,
           folds = 2
         )
 
-        sl <- sl3::Lrnr_sl$new(learners = aw_stack,
-                               metalearner = sl3::Lrnr_nnls$new())
+        sl <- sl3::Lrnr_sl$new(
+          learners = aw_stack,
+          metalearner = sl3::Lrnr_nnls$new()
+        )
 
         sl_fit <- suppressWarnings(sl$train(task_at))
 
         ghat_1w <- bound_precision(sl_fit$predict(task_av))
 
-        h_aw <- calc_clever_covariate(ghat_1_w = ghat_1w,
-                                      data = av_data,
-                                      exposure = "a",
-                                      h_aw_trunc_lvl = 10,
-                                      type = "reg")
+        h_aw <- calc_clever_covariate(
+          ghat_1_w = ghat_1w,
+          data = av_data,
+          exposure = "a",
+          h_aw_trunc_lvl = h_aw_trunc_lvl,
+          type = "reg"
+        )
 
         av_data$ghat_1w <- ghat_1w
         av_data$h_aw <- h_aw
@@ -163,8 +170,10 @@ est_marg_nuisance_params <- function(at,
           outcome_type = family
         )
 
-        sl <- sl3::Lrnr_sl$new(learners = aw_stack,
-                               metalearner = sl3::Lrnr_nnls$new())
+        sl <- sl3::Lrnr_sl$new(
+          learners = aw_stack,
+          metalearner = sl3::Lrnr_nnls$new()
+        )
 
         sl_fit <- suppressWarnings(sl$train(task_at))
 

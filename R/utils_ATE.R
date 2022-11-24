@@ -18,7 +18,6 @@ calc_ate_estimates <- function(data,
                                y,
                                p_adjust_n,
                                v_fold = FALSE) {
-
   data[ate_var] <- data$qbar_1w_star - data$qbar_0w_star
 
   thetas <-
@@ -67,8 +66,10 @@ calc_ate_estimates <- function(data,
   p_value_adjust <-
     stats::p.adjust(p_value, method = "bonferroni", n = p_adjust_n)
 
-  return(list("ate" = theta, "se" = se, "ci" = ci, "p_value" = p_value,
-              "adj_p_value" = p_value_adjust, "data" = data))
+  return(list(
+    "ate" = theta, "se" = se, "ci" = ci, "p_value" = p_value,
+    "adj_p_value" = p_value_adjust, "data" = data
+  ))
 }
 
 ###############################################################################
@@ -157,7 +158,6 @@ calc_clever_covariate <- function(ghat_1_w,
 #'  avoid numerical instability issues.
 #' @export
 fit_least_fav_submodel <- function(h_aw, data, y, qbar_aw, qbar_1w, qbar_0w) {
-
   data$y_scaled <- scale_to_unit(data[y])[[1]]
 
   logit_update <-
@@ -172,7 +172,9 @@ fit_least_fav_submodel <- function(h_aw, data, y, qbar_aw, qbar_1w, qbar_0w) {
   qbar_1w_star <- qbar_1w + epsilon * h_aw
   qbar_0w_star <- qbar_0w + epsilon * h_aw
 
-  return(list("qbar_aw_star" = qbar_aw_star,
-              "qbar_1w_star" = qbar_1w_star,
-              "qbar_0w_star" = qbar_0w_star))
+  return(list(
+    "qbar_aw_star" = qbar_aw_star,
+    "qbar_1w_star" = qbar_1w_star,
+    "qbar_0w_star" = qbar_0w_star
+  ))
 }

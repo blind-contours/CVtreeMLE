@@ -116,12 +116,14 @@ calc_marginal_ate <- function(marginal_data,
 
   for (i in seq(marg_data)) {
     marg_mix <- marg_data[[i]]
-    flux_results <- fit_least_fav_submodel(h_aw = marg_mix$h_aw,
-                                           data = marg_mix,
-                                           y = y,
-                                           qbar_aw = marg_mix$qbar_aw,
-                                           qbar_1w = marg_mix$qbar_1w,
-                                           qbar_0w = marg_mix$qbar_0w)
+    flux_results <- fit_least_fav_submodel(
+      h_aw = marg_mix$h_aw,
+      data = marg_mix,
+      y = y,
+      qbar_aw = marg_mix$qbar_aw,
+      qbar_1w = marg_mix$qbar_1w,
+      qbar_0w = marg_mix$qbar_0w
+    )
 
     ## back-scale Y
     # qbar_aw_star <- scale_to_original(scaled_vals = flux_results$qbar_aw_star,
@@ -140,10 +142,12 @@ calc_marginal_ate <- function(marginal_data,
     marg_mix$qbar_0w_star <- flux_results$qbar_0w_star
     marg_mix$qbar_1w_star <- flux_results$qbar_1w_star
 
-    ate_results <- calc_ate_estimates(data = marg_mix,
-                                      ate_var = "marg_ATE",
-                                      y = y,
-                                      p_adjust_n = length(no_null_indices))
+    ate_results <- calc_ate_estimates(
+      data = marg_mix,
+      ate_var = "marg_ATE",
+      y = y,
+      p_adjust_n = length(no_null_indices)
+    )
 
     sqrd_resids <- (marg_mix$qbar_aw_star - marg_mix[y])^2
     rmse <- sqrt(mean(sqrd_resids[, 1]))
@@ -159,6 +163,8 @@ calc_marginal_ate <- function(marginal_data,
     updated_marginal_data[[i]] <- ate_results$data
   }
 
-  return(list(marginal_results = marginal_results,
-              data = updated_marginal_data))
+  return(list(
+    marginal_results = marginal_results,
+    data = updated_marginal_data
+  ))
 }

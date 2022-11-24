@@ -35,17 +35,19 @@
 #' sls <- create_sls()
 #' w_stack <- sls$W_stack
 #' tree_stack <- sls$A_stack
-#' example_output <- fit_mix_rule_backfitting(at = data,
-#'                                             a = mix_comps,
-#'                                             w = W,
-#'                                             y = "y",
-#'                                             direction = "positive",
-#'                                             w_stack = w_stack,
-#'                                             fold = 1,
-#'                                             max_iter = 1,
-#'                                             verbose = FALSE,
-#'                                             parallel = FALSE,
-#'                                             seed = 6442)
+#' example_output <- fit_mix_rule_backfitting(
+#'   at = data,
+#'   a = mix_comps,
+#'   w = W,
+#'   y = "y",
+#'   direction = "positive",
+#'   w_stack = w_stack,
+#'   fold = 1,
+#'   max_iter = 1,
+#'   verbose = FALSE,
+#'   parallel = FALSE,
+#'   seed = 6442
+#' )
 #' @export
 
 fit_mix_rule_backfitting <- function(at,
@@ -59,7 +61,6 @@ fit_mix_rule_backfitting <- function(at,
                                      verbose,
                                      parallel_cv,
                                      seed) {
-
   if (parallel_cv == TRUE) {
     future::plan(future::sequential, gc = TRUE)
   }
@@ -92,18 +93,18 @@ fit_mix_rule_backfitting <- function(at,
     as.formula(paste(y, "~", paste(a, collapse = "+")))
 
   pre_model_t0 <- pre::pre(formula,
-                           data = at,
-                           family = "gaussian",
-                           use.grad = FALSE,
-                           tree.unbiased = TRUE,
-                           removecomplements = TRUE,
-                           removeduplicates = TRUE,
-                           maxdepth = pre::maxdepth_sampler(),
-                           sampfrac = min(1, (11 * sqrt(dim(at)[1]) + 1) /
-                                            dim(at)[1]),
-                           nfolds = 10,
-                           par.final = FALSE,
-                           par.init = FALSE
+    data = at,
+    family = "gaussian",
+    use.grad = FALSE,
+    tree.unbiased = TRUE,
+    removecomplements = TRUE,
+    removeduplicates = TRUE,
+    maxdepth = pre::maxdepth_sampler(),
+    sampfrac = min(1, (11 * sqrt(dim(at)[1]) + 1) /
+      dim(at)[1]),
+    nfolds = 10,
+    par.final = FALSE,
+    par.init = FALSE
   )
 
   qbar_aw_initial <- predict(pre_model_t0)
@@ -143,32 +144,35 @@ fit_mix_rule_backfitting <- function(at,
     at$QbarW_now <- preds_no_offset
 
     pre_model <- pre::pre(formula,
-                          data = at,
-                          family = "gaussian",
-                          use.grad = FALSE,
-                          tree.unbiased = TRUE,
-                          removecomplements = TRUE,
-                          removeduplicates = TRUE,
-                          maxdepth = pre::maxdepth_sampler(),
-                          sampfrac = min(1, (11 * sqrt(dim(at)[1]) + 1) /
-                                           dim(at)[1]),
-                          nfolds = 10,
-                          offset = at$qbar_w_initial,
-                          par.final = FALSE,
-                          par.init = FALSE
+      data = at,
+      family = "gaussian",
+      use.grad = FALSE,
+      tree.unbiased = TRUE,
+      removecomplements = TRUE,
+      removeduplicates = TRUE,
+      maxdepth = pre::maxdepth_sampler(),
+      sampfrac = min(1, (11 * sqrt(dim(at)[1]) + 1) /
+        dim(at)[1]),
+      nfolds = 10,
+      offset = at$qbar_w_initial,
+      par.final = FALSE,
+      par.init = FALSE
     )
 
     pre_model_preds_offset <- predict(pre_model,
-                                      newoffset = at$qbar_w_initial)
+      newoffset = at$qbar_w_initial
+    )
 
     at$qbar_aw_now <- predict(pre_model,
-                              newoffset = at_no_offset$qbar_w_initial)
+      newoffset = at_no_offset$qbar_w_initial
+    )
 
     pre_model_coefs <- stats::coef(pre_model, penalty.par.val = "lambda.min")
 
     pre_coefs_no_zero <- base::subset(pre_model_coefs, coefficient != 0)
     pre_coefs_no_zero$test <- apply(pre_coefs_no_zero, 1, function(x) {
-      pull_out_rule_vars(x, a)})
+      pull_out_rule_vars(x, a)
+    })
 
     rules <- pre_coefs_no_zero
     rules$boot_num <- iter
@@ -225,7 +229,7 @@ fit_mix_rule_backfitting <- function(at,
     rules <- rules %>%
       dplyr::group_by(test) %>%
       dplyr::slice_max(n = 1, coefficient)
-  }else {
+  } else {
     rules <- rules %>%
       dplyr::group_by(test) %>%
       dplyr::slice_min(n = 1, coefficient)
@@ -240,8 +244,10 @@ fit_mix_rule_backfitting <- function(at,
 
   if (dim(rules)[1] == 0) {
     rules <- data.frame(matrix(nrow = 1, ncol = 7))
-    colnames(rules) <- c("rule", "coefficient", "description",
-                         "test", "boot_num", "direction", "fold")
+    colnames(rules) <- c(
+      "rule", "coefficient", "description",
+      "test", "boot_num", "direction", "fold"
+    )
     rules$rule <- "None"
     rules$coefficient <- 0
     rules$description <- "No Rules Found"

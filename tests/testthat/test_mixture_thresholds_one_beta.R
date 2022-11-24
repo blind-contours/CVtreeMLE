@@ -5,7 +5,7 @@ library(pre)
 library(partykit)
 
 
-data <- simulate_mixture_cube(n_obs =  1000)
+data <- simulate_mixture_cube(n_obs = 1000)
 
 sls <- create_sls()
 w_stack <- sls$W_stack
@@ -14,19 +14,22 @@ mix_comps <- c("M1", "M2", "M3")
 w <- c("age", "sex", "bmi")
 data$y_scaled <- data$y
 
-example_output <- fit_mix_rule_backfitting(at = data,
-                                             a = mix_comps,
-                                             w = w,
-                                             y = "y_scaled",
-                                             direction = "positive",
-                                             w_stack = w_stack,
-                                             fold = 1,
-                                             max_iter = 4,
-                                             verbose = FALSE,
-                                             parallel = FALSE,
-                                             seed = 6442)
+example_output <- fit_mix_rule_backfitting(
+  at = data,
+  a = mix_comps,
+  w = w,
+  y = "y_scaled",
+  direction = "positive",
+  w_stack = w_stack,
+  fold = 1,
+  max_iter = 4,
+  verbose = FALSE,
+  parallel = FALSE,
+  seed = 6442
+)
 
 mixture_rules <- example_output$rules
 
 expect_true(mixture_rules[
-  which.max(mixture_rules$coefficient), "test"] == "M1-M2-M3")
+  which.max(mixture_rules$coefficient), "test"
+] == "M1-M2-M3")

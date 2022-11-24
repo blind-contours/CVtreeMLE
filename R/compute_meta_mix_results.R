@@ -26,7 +26,6 @@ meta_mix_results <- function(v_fold_mixture_results,
                              mix_comps,
                              n_folds,
                              data) {
-
   v_fold_mixture_group <- v_fold_mixture_group_split(v_fold_mixture_results)
 
   v_fold_mixture_w_pooled <- list()
@@ -36,32 +35,35 @@ meta_mix_results <- function(v_fold_mixture_results,
     results_df <- v_fold_mixture_group[[i]]
 
     weighted_mean <- sum(results_df$ate *
-                           (1 / results_df$se^2)) / sum((1 / results_df$se^2))
+      (1 / results_df$se^2)) / sum((1 / results_df$se^2))
 
     weighted_rmse <- sum(results_df$rmse *
-                           (1 / results_df$se^2)) / sum((1 / results_df$se^2))
+      (1 / results_df$se^2)) / sum((1 / results_df$se^2))
 
     pooled_se <- sqrt(1 / (1 / sum(results_df$se^2)))
 
     pooled_p_val <- round(2 *
-                            stats::pnorm(abs(weighted_mean / pooled_se),
-                                         lower.tail = FALSE), 5)
+      stats::pnorm(abs(weighted_mean / pooled_se),
+        lower.tail = FALSE
+      ), 5)
 
     pooled_ci <- c(
       round(weighted_mean + stats::qnorm(0.05 / 2, lower.tail = TRUE) *
-              pooled_se, 4),
+        pooled_se, 4),
       round(weighted_mean + stats::qnorm(0.05 / 2, lower.tail = FALSE) *
-              pooled_se, 4)
+        pooled_se, 4)
     )
 
     vars <- mix_comps[mix_comps %in% strsplit(results_df$mix_rule[1],
-                                              split = " ")[[1]]]
+      split = " "
+    )[[1]]]
 
     intxn_rule <- paste("(", paste(results_df$mix_rule, collapse = ")|("), ")")
 
     intxn_data <- data %>%
       dplyr::mutate("intxn_rule" := ifelse(eval(parse(text = intxn_rule)),
-                                           1, 0))
+        1, 0
+      ))
 
     new_rule <- list()
 
@@ -77,8 +79,10 @@ meta_mix_results <- function(v_fold_mixture_results,
         summarise(max = max(!!(as.name(var))))
       var_max <- subset(var_max, intxn_rule == 1, select = max)
 
-      augmented_rule <- paste(var, ">=", round(var_min, 3), "&", var, "<=",
-                              round(var_max, 3))
+      augmented_rule <- paste(
+        var, ">=", round(var_min, 3), "&", var, "<=",
+        round(var_max, 3)
+      )
 
       new_rule <- append(new_rule, augmented_rule)
     }
