@@ -39,6 +39,7 @@
 #' @importFrom MASS mvrnorm
 #' @importFrom purrr rbernoulli
 #' @importFrom rlang :=
+#' @importFrom stats sd
 #' @return obs: A data frame of the simulated data for the mixture cube.
 
 #' @export

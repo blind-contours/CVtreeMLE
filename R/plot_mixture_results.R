@@ -4,6 +4,9 @@
 #' @param hjust Horizontal adjustment of rule placement on plots relative to
 #' point estimate
 #'
+#' @import viridis
+#' @import hrbrthemes
+#'
 #' @export
 
 plot_mixture_results <- function(v_intxn_results, hjust) {

@@ -31,7 +31,9 @@ Imports:
     stringr,
     MASS,
     ggplot2,
-    furrr
+    furrr,
+    hrbrthemes,
+    viridis
 Suggests:
     rmarkdown,
     knitr,
