@@ -45,9 +45,9 @@ est_mix_nuisance_params_nie <- function(at,
                                         psi_z_stack,
                                         family,
                                         rules,
-                                        h_aw_trunc_lvl = 10,
                                         parallel_cv,
-                                        seed) {
+                                        seed,
+                                        h_aw_trunc_lvl = h_aw_trunc_lvl) {
   if (parallel_cv == TRUE) {
     future::plan(future::sequential, gc = TRUE)
   }
@@ -135,6 +135,18 @@ est_mix_nuisance_params_nie <- function(at,
         at_hy <- (at_treatment_indicator / at_g1_est) * (1 - ((at_e0_est/at_g0_est)*(at_g1_est/at_e1_est)))
         at_hz <- (2 * at_treatment_indicator - 1) / at_g1_est
 
+        at_hy <-
+          ifelse(at_hy > h_aw_trunc_lvl, h_aw_trunc_lvl, at_hy)
+
+        at_hy <-
+          ifelse(at_hy < -h_aw_trunc_lvl, -h_aw_trunc_lvl, at_hy)
+
+        at_hz <-
+          ifelse(at_hz > h_aw_trunc_lvl, h_aw_trunc_lvl, at_hz)
+
+        at_hz <-
+          ifelse(at_hz < -h_aw_trunc_lvl, -h_aw_trunc_lvl, at_hz)
+
         ## TODO: in some instances where there is poor prediction of exposure,
         ## all predictions are the same which
         ## breaks the clever covariate. In this case, skip estimation of
@@ -179,6 +191,18 @@ est_mix_nuisance_params_nie <- function(at,
 
         av_hy <- (av_treatment_indicator / av_g1_est) * (1 - ((av_e0_est/av_g0_est)*(av_g1_est/av_e1_est)))
         av_hz <- (2 * av_treatment_indicator - 1) / av_g1_est
+
+        av_hy <-
+          ifelse(av_hy > h_aw_trunc_lvl, h_aw_trunc_lvl, av_hy)
+
+        av_hy <-
+          ifelse(av_hy < -h_aw_trunc_lvl, -h_aw_trunc_lvl, av_hy)
+
+        av_hz <-
+          ifelse(av_hz > h_aw_trunc_lvl, h_aw_trunc_lvl, av_hz)
+
+        av_hz <-
+          ifelse(av_hz < -h_aw_trunc_lvl, -h_aw_trunc_lvl, av_hz)
 
         av_mix$hy <- av_hy
         av_mix$hz <- av_hz

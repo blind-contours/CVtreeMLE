@@ -215,7 +215,8 @@ CVtreeMLE <- function(w,
                       parallel_type = "multi_session",
                       num_cores = 2,
                       max_iter = 5,
-                      verbose = FALSE) {
+                      verbose = FALSE,
+                      h_aw_trunc_lvl = 20) {
 
   if (any(sapply(data[, a], is.factor))) {
     print("Factor variable detected in exposures, converting to numeric")
@@ -501,7 +502,8 @@ CVtreeMLE <- function(w,
       family = family,
       rules = rules,
       parallel_cv = parallel_cv,
-      seed = seed
+      seed = seed,
+      h_aw_trunc_lvl
     )
 
     mix_interaction_data <- mix_nuisance_params$data
@@ -524,7 +526,8 @@ CVtreeMLE <- function(w,
         family = family,
         rules = rules,
         parallel_cv = parallel_cv,
-        seed = seed
+        seed = seed,
+        h_aw_trunc_lvl
       )
 
       mix_interaction_data_nde <- mix_nuisance_params_nde$data

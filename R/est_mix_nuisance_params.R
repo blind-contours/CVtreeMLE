@@ -36,9 +36,9 @@ est_mix_nuisance_params <- function(at,
                                     aw_stack,
                                     family,
                                     rules,
-                                    h_aw_trunc_lvl = 10,
                                     parallel_cv,
-                                    seed) {
+                                    seed,
+                                    h_aw_trunc_lvl = h_aw_trunc_lvl) {
   if (parallel_cv == TRUE) {
     future::plan(future::sequential, gc = TRUE)
   }
@@ -88,7 +88,7 @@ est_mix_nuisance_params <- function(at,
         h_aw <- calc_clever_covariate(ghat_1_w = ghat_1w,
                                       data = av_mix,
                                       exposure = "A_mix",
-                                      h_aw_trunc_lvl = 10)
+                                      h_aw_trunc_lvl = h_aw_trunc_lvl)
 
         task_at <- sl3::make_sl3_Task(
           data = at_mix,
