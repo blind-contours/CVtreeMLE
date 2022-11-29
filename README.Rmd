@@ -194,12 +194,16 @@ data with ground-truth.
 ## Simulate Data
 
 ```{r simulate_data, warning=FALSE}
-sim_data <- simulate_mixture_cube(n_obs = 800,
-                                  splits = c(0.99, 2.0, 2.5),
-                                  mins = c(0, 0, 0),
-                                  maxs = c(3, 4, 5),
-                                  subspace_assoc_strength_betas = c(0, 0, 0, 0,
-                                                                    0, 0, 6, 0))
+sim_data <- simulate_mixture_cube(
+  n_obs = 800,
+  splits = c(0.99, 2.0, 2.5),
+  mins = c(0, 0, 0),
+  maxs = c(3, 4, 5),
+  subspace_assoc_strength_betas = c(
+    0, 0, 0, 0,
+    0, 0, 6, 0
+  )
+)
 head(sim_data) %>%
   kbl(caption = "Simulated Data") %>%
   kable_classic(full_width = FALSE, html_font = "Cambria")
@@ -233,16 +237,18 @@ node in O = W,A,Y to the `CVtreeMLE` function.
 ```{r run_simulation}
 ptm <- proc.time()
 
-sim_results <- CVtreeMLE(data = sim_data,
-                         w = c("w", "w2"),
-                         a = c(paste("M", seq(3), sep = "")),
-                         y = "y",
-                         n_folds = 5,
-                         parallel_cv = TRUE,
-                         seed = 2333,
-                         parallel_type = "multi_session",
-                         family = "continuous",
-                         num_cores = 2)
+sim_results <- CVtreeMLE(
+  data = sim_data,
+  w = c("w", "w2"),
+  a = c(paste("M", seq(3), sep = "")),
+  y = "y",
+  n_folds = 5,
+  parallel_cv = TRUE,
+  seed = 2333,
+  parallel_type = "multi_session",
+  family = "continuous",
+  num_cores = 2
+)
 
 proc.time() - ptm
 ```
@@ -302,9 +308,11 @@ function. This will return a list of plots with names corresponding to the
 interactions found.
 
 ```{r plot_sim_mixture_results}
-mixture_plots <- plot_mixture_results(v_intxn_results =
-                                        sim_results$`V-Specific Mix Results`,
-                                      hjust = 1.05)
+mixture_plots <- plot_mixture_results(
+  v_intxn_results =
+    sim_results$`V-Specific Mix Results`,
+  hjust = 1.05
+)
 mixture_plots$M1M2M3
 ```
 This plot shows the ATE specific for each fold and for the weighted-mean 

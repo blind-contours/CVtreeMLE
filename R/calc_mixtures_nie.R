@@ -45,7 +45,6 @@ calc_mixtures_nie <- function(input_mix_rules,
                               y,
                               n_folds,
                               no_mixture_rules) {
-
   fold_mix_rules <-
     data.table::rbindlist(unlist(input_mix_rules, recursive = FALSE))
 
@@ -95,7 +94,8 @@ calc_mixtures_nie <- function(input_mix_rules,
     }
 
     mix_rule_data <- do.call(rbind, unlist(intxn_rule_data_list,
-                                           recursive = FALSE))
+      recursive = FALSE
+    ))
 
 
     if (any(is.na(mix_rule_data$hz))) {
@@ -134,7 +134,7 @@ calc_mixtures_nie <- function(input_mix_rules,
 
     # use the Tchetgen Tchetgen and Shpitser (2011) version
     eif <- (av_treatment_indicator / mix_rule_data$av_g1_est) * (
-      mix_rule_data[,y] - psi_Z1_est - mix_rule_data$av_e0_est * mix_rule_data$av_g0_est / (mix_rule_data$av_e1_est * mix_rule_data$av_g1_est) * (mix_rule_data[,y] - mix_rule_data$av_qbar_1zw_star)
+      mix_rule_data[, y] - psi_Z1_est - mix_rule_data$av_e0_est * mix_rule_data$av_g0_est / (mix_rule_data$av_e1_est * mix_rule_data$av_g1_est) * (mix_rule_data[, y] - mix_rule_data$av_qbar_1zw_star)
     ) - (av_control_indicator / mix_rule_data$av_g0_est) * (mix_rule_data$av_qbar_1zw_star - psi_Z0_est) +
       psi_Z_est - theta
 
@@ -172,8 +172,10 @@ calc_mixtures_nie <- function(input_mix_rules,
     nie_mixture_results$`Lower CI`[group] <- round(ci[1], 3)
     nie_mixture_results$`Upper CI`[group] <- round(ci[2], 3)
     nie_mixture_results$`P-value`[group] <- round(p_value, 6)
-    nie_mixture_results$`P-value Adj`[group] <- round(p_value_adjust,
-                                                      6)
+    nie_mixture_results$`P-value Adj`[group] <- round(
+      p_value_adjust,
+      6
+    )
     nie_mixture_results$`Vars`[group] <- vars
     nie_mixture_results$`RMSE`[group] <- round(rmse, 3)
 

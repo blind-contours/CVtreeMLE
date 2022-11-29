@@ -39,7 +39,7 @@ round_rules <- function(rules) {
     for (j in seq(rule_split)) {
       element <- rule_split[[j]]
       if (grepl("-*\\d+\\.*\\d*", element) == TRUE &&
-          grepl("[[:alpha:]]", element) == FALSE) {
+        grepl("[[:alpha:]]", element) == FALSE) {
         element_round <- round(as.numeric(element), 3)
         rule_split[[j]] <- element_round
       }
@@ -275,5 +275,4 @@ list_rules_party <- function(x, i = NULL, ...) {
   }
   node <- rec_fun(partykit::node_party(x))
   paste(rule, collapse = " & ")
-
 }

@@ -3,7 +3,7 @@
 #'
 #' @description For each mixture mixture interaction found, create a g estimator
 #' for the probability of being exposed to the rule thresholds,
-#'a Q estimator for the outcome E(Y| A = a_mix, Z, W), an e estimator for
+#' a Q estimator for the outcome E(Y| A = a_mix, Z, W), an e estimator for
 #' e(A|Z,W) and a Phi estimator that regresses the outcome counterfactuals on
 #' the covariates of A =0.  Get estimates of g, e,phi, and Q using the
 #' validation data and calculate the clever covariate used in the
@@ -69,7 +69,6 @@ est_mix_nuisance_params_nde <- function(at,
       interaction_rule <- at_rules_eval[, interaction]
 
       if (dim(table(interaction_rule)) == 2) {
-
         at_mix$A_mix <- interaction_rule
         av_mix$A_mix <- av_rules_eval[, interaction]
 
@@ -90,8 +89,10 @@ est_mix_nuisance_params_nde <- function(at,
           outcome_type = "binomial"
         )
 
-        sl <- sl3::Lrnr_sl$new(learners = aw_stack,
-                               metalearner = sl3::Lrnr_nnls$new())
+        sl <- sl3::Lrnr_sl$new(
+          learners = aw_stack,
+          metalearner = sl3::Lrnr_nnls$new()
+        )
 
         sl_fit_g <- suppressWarnings(sl$train(task_at_g))
 
@@ -105,7 +106,7 @@ est_mix_nuisance_params_nde <- function(at,
 
         task_at_e <- sl3::make_sl3_Task(
           data = at_mix,
-          covariates = c(w,z),
+          covariates = c(w, z),
           outcome = "A_mix",
           outcome_type = "binomial",
           folds = 2
@@ -113,7 +114,7 @@ est_mix_nuisance_params_nde <- function(at,
 
         task_av_e <- sl3::make_sl3_Task(
           data = av_mix,
-          covariates = c(w,z),
+          covariates = c(w, z),
           outcome = "A_mix",
           outcome_type = "binomial"
         )
@@ -130,7 +131,7 @@ est_mix_nuisance_params_nde <- function(at,
         at_e1_est <- at_e_est
         at_e0_est <- 1 - at_e1_est
 
-        at_hy <- (at_treatment_indicator / at_g1_est) * ((at_e0_est/at_g0_est)*(at_g1_est/at_e1_est)) - (at_control_indicator / at_g0_est)
+        at_hy <- (at_treatment_indicator / at_g1_est) * ((at_e0_est / at_g0_est) * (at_g1_est / at_e1_est)) - (at_control_indicator / at_g0_est)
         at_hz <- 1 / at_g0_est
 
         at_hy <-
@@ -158,7 +159,7 @@ est_mix_nuisance_params_nde <- function(at,
         av_e1_est <- av_e_est
         av_e0_est <- 1 - av_e1_est
 
-        av_hy <- (av_treatment_indicator / av_g1_est) * ((av_e0_est/av_g0_est)*(av_g1_est/av_e1_est)) - (av_control_indicator / av_g0_est)
+        av_hy <- (av_treatment_indicator / av_g1_est) * ((av_e0_est / av_g0_est) * (av_g1_est / av_e1_est)) - (av_control_indicator / av_g0_est)
         av_hz <- 1 / av_g0_est
 
         av_hy <-
@@ -240,12 +241,14 @@ est_mix_nuisance_params_nde <- function(at,
         at_mix$qbar_1zw <- sl_fit_y$predict(task_at_1)
         at_mix$qbar_0zw <- sl_fit_y$predict(task_at_0)
 
-        at_Q_y_tmle_udpates <- fit_least_fav_submodel(h_aw = at_hy,
-                                                   data = at_mix,
-                                                   y = y,
-                                                   qbar_aw = at_mix$qbar_azw,
-                                                   qbar_1w = at_mix$qbar_1zw,
-                                                   qbar_0w = at_mix$qbar_0zw)
+        at_Q_y_tmle_udpates <- fit_least_fav_submodel(
+          h_aw = at_hy,
+          data = at_mix,
+          y = y,
+          qbar_aw = at_mix$qbar_azw,
+          qbar_1w = at_mix$qbar_1zw,
+          qbar_0w = at_mix$qbar_0zw
+        )
 
 
         at_q_diff <- at_Q_y_tmle_udpates$qbar_1w_star - at_Q_y_tmle_udpates$qbar_0w_star
@@ -255,12 +258,14 @@ est_mix_nuisance_params_nde <- function(at,
         av_mix$qbar_1zw <- sl_fit_y$predict(task_av_1)
         av_mix$qbar_0zw <- sl_fit_y$predict(task_av_0)
 
-        av_Q_y_tmle_udpates <- fit_least_fav_submodel(h_aw = av_hy,
-                                                      data = av_mix,
-                                                      y = y,
-                                                      qbar_aw = av_mix$qbar_azw,
-                                                      qbar_1w = av_mix$qbar_1zw,
-                                                      qbar_0w = av_mix$qbar_0zw)
+        av_Q_y_tmle_udpates <- fit_least_fav_submodel(
+          h_aw = av_hy,
+          data = av_mix,
+          y = y,
+          qbar_aw = av_mix$qbar_azw,
+          qbar_1w = av_mix$qbar_1zw,
+          qbar_0w = av_mix$qbar_0zw
+        )
 
 
         av_q_diff <- av_Q_y_tmle_udpates$qbar_1w_star - av_Q_y_tmle_udpates$qbar_0w_star
@@ -304,7 +309,7 @@ est_mix_nuisance_params_nde <- function(at,
 
         av_mix$psi_z <- qbar_diff_star
         # compute individual scores for DY, DA, DW
-        d_y <- av_hy * (av_mix[,y] - av_Q_y_tmle_udpates$qbar_aw_star)
+        d_y <- av_hy * (av_mix[, y] - av_Q_y_tmle_udpates$qbar_aw_star)
         d_z <- av_control_indicator * av_hz * (av_Q_y_tmle_udpates$qbar_1w_star - av_Q_y_tmle_udpates$qbar_0w_star - qbar_diff_star)
         d_w <- qbar_diff_star
 

@@ -43,8 +43,10 @@ sim_data_exp <- simulate_mixture_cube(
   binary = binary
 )
 
-expected_y_exp <- subset(x = sim_data_exp,
-                         M1 < 0.99 & M2 > 2.0 & M3 > 2.5, select = y)
+expected_y_exp <- subset(
+  x = sim_data_exp,
+  M1 < 0.99 & M2 > 2.0 & M3 > 2.5, select = y
+)
 
 ate <- 0
 
@@ -79,9 +81,13 @@ sim_data_unexp <- simulate_mixture_cube(
   binary = binary
 )
 
-expected_y_unexp <- subset(x = sim_data_unexp,
-                           M1 < 0.99 & M2 > 2.0 & M3 > 2.5, select = y)
+expected_y_unexp <- subset(
+  x = sim_data_unexp,
+  M1 < 0.99 & M2 > 2.0 & M3 > 2.5, select = y
+)
 
 
 expect_equal(mean(expected_y_exp$y) - mean(expected_y_unexp$y),
-             6, tolerance = 0.07)
+  6,
+  tolerance = 0.07
+)

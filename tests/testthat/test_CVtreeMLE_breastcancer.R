@@ -19,14 +19,21 @@ table(data$y)
 
 y <- "y"
 
-w <- c("marg.adhesion", "epith.c.size",
-       "bl.cromatin", "normal.nucleoli", "mitoses")
+w <- c(
+  "marg.adhesion", "epith.c.size",
+  "bl.cromatin", "normal.nucleoli", "mitoses"
+)
 
 a <- c("cl.thickness", "cell.size", "cell.shape")
 
-data <- suppressWarnings(data.frame(lapply(data,
-                                           function(x) as.numeric(
-                                             as.character(x)))))
+data <- suppressWarnings(data.frame(lapply(
+  data,
+  function(x) {
+    as.numeric(
+      as.character(x)
+    )
+  }
+)))
 
 data <- data[colnames(data) != "class"]
 
@@ -49,7 +56,9 @@ proc.time() - ptm
 
 ## test mixture result outputs given interaction exist in this data:
 expect_true(
-  class(breast_cancr_results$`V-Specific Mix Results`) == "list")
+  class(breast_cancr_results$`V-Specific Mix Results`) == "list"
+)
 
 expect_true(
-  class(breast_cancr_results$`Pooled TMLE Mixture Results`) == "data.frame")
+  class(breast_cancr_results$`Pooled TMLE Mixture Results`) == "data.frame"
+)

@@ -34,15 +34,21 @@ plot_mixture_results <- function(v_intxn_results, hjust) {
     ) +
       ggplot2::geom_errorbarh(size = line_size) +
       ggplot2::geom_point(size = point_size) +
-      ggplot2::geom_vline(xintercept = 0, alpha = .25, linetype = "dotted",
-                          size = line_size) +
+      ggplot2::geom_vline(
+        xintercept = 0, alpha = .25, linetype = "dotted",
+        size = line_size
+      ) +
       ggplot2::labs(x = "ATE", y = "Fold", color = "") +
       ggplot2::ggtitle(title) +
       ggplot2::theme_classic() +
-      ggplot2::theme(text = text_theme, axis.text = axis_text_theme,
-                     legend.position = "none") +
-      ggplot2::geom_text(size = 4, hjust = hjust, vjust = 0,
-                         colour = "#3C3C3C", nudge_x = -0, nudge_y = 0.0) +
+      ggplot2::theme(
+        text = text_theme, axis.text = axis_text_theme,
+        legend.position = "none"
+      ) +
+      ggplot2::geom_text(
+        size = 4, hjust = hjust, vjust = 0,
+        colour = "#3C3C3C", nudge_x = -0, nudge_y = 0.0
+      ) +
       viridis::scale_color_viridis(discrete = TRUE) +
       hrbrthemes::theme_ipsum()
 

@@ -19,7 +19,7 @@ create_cv_folds <- function(v, y, verbose = FALSE) {
     for (i in 1:nys) {
       # Record how many observations have this Y value.
       n <- sum(y == ys[i])
-      folds <- cvTools::cvFolds(n, K = v,  R = 1, type = "random")$which
+      folds <- cvTools::cvFolds(n, K = v, R = 1, type = "random")$which
 
       out[y == ys[i]] <- folds
     }
@@ -28,7 +28,7 @@ create_cv_folds <- function(v, y, verbose = FALSE) {
       print(table(y, "Fold" = out, useNA = "ifany"))
     }
   } else {
-    xx <- cvTools::cvFolds(nn, K = v,  R = 1, type = "random")$which
+    xx <- cvTools::cvFolds(nn, K = v, R = 1, type = "random")$which
     out <- xx
   }
   return(out)

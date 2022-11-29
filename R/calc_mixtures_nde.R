@@ -45,7 +45,6 @@ calc_mixtures_nde <- function(input_mix_rules,
                               y,
                               n_folds,
                               no_mixture_rules) {
-
   fold_mix_rules <-
     data.table::rbindlist(unlist(input_mix_rules, recursive = FALSE))
 
@@ -95,7 +94,8 @@ calc_mixtures_nde <- function(input_mix_rules,
     }
 
     mix_rule_data <- do.call(rbind, unlist(intxn_rule_data_list,
-                                           recursive = FALSE))
+      recursive = FALSE
+    ))
     logit_update <-
       stats::glm(
         q_diff ~ -1 + hz + offset(qdiff_w),
@@ -109,7 +109,7 @@ calc_mixtures_nde <- function(input_mix_rules,
     av_control_indicator <- 1 - mix_rule_data$A_mix
 
     # compute individual scores for DY, DA, DW
-    d_y <- mix_rule_data$hy * (mix_rule_data[,y] - mix_rule_data$qbar_azw_star)
+    d_y <- mix_rule_data$hy * (mix_rule_data[, y] - mix_rule_data$qbar_azw_star)
     d_z <- av_control_indicator * mix_rule_data$hz * (mix_rule_data$qbar_1zw_star - mix_rule_data$qbar_0zw_star - qbar_diff_star)
     d_w <- qbar_diff_star
 
@@ -147,8 +147,10 @@ calc_mixtures_nde <- function(input_mix_rules,
     nde_mixture_results$`Lower CI`[group] <- round(ci[1], 3)
     nde_mixture_results$`Upper CI`[group] <- round(ci[2], 3)
     nde_mixture_results$`P-value`[group] <- round(p_value, 6)
-    nde_mixture_results$`P-value Adj`[group] <- round(p_value_adjust,
-                                                  6)
+    nde_mixture_results$`P-value Adj`[group] <- round(
+      p_value_adjust,
+      6
+    )
     nde_mixture_results$`Vars`[group] <- vars
     nde_mixture_results$`RMSE`[group] <- round(rmse, 3)
 

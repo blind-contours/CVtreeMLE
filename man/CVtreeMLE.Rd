@@ -27,7 +27,8 @@ CVtreeMLE(
   parallel_type = "multi_session",
   num_cores = 2,
   max_iter = 5,
-  verbose = FALSE
+  verbose = FALSE,
+  h_aw_trunc_lvl = 20
 )
 }
 \arguments{

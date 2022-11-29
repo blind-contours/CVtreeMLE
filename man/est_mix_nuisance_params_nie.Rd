@@ -16,9 +16,9 @@ est_mix_nuisance_params_nie(
   psi_z_stack,
   family,
   rules,
-  h_aw_trunc_lvl = 10,
   parallel_cv,
-  seed
+  seed,
+  h_aw_trunc_lvl = h_aw_trunc_lvl
 )
 }
 \arguments{
@@ -45,12 +45,12 @@ controls observations}
 
 \item{rules}{Dataframe of rules found during the PRE fitting process}
 
-\item{h_aw_trunc_lvl}{Truncation level of the clever covariate (induces more
-bias to reduce variance)}
-
 \item{parallel_cv}{TRUE/FALSE if cv parallelization is used}
 
 \item{seed}{Seed number}
+
+\item{h_aw_trunc_lvl}{Truncation level of the clever covariate (induces more
+bias to reduce variance)}
 }
 \value{
 A list of dataframes where the nuisance parameters are added to

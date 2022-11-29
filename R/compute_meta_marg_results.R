@@ -24,7 +24,6 @@ compute_meta_marg_results <- function(v_fold_marginal_results,
                                       data,
                                       mix_comps,
                                       n_folds) {
-
   v_fold_marg_group <- v_fold_marginal_qgroup_split(v_fold_marginal_results)
 
   v_fold_marginal_w_pooled <- list()
@@ -34,31 +33,37 @@ compute_meta_marg_results <- function(v_fold_marginal_results,
     results_df <- v_fold_marg_group[[i]]
 
     var <- mix_comps[mix_comps %in% strsplit(results_df$Reference_Rule[1],
-                                             split = " ")[[1]]]
+      split = " "
+    )[[1]]]
 
 
     weighted_mean <- sum(results_df$`Marginal ATE` *
-                           (1 / results_df$`Standard Error`^2)) /
-                            sum((1 / results_df$`Standard Error`^2))
+      (1 / results_df$`Standard Error`^2)) /
+      sum((1 / results_df$`Standard Error`^2))
 
     weighted_rmse <- sum(results_df$RMSE *
-                           (1 / results_df$`Standard Error`^2)) /
-                            sum((1 / results_df$`Standard Error`^2))
+      (1 / results_df$`Standard Error`^2)) /
+      sum((1 / results_df$`Standard Error`^2))
 
     pooled_se <- sqrt(1 / (1 / sum(results_df$`Standard Error`^2)))
 
-    pooled_p_val <- round(2 * stats::pnorm(abs(weighted_mean /
-                                                 pooled_se),
-                                           lower.tail = FALSE), 5)
+    pooled_p_val <- round(2 * stats::pnorm(
+      abs(weighted_mean /
+        pooled_se),
+      lower.tail = FALSE
+    ), 5)
 
     pooled_ci <- c(
-      round(weighted_mean + stats::qnorm(0.05 /
-                                           2,
-                                         lower.tail = TRUE) * pooled_se, 4),
-
-      round(weighted_mean + stats::qnorm(0.05 /
-                                           2,
-                                         lower.tail = FALSE) * pooled_se, 4)
+      round(weighted_mean + stats::qnorm(
+        0.05 /
+          2,
+        lower.tail = TRUE
+      ) * pooled_se, 4),
+      round(weighted_mean + stats::qnorm(
+        0.05 /
+          2,
+        lower.tail = FALSE
+      ) * pooled_se, 4)
     )
 
     ref_rule <- paste(results_df$Reference_Rule, collapse = "|")
@@ -86,8 +91,10 @@ compute_meta_marg_results <- function(v_fold_marginal_results,
 
     ref_max <- subset(ref_max, ref_rule == 1, select = max)
 
-    ref_rule <- paste(var, " >= ", round(ref_min[[1]], 3), "&", var, "<=",
-                      round(ref_max[[1]], 3))
+    ref_rule <- paste(
+      var, " >= ", round(ref_min[[1]], 3), "&", var, "<=",
+      round(ref_max[[1]], 3)
+    )
 
     ## comp rule
 
@@ -105,8 +112,10 @@ compute_meta_marg_results <- function(v_fold_marginal_results,
 
     comp_max <- subset(comp_max, comp_rule == 1, select = max)
 
-    comp_rule <- paste(var, " >= ", round(comp_min[[1]], 3), "&", var, "<=",
-                       round(comp_max[[1]], 3))
+    comp_rule <- paste(
+      var, " >= ", round(comp_min[[1]], 3), "&", var, "<=",
+      round(comp_max[[1]], 3)
+    )
 
     average_results <- cbind(
       round(weighted_mean, 3),
