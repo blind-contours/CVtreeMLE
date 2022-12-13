@@ -639,7 +639,7 @@ vignette.
 If you encounter any bugs or have any specific feature requests, please
 [file an issue](https://github.com/blind-contours/CVtreeMLE/issues).
 Further details on filing issues are provided in our [contribution
-guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/main/CONTRIBUTING.md).
+guidelines](https://github.com/blind-contours/CVtreeMLE/blob/main/contributing.md).
 
 ------------------------------------------------------------------------
 
@@ -647,7 +647,7 @@ guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/main/CONTRIBUTIN
 
 Contributions are very welcome. Interested contributors should consult
 our [contribution
-guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/main/CONTRIBUTING.md)
+guidelines](https://github.com/blind-contours/CVtreeMLE/blob/main/contributing.md)
 prior to submitting a pull request.
 
 ------------------------------------------------------------------------
