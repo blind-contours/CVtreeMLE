@@ -41,9 +41,9 @@ est_marg_nuisance_params <- function(at,
                                      a,
                                      no_marg_rules,
                                      marg_decisions,
-                                     h_aw_trunc_lvl = h_aw_trunc_lvl,
                                      parallel_cv,
-                                     seed) {
+                                     seed,
+                                     h_aw_trunc_lvl) {
   if (parallel_cv == TRUE) {
     future::plan(future::sequential, gc = TRUE)
   }

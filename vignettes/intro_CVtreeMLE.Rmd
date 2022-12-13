@@ -132,7 +132,8 @@ niehs_results <- CVtreeMLE(
   a = c(paste("X", seq(7), sep = "")),
   y = "Y",
   fit_marginals = TRUE,
-  n_folds = 5,
+  which_marginals = "X1", 
+  n_folds = 10,
   seed = seed,
   parallel_cv = TRUE,
   parallel = TRUE,
@@ -161,11 +162,11 @@ pooled_mixture_results %>%
   kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
 ```
 
-Above, the pooled mixture ATE for each rule is given. Let's focus on the first 
+Above, the pooled mixture ATE for each rule is given. Let's focus on the last 
 row that has $X_5*X_7$. The Mixture ATE shows the ATE, or the expected mean 
 outcome difference if all individuals were exposed to the mixture rule compared 
-to if no individuals were exposed to the mixture rule. So in the first row the
-ATE is 7.5 which means the endocrine disruption outcome is 7.5 higher
+to if no individuals were exposed to the mixture rule. So in the last row the
+ATE is 5.7 which means the endocrine disruption outcome is 5.7 higher
 if all individuals were exposed to the thresholds shown in union rule compared
 to if no individuals were exposed to this rule. 
 
@@ -186,7 +187,7 @@ vfold_mixture_results$`X5-X7` %>%
 ```
 Above we see the fold specific results for $X_5 * X_7$. Let's focus on $X_5$ in 
 the rules listed under _mix_rule_. Here we see that in fold 1 the threshold
-for $X_5$ is 1.332, in fold 2 it's 0.374 etc. Of these thresholds we select
+for $X_5$ is 1.888, in fold 2 it's 0.374 etc. Of these thresholds we select
 the highest because this value covers observations indicated by lower 
 thresholds. This is because, in the case of $X_5$ the direction is 
 less than or equal to. What happens under the hood is, for rules that have the

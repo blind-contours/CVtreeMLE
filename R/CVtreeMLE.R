@@ -22,6 +22,8 @@
 #' @param fit_marginals TRUE/FALSE whether or not to find cut-points at
 #' ATEs for each data-adaptive level of the dose-response relationship for
 #' each individual exposure. Default is FALSE.
+#' @param which_marginals If fit marginals is TRUE, which marginals should
+#' CVtreeMLE identify partition nodes in? Takes in a list of the exposures.
 #' @param direction Positive or negative, whether to select the tree with the
 #' maximum (positive) coefficient attached to it in the ensemble or the
 #' minimum (negative). If positive, positive ATEs are given, if negative,
@@ -201,6 +203,7 @@ CVtreeMLE <- function(w,
                       aw_stack = NULL,
                       a_stack = NULL,
                       fit_marginals = FALSE,
+                      which_marginals = a,
                       direction = "positive",
                       n_folds,
                       seed = 6442,
@@ -210,7 +213,8 @@ CVtreeMLE <- function(w,
                       parallel_type = "multi_session",
                       num_cores = 2,
                       max_iter = 5,
-                      verbose = FALSE) {
+                      verbose = FALSE,
+                      h_aw_trunc_lvl = 10) {
 
   if (any(sapply(data[, a], is.factor))) {
     print("Factor variable detected in exposures, converting to numeric")
@@ -374,7 +378,7 @@ CVtreeMLE <- function(w,
 
                                                marg_decisions <-
                                                  fit_marg_rule_backfitting(
-                                                 mix_comps = a,
+                                                 mix_comps = which_marginals,
                                                  at = at,
                                                  w = w,
                                                  y = y,
@@ -478,7 +482,8 @@ CVtreeMLE <- function(w,
       family = family,
       rules = rules,
       parallel_cv = parallel_cv,
-      seed = seed
+      seed = seed,
+      h_aw_trunc_lvl = h_aw_trunc_lvl
     )
 
     mix_interaction_data <- mix_nuisance_params$data
@@ -497,7 +502,8 @@ CVtreeMLE <- function(w,
       no_marg_rules = no_marg_rules,
       marg_decisions = marg_decisions,
       parallel_cv = parallel_cv,
-      seed = seed
+      seed = seed,
+      h_aw_trunc_lvl = h_aw_trunc_lvl
     )
 
     non_ref_rules <- marg_decisions[marg_decisions$quantile > 1, ]

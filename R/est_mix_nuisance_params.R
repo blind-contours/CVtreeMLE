@@ -36,9 +36,9 @@ est_mix_nuisance_params <- function(at,
                                     aw_stack,
                                     family,
                                     rules,
-                                    h_aw_trunc_lvl = h_aw_trunc_lvl,
                                     parallel_cv,
-                                    seed) {
+                                    seed,
+                                    h_aw_trunc_lvl) {
   if (parallel_cv == TRUE) {
     future::plan(future::sequential, gc = TRUE)
   }

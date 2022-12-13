@@ -72,8 +72,8 @@ For more information on data-adaptive parameters see [@Hubbard2016].
 `CVtreeMLE` uses data-adaptive parameters by implementing V-fold 
 cross-validation (CV), that is, in 10-fold CV, the data 
 is split 10 times (folds), where 90\% of the data is used to determine rules
-in a mixture, and the $g$ (probability of being exposed estimator, P(A|W)) 
-and $Q$ (outcome estimator E(Y|A,W)) estimators needed for the ATE. These rules 
+in a mixture, and the g (probability of being exposed estimator, P(A|W)) 
+and Q (outcome estimator E(Y|A,W)) estimators needed for the ATE. These rules 
 and estimators created in training data are applied to the validation data 
 in order to calculate the final ATE target parameter. This process cycles 10 
 times and the parameters across the folds are pooled, utilizing the full data. 
@@ -94,7 +94,7 @@ for public policy and are asymptotically efficient.
 `CVtreeMLE` integrates with the [`sl3`package](https://github.com/tlverse/sl3) 
 [@coyle2021sl3] to allow for ensemble machine learning to be leveraged 
 in the estimation procedure. `sl3` is used to 
-create ensemble machine learning estimators for the $Q$ and $g$ mechanisms for 
+create ensemble machine learning estimators for the Q and g mechanisms for 
 the average treatment effect (ATE) target parameter. `sl3`  is also used in the 
 iterative backfitting procedure. The iterative backfitting algorithm fits 
 E(Y|A,W) = f(A) + h(W), where f(A) is a Super Learner of decision trees and 
@@ -164,27 +164,16 @@ set.seed(429153)
 
 
 To illustrate how `CVtreeMLE` may be used to ascertain the effect of a joint 
-exposure, consider three exposures. We can represent these exposures as a cube,
-this is depicted below: 
+exposure, consider three exposures. We show a simulation of these exposures
+below below. We generate covariates of a population then use a multinomial
+regression to assign them to particular combinations of exposure levels. 
+We then generate outcomes in each region of this "mixture cube". One region
+has the worst outcome and we are interested to determine if CVtreeMLE
+identifies this region and estimates the correct outcome difference in this 
+region compared to the complementary space.
 
-![](man/figures/The_Cube.png)
+![](man/figures/3D_sim_plot.jpeg)
 
-This figure shows two regions we may be interested in within the mixture space.
-On the left, the orange region is where $M_1$ is less than 1, $M_2$ is greater
-than 2 and $M_3$ is less than 2.5. If we were to generate this data, we'd 
-expect `CVtreeMLE` to find these thresholds in the mixture space. Likewise, 
-in blue this shows the region where  $M_1$ is less than 1, $M_2$ is greater
-than 2 and $M_3$ is greater than 2.5. We want to simulate an outcome that 
-is highest in this region and where the density of the region is based on 
-covariates. 
-
-
-To do this, use the `simulate_mixture_cube` function to generate simulated    
-data that represents ground-truth. Here, we create three continuous mixture 
-variables, A, that are correlated and baseline covariates, W, that are 
-confounders. Our outcome will be generated such that individuals 
-with a specific set of exposures have a different outcome compared to 
-individuals who are not exposed to this combination of exposure levels. 
 
 In reality, the outcome people have will not be homogenous within a certain
 region of exposures but we use this example as a way to illustrate that 
@@ -239,7 +228,7 @@ ptm <- proc.time()
 
 sim_results <- CVtreeMLE(
   data = sim_data,
-  w = c("w", "w2"),
+  w = c("age", "sex", "bmi"),
   a = c(paste("M", seq(3), sep = "")),
   y = "y",
   n_folds = 5,
@@ -276,13 +265,13 @@ mixture_results %>%
   kable_classic(full_width = FALSE, html_font = "Cambria")
 ```
 
-Above, the estimated mixture ATE for this rule is 5.96 (5.6 - 6.4), which 
+Above, the estimated mixture ATE for this rule is 5.93 (5.84 - 6.03), which 
 covers our true mixture ATE used to generate the data which was 6. The 
 estimated mixture ATE is interpreted as: the average counterfactual mean 
 outcome if all individuals were exposed to the rule shown in 
 `Union Rule` compared to if all individuals were unexposed is 
-5.96. That is, those individuals who are exposed to this rule have an outcome 
-that is 5.96 higher compared to those that are not exposed to this rule. The 
+5.93. That is, those individuals who are exposed to this rule have an outcome 
+that is 5.93 higher compared to those that are not exposed to this rule. The 
 standard error, confidence intervals and p-values are derived from the 
 influence curve of this estimator.
 
@@ -295,7 +284,7 @@ ATE target parameter and variance estimates from the fold specific IC.
 
 ```{r fold_specific_results}
 mixture_v_results <- sim_results$`V-Specific Mix Results`
-mixture_v_results$M1M2M3
+mixture_v_results$`M1-M2-M3`
 ```
 
 In v-fold specific results we also give a pooled estimate. This is different 
@@ -313,7 +302,7 @@ mixture_plots <- plot_mixture_results(
     sim_results$`V-Specific Mix Results`,
   hjust = 1.05
 )
-mixture_plots$M1M2M3
+mixture_plots$`M1-M2-M3`
 ```
 This plot shows the ATE specific for each fold and for the weighted-mean 
 results over the fold with corresponding pooled variance. The rule is the 
@@ -321,16 +310,9 @@ union rule which includes all observations that were indicated by the
 fold specific rules. 
 
 `CVtreeMLE` also data-adaptively identifies thresholds in the marginal space. 
-These around found here:
-
-```{r pooled_marginal_results}
-marginal_results <- sim_results$`Pooled TMLE Marginal Results`
-marginal_results %>%
-  dplyr::filter(`Proportion in Fold` == 1.0) %>%
-  kbl(caption = "Marginal Results") %>%
-  kable_classic(full_width = FALSE, html_font = "Cambria")
-```
-
+This feature is described in the vignette. In the marginal setting, partitions
+are found for each mixture variable individually and the ATE is in reference
+to the baseline (lowest leaf) value.
 
 Additional details for this and other features are given in the vignette. 
 
@@ -344,7 +326,7 @@ issue](https://github.com/blind-contours/CVtreeMLE/issues). Further details
 on filing
 issues are provided in our [contribution
 guidelines](https://github.com/blind-contours/
-CVtreeMLE/blob/master/CONTRIBUTING.md).
+CVtreeMLE/blob/main/CONTRIBUTING.md).
 
 ---
 
@@ -353,7 +335,7 @@ CVtreeMLE/blob/master/CONTRIBUTING.md).
 Contributions are very welcome. Interested contributors should consult our
 [contribution
 guidelines](https://github.com/blind-contours/
-CVtreeMLE/blob/master/CONTRIBUTING.md)
+CVtreeMLE/blob/main/CONTRIBUTING.md)
 prior to submitting a pull request.
 
 ---
@@ -373,17 +355,6 @@ After using the `CVtreeMLE` R package, please cite the following:
   url = {TBD},
   journal = {Journal of Open Source Software},
   publisher = {The Open Journal}
-}
-
-@software{mccoyd2022CVtreeMLE-rpkg,
-  author = {McCoy, David B; Hubbard, Alan; Van der Laan Mark},
-  title = {{CVtreeMLE}: Efficient Estimation of Mixed Exposures using 
-  Data Adaptive Decision Trees and Cross-Validated Targeted Maximum 
-  Likelihood Estimation in {R}},
-  year  = {2022},
-  doi = {TBD},
-  url = {https://CRAN.R-project.org/package=CVtreeMLE},
-  note = {R package version 0.3.4}
 }
 
 ---
@@ -422,7 +393,7 @@ biomedical big data fellow.
 
 ## License
 
-&copy; 2017-2021 David B. McCoy
+&copy; 2017-2022 David B. McCoy
 
 The contents of this repository are distributed under the MIT license. See 
 below for details:
