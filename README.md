@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# `CVtreeMLE` \<img src=“man/figures/CVtreeMLE_sticker.png height=”300” align=“right”/\>
+# `CVtreeMLE` <img src="man/figures/CVtreeMLE_sticker.png" height=”300” align=“right”/>
 
 <!-- badges: start -->
 
@@ -434,8 +434,9 @@ demanding. Examples of estimators used by default are random forest,
 xgboost, elastic net, and glms. Users can also pass in their own custom
 stacks of learners. We also see here that, using 2 cores with these
 learners on our simulated data with 500 observations and 6 variables,
-our run time is 21 minutes. This can be greatly improved by increasing
-the num_cores parameter.
+our run time is 10 minutes. This can be greatly improved by increasing
+the num_cores parameter. Also in the above example we are not assessing
+for marginal partitions. 
 
 ## Results
 
@@ -618,7 +619,9 @@ mixture_plots <- plot_mixture_results(
 mixture_plots$`M1-M2-M3`
 ```
 
-![](man/figures/README-plot_sim_mixture_results-1.png)<!-- --> This plot
+![](man/figures/README-plot_sim_mixture_results-1.png)<!-- --> 
+  
+This plot
 shows the ATE specific for each fold and for the weighted-mean results
 over the fold with corresponding pooled variance. The rule is the union
 rule which includes all observations that were indicated by the fold
