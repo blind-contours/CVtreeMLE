@@ -138,7 +138,7 @@ niehs_results <- CVtreeMLE(
   parallel_cv = TRUE,
   parallel = TRUE,
   family = "continuous",
-  num_cores = 7,
+  num_cores = 2,
   max_iter = 5
 )
 proc.time() - ptm

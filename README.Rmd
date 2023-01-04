@@ -37,6 +37,9 @@ __Author:__ [David McCoy](https://davidmccoy.org)
 ---
 
 ## What is `CVtreeMLE`?
+People often encounter multiple simultaneous exposures (e.g. several drugs or pollutants). Policymakers are interested in setting safe limits, interdictions, or recommended dosage combinations based on a combination of thresholds, one per exposure. Setting these thresholds is difficult because all relevant interactions between exposures must be accounted for. Previous statistical methods have used parametric estimators which don’t directly address the question of superadditive or subadditive effects in a mixture and rely on unrealistic assumptions. Here we present an estimator that a) automatically identifies thresholds that maximize the differential effect of self-selecting exposure within the thresholded exposure region vs. outside of it; and which b) unbiasedly and efficiently estimates the magnitude of that differential effect. This is done by combining a tree-based search algorithm with a targeted maximum likelihood estimator using cross-validation. We provide open-source software (CVtreeMLE) that implements the method. 
+
+
 To-date, there is no method which delivers robust statistical inference 
 based on leaves of a decision tree that also uses the full data. 
 Although decision trees are widely used algorithms because they provide 
@@ -165,7 +168,7 @@ set.seed(429153)
 
 To illustrate how `CVtreeMLE` may be used to ascertain the effect of a joint 
 exposure, consider three exposures. We show a simulation of these exposures
-below below. We generate covariates of a population then use a multinomial
+below. We generate covariates of a population then use a multinomial
 regression to assign them to particular combinations of exposure levels. 
 We then generate outcomes in each region of this "mixture cube". One region
 has the worst outcome and we are interested to determine if CVtreeMLE

@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# `CVtreeMLE` <img src="man/figures/CVtreeMLE_sticker.png" height="300" align="right"/>
+# `CVtreeMLE` \<img src=“man/figures/CVtreeMLE_sticker.png height=”300” align=“right”/\>
 
 <!-- badges: start -->
 
@@ -20,6 +20,8 @@ developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.re
 license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4070042.svg)](https://doi.org/10.5281/zenodo.4070042) -->
 <!-- [![DOI](https://joss.theoj.org/papers/10.21105/joss.02447/status.svg)](https://doi.org/10.21105/joss.02447) -->
+[![Codecov test
+coverage](https://codecov.io/gh/blind-contours/CVtreeMLE/branch/main/graph/badge.svg)](https://app.codecov.io/gh/blind-contours/CVtreeMLE?branch=main)
 <!-- badges: end -->
 
 > Efficient Estimation of the Causal Effects of Joint Exposure using
@@ -30,6 +32,22 @@ license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://open
 ------------------------------------------------------------------------
 
 ## What is `CVtreeMLE`?
+
+People often encounter multiple simultaneous exposures (e.g. several
+drugs or pollutants). Policymakers are interested in setting safe
+limits, interdictions, or recommended dosage combinations based on a
+combination of thresholds, one per exposure. Setting these thresholds is
+difficult because all relevant interactions between exposures must be
+accounted for. Previous statistical methods have used parametric
+estimators which don’t directly address the question of superadditive or
+subadditive effects in a mixture and rely on unrealistic assumptions.
+Here we present an estimator that a) automatically identifies thresholds
+that maximize the differential effect of self-selecting exposure within
+the thresholded exposure region vs. outside of it; and which b)
+unbiasedly and efficiently estimates the magnitude of that differential
+effect. This is done by combining a tree-based search algorithm with a
+targeted maximum likelihood estimator using cross-validation. We provide
+open-source software (CVtreeMLE) that implements the method.
 
 To-date, there is no method which delivers robust statistical inference
 based on leaves of a decision tree that also uses the full data.
@@ -165,7 +183,7 @@ set.seed(429153)
 
 To illustrate how `CVtreeMLE` may be used to ascertain the effect of a
 joint exposure, consider three exposures. We show a simulation of these
-exposures below below. We generate covariates of a population then use a
+exposures below. We generate covariates of a population then use a
 multinomial regression to assign them to particular combinations of
 exposure levels. We then generate outcomes in each region of this
 “mixture cube”. One region has the worst outcome and we are interested
@@ -414,7 +432,7 @@ sim_results <- CVtreeMLE(
 
 proc.time() - ptm
 #>    user  system elapsed 
-#>  82.715  16.385 738.672
+#>  54.595   7.885 624.751
 ```
 
 Note that above, there are default estimators for all parameters if they
@@ -425,9 +443,8 @@ demanding. Examples of estimators used by default are random forest,
 xgboost, elastic net, and glms. Users can also pass in their own custom
 stacks of learners. We also see here that, using 2 cores with these
 learners on our simulated data with 500 observations and 6 variables,
-our run time is 10 minutes. This can be greatly improved by increasing
-the num_cores parameter. Also in the above example we are not assessing
-for marginal partitions. 
+our run time is 21 minutes. This can be greatly improved by increasing
+the num_cores parameter.
 
 ## Results
 
@@ -610,9 +627,7 @@ mixture_plots <- plot_mixture_results(
 mixture_plots$`M1-M2-M3`
 ```
 
-![](man/figures/README-plot_sim_mixture_results-1.png)<!-- --> 
-  
-This plot
+![](man/figures/README-plot_sim_mixture_results-1.png)<!-- --> This plot
 shows the ATE specific for each fold and for the weighted-mean results
 over the fold with corresponding pooled variance. The rule is the union
 rule which includes all observations that were indicated by the fold
@@ -633,7 +648,7 @@ vignette.
 If you encounter any bugs or have any specific feature requests, please
 [file an issue](https://github.com/blind-contours/CVtreeMLE/issues).
 Further details on filing issues are provided in our [contribution
-guidelines](https://github.com/blind-contours/CVtreeMLE/blob/main/contributing.md).
+guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/main/CONTRIBUTING.md).
 
 ------------------------------------------------------------------------
 
@@ -641,7 +656,7 @@ guidelines](https://github.com/blind-contours/CVtreeMLE/blob/main/contributing.m
 
 Contributions are very welcome. Interested contributors should consult
 our [contribution
-guidelines](https://github.com/blind-contours/CVtreeMLE/blob/main/contributing.md)
+guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/main/CONTRIBUTING.md)
 prior to submitting a pull request.
 
 ------------------------------------------------------------------------
