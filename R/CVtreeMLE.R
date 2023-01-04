@@ -58,7 +58,8 @@
 #' @param parallel_type default is `multi_session`, if parallel is true
 #' which type of parallelization to do `multi_session` or `multicore`
 #' @param num_cores If using parallel, the number of cores to parallelize over
-#'
+#' @param h_aw_trunc_lvl Level to truncate the clever covariate
+#' to control variance, default is 10.
 #' @details The function performs the following functions.
 #'  \enumerate{
 #'  \item Imputes missing values with the mean and creates dummy indicator

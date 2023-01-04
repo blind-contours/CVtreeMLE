@@ -5,6 +5,8 @@
 #' @param mix_comps Character list of mixture variables
 #' @param hjust Degree to horizontally adjust the placement of rules on plot
 #'
+#' @import viridis
+#' @import hrbrthemes
 #' @export
 
 plot_marginal_results <- function(v_marginal_results,
@@ -66,7 +68,9 @@ plot_marginal_results <- function(v_marginal_results,
           colour = "#3C3C3C",
           nudge_x = 0,
           nudge_y = 0.0
-        )
+        ) +
+        viridis::scale_color_viridis(discrete = TRUE) +
+        hrbrthemes::theme_ipsum()
 
 
       plot_list[[var]] <- plot

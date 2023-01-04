@@ -1,6 +1,6 @@
 ---
 title: "Evaluating Causal Effects of Mixed Exposures using Data Adaptive Decision Trees and CV-TMLE"
-author: "[David McCoy]"
+author: "[David McCoy](https://www.davidmccoy.org/)"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 bibliography: ../inst/REFERENCES.bib
@@ -34,7 +34,7 @@ are collected for the estimation data or loses power when the full data is
 simply split. Our proposed approach for decision trees applied to mixtures,
 aims to preserve the data-adaptive part of the sample splitting algorithm 
 but we define an average of the data-adaptive parameter estimates across 
-estimation samples based on arbitrary splits in  V-fold cross-validation. 
+estimation samples based on arbitrary splits in K-fold cross-validation. 
 In this way, one can still use the power of the entire dataset.
 The `CVtreeMLE` package implements decision tree algorithms for computing 
 thresholds in exposures that best explain an outcome while flexibly adjusting
@@ -45,7 +45,7 @@ the counterfactual mean outcome difference if all individual were exposed
 to the rule compared to if no one was exposed to the mixture.
 
 Two types of results are given for decision trees identified in the mixture 
-and marginal space of the exposure. V-fold specific results give the ATE and
+and marginal space of the exposure. K-fold specific results give the ATE and
 variance estimates for a fold specific set of rules. The pooled ATE takes the
 average across folds to gain power (reduce variance). We give both so that 
 researchers can look to see how consistent rules are given sample splitting 
@@ -133,7 +133,7 @@ niehs_results <- CVtreeMLE(
   y = "Y",
   fit_marginals = TRUE,
   which_marginals = "X1", 
-  n_folds = 10,
+  n_folds = 5,
   seed = seed,
   parallel_cv = TRUE,
   parallel = TRUE,
@@ -187,7 +187,7 @@ vfold_mixture_results$`X5-X7` %>%
 ```
 Above we see the fold specific results for $X_5 * X_7$. Let's focus on $X_5$ in 
 the rules listed under _mix_rule_. Here we see that in fold 1 the threshold
-for $X_5$ is 1.888, in fold 2 it's 0.374 etc. Of these thresholds we select
+for $X_5$ is 1.888, in fold 2 it's 0.318 etc. Of these thresholds we select
 the highest because this value covers observations indicated by lower 
 thresholds. This is because, in the case of $X_5$ the direction is 
 less than or equal to. What happens under the hood is, for rules that have the
@@ -196,16 +196,16 @@ look at the min and max of each variable within this rule - this creates the
 union rule which encompasses all observations indicated by the rules across the
 folds.
 
-So in our union rule the threshold for $X_5$ is 1.324 because 
+So in our union rule the threshold for $X_5$ is 3.4 because 
 this threshold covers all other observations indicated by slightly lower
 rules in the other folds. The same is true for $X_7$ but we select the 
 lower threshold because the direction is $>=$. This is why in the first table
-the union rule is X5 < 1.324 & X7 > 0.242. This rule covers all observations
+the union rule is X5 < 3.4 & X7 > 0.135. This rule covers all observations
 indicated by the fold specific rules used to generate the ATE. 
 
-Overall, the ATE for this rule is 7.5 for the pooled TMLE estimate. 
-We see this is higher than if we were to simply take a weighted average which
-is shown in the pooled row above. 
+Overall, the ATE for this rule is 5.7 for the pooled TMLE estimate. 
+We see this is different than if we were to simply take a weighted average which
+is shown in the pooled row above in the fold specific results.
 
 What happens is that the nuisance parameters 
 used to generate the v-fold specific results are instead pooled and a TMLE
@@ -288,7 +288,7 @@ mixture_plots$`X1-X7`
 The goal of this plot is to give users a visual inspection of how consistent 
 results are for a specific rule. 
 
-Above we see the ATE estimates for thresholds determined in $X_7*X_5$. Overlaid
+Above we see the ATE estimates for thresholds determined in $X_1*X_7$. Overlaid
 on these dot-whisker plots is the rule determined in each of the folds. 
 On the Y-axis, Pooled is the overall pooled estimate. This is a weighted average
 of the ATEs across the folds with the harmonic mean of the variances. This is
@@ -308,22 +308,22 @@ best fitting decision tree applied to the mixed exposure while flexibly
 adjusting for covariates using ensemble machine learning. `CVtreeMLE` found
 thresholds in $X_5$ and $X_7$ in 100% of the folds, meaning that a exposure 
 region between these two variables consistently predicts more severe outcomes. 
-The ATE for this region was 7.5 meaning that, the outcome was 7.5 higher
+The ATE for this region was 5.7 meaning that, the outcome was 5.7 higher
 if all individuals were exposed to this region compared to if no individuals
 were exposed to this region. This effect was significant at p < 0.001 with 
-95% CI between 6.6-8.4. The region that includes all the individuals used
-in this ATE estimate was: X5 > 0.05 & X5 < 1.324 & X7 > 0.242 & X7 < 4.886. 
+95% CI between 3.9-7.6. The region that includes all the individuals used
+in this ATE estimate was: X5 > 0.05 & X5 < 3.4 & X7 > 0.135 & X7 < 4.886. 
 
 There was some fluctuation of the fold specific thresholds used in this 
-mixture rule. For X5 threshold values _1.332_, 0.374, 0.611, 0.313, and 0.709.
-_1.332_ was used in the union rule because it encompasses all the observations
-indicated from the other rules. For X7, threshold values 0.669, 0.958, 0.503,
-0.611, and 0.24 were found and therefore _0.24_ was used as the lower bound 
+mixture rule. For X5 threshold values 1.888, 3.189, 3.437, 3.098, and 0.699. 
+_3.4_ was used in the union rule because it encompasses all the observations
+indicated from the other rules. For X7, threshold values 0.669, 0.247, 0.204,
+0.132, and 0.355 were found and therefore _0.132_ was used as the lower bound 
 which encompasses all these observations. 
 
 Overall our results show that individuals who are exposed to levels of X5 at 
-levels less than 1.332 and X7 at levels greater than 0.24 have outcomes that 
-are 7.5 higher compared to those who are not exposed to this combination 
+levels less than 3.4 and X7 at levels greater than 0.132 have outcomes that 
+are 5.7 higher compared to those who are not exposed to this combination 
 of exposures. 
 
 ## Marginal Results
@@ -355,12 +355,10 @@ of other algorithms on the covariates and other exposures.
 
 As we can see above, the partitioning points can change across the folds. In
 each tree we use the region with the lowest mean outcome as the reference
-region for that exposure. So in fold 1 that region is X1 < 1.762 & X1 < 0.998 &
-X1 < 0.329. Or more simply X1 < 0.329. In fold 2 this reference region is X1 <
-0.5, fold 3 X1 < 0.48, fold 4 X1 < 0.3 and fold 5 X1 < 2.07. So fold 5 induces
-some instability as the rest of the reference regions were defined pretty 
-consistently. This can be improved by using more folds as we recommend. We 
-compare each region above the reference region to the reference region when
+region for that exposure. So in fold 1 that region is X1 < 2.03 & X1 < 0.998. 
+Or more simply X1 < 0.998. In fold 2 this reference region is X1 <
+1.034 etc. Stability of the reference region can can be improved by using more folds as we recommend. We 
+compare each region above the reference region when
 computing the marginal ATE. So for example, if we look at the v-fold specific 
 estimates for X1 comparing the region directly above each reference to the 
 fold specific reference the results from `CVtreeMLE` look like:
@@ -410,33 +408,13 @@ plot(x1_models[[1]])
 ```
 
 This shows that in node 5 from the tree the ATE estimate (compared to node 4) 
-is 1.421 (-.003 - 2.846). Node 6 compared to node 4 has an ATE of 5.89 (4.854 - 
-6.933) etc. Overall `CVtreeMLE` gives valid inference for the terminal nodes
+is 3.066 (1.8 - 4.3). So in Fold 1, for $X1$ CVtreeMLE finds these regions
+and gives ATEs for each leaf in the respective decision tree. So for variable 
+$X1$, a positive effect is found in Fold 1 and partition points for < 0.998, > 0.998 & < 2, and > 2 are found, each with a valid ATE attached.
+
+Overall `CVtreeMLE` gives valid inference for the terminal nodes
 of the best fitting decision tree. 
 
-It should be noted that the higher regions above the reference region are not 
-found across all the folds. Let's look again at our output for X1. 
-
-```{r X1_higher_thresholds_reduce_example}
-fold_marginal_results %>%
-  filter(var == "X1") %>%
-  kableExtra::kbl(
-    caption = "V-fold specific results for X1"
-  ) %>%
-  kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
-```
-Here we see that for comparing X1 at a region directly above the reference to
-the reference (X1_2 - X1_1) we have 5 results plus a pooled estimate (weighted
-average with a union rule). Because only 4 folds included a tree that had 
-two levels above the reference (X1_3 - X1_1) we have only 4 results. This 
-is the same for a trees with four terminal nodes. At five terminal nodes we 
-see only 2 folds included these trees and likewise for six nodes only one. 
-We can revist the plots above for this X1 variable to see this variability. 
-
-As such, when reporting v-fold specific results, it is important to include 
-these consistency measures. Again, it is likely these trees will all be more
-similar, and therefore results will be cleaner and more interpretable when
-higher folds are used. 
 
 ## Marginal Pooled Results
 
@@ -463,46 +441,6 @@ For X1, because the lower bound of the thresholds that divided region 2
 from region 1 was 0.33, we use this as the union rule as this threshold 
 encompasses all observations indicated by the other rules for for this 
 variable region. 
-
-
-The marginal rule is what we compare to the reference level. 
-Reference rules can be found 
-here: 
-
-```{r marginal_refs}
-pooled_marginal_refs <- niehs_results$`Pooled Marginal Refs`
-
-pooled_marginal_refs %>%
-  kableExtra::kbl(caption = "Pooled Marginal Reference Regions") %>%
-  kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
-```
-
-Let's examine this a bit more in detail by looking at the results for just
-one variable. 
-
-```{r marginal_results_example}
-pooled_marginal_results %>%
-  dplyr::filter(`Proportion in Fold` == 1) %>%
-  dplyr::filter(var == "X1") %>%
-  kableExtra::kbl(caption = "Pooled Marginal Results") %>%
-  kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
-```
-Above, this means that, in the leaves of the trees generated for $X_1$ at 
-least one partition was found in 100% of the folds. This region is 
-$X_1$ > 0.32 & $X_1$ < 4.7. The outcome in this region is compared to the 
-reference region found across all the folds. Which is: 
-
-```{r marginal_refs_example}
-pooled_marginal_refs %>%
-  dplyr::filter(`Variable Quantile` == "X1_1") %>%
-  kableExtra::kbl(caption = "Pooled Marginal Reference Regions X1") %>%
-  kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
-```
-
-We see there is some overlap in these regions and that's to be expected given
-variation across the folds. In this example we can say that, levels in $X_1$ 
-change somewhere between 0.3 and 2. For this reason it's more interpretable
-to look at the v-fold specific results.
 
 ## Marginal Plotting
 

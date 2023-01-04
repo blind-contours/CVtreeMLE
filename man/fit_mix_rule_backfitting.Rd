@@ -69,15 +69,17 @@ W <- c("age", "sex", "bmi")
 sls <- create_sls()
 w_stack <- sls$W_stack
 tree_stack <- sls$A_stack
-example_output <- fit_mix_rule_backfitting(at = data,
-                                            a = mix_comps,
-                                            w = W,
-                                            y = "y",
-                                            direction = "positive",
-                                            w_stack = w_stack,
-                                            fold = 1,
-                                            max_iter = 1,
-                                            verbose = FALSE,
-                                            parallel = FALSE,
-                                            seed = 6442)
+example_output <- fit_mix_rule_backfitting(
+  at = data,
+  a = mix_comps,
+  w = W,
+  y = "y",
+  direction = "positive",
+  w_stack = w_stack,
+  fold = 1,
+  max_iter = 1,
+  verbose = FALSE,
+  parallel = FALSE,
+  seed = 6442
+)
 }

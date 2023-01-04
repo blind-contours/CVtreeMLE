@@ -12,3 +12,4 @@
 ^.lintr$
 ^codecov\.yml$
 ^LICENSE\.md$
+^contributing\.md$

@@ -15,6 +15,7 @@ CVtreeMLE(
   aw_stack = NULL,
   a_stack = NULL,
   fit_marginals = FALSE,
+  which_marginals = a,
   direction = "positive",
   n_folds,
   seed = 6442,
@@ -24,7 +25,8 @@ CVtreeMLE(
   parallel_type = "multi_session",
   num_cores = 2,
   max_iter = 5,
-  verbose = FALSE
+  verbose = FALSE,
+  h_aw_trunc_lvl = 10
 )
 }
 \arguments{
@@ -57,6 +59,9 @@ decision tree estimators used in the ensemble.}
 \item{fit_marginals}{TRUE/FALSE whether or not to find cut-points at
 ATEs for each data-adaptive level of the dose-response relationship for
 each individual exposure. Default is FALSE.}
+
+\item{which_marginals}{If fit marginals is TRUE, which marginals should
+CVtreeMLE identify partition nodes in? Takes in a list of the exposures.}
 
 \item{direction}{Positive or negative, whether to select the tree with the
 maximum (positive) coefficient attached to it in the ensemble or the

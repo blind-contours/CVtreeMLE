@@ -32,7 +32,7 @@ knitr::opts_chunk$set(
 > Efficient Estimation of the Causal Effects of Joint Exposure using Data 
 Adaptive Decision Trees and Cross-Validated Targeted Maximum Likelihood 
 Estimation
-__Author:__ David McCoy
+__Author:__ [David McCoy](https://davidmccoy.org)
 
 ---
 
@@ -151,7 +151,7 @@ install.packages("pre")
 
 First load the package and other packages needed
 
-```{r libraries, warning=FALSE}
+```{r libraries, warning=FALSE, message=FALSE}
 library(CVtreeMLE)
 library(sl3)
 library(pre)

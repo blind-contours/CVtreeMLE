@@ -26,7 +26,8 @@ coverage](https://codecov.io/gh/blind-contours/CVtreeMLE/branch/main/graph/badge
 
 > Efficient Estimation of the Causal Effects of Joint Exposure using
 > Data Adaptive Decision Trees and Cross-Validated Targeted Maximum
-> Likelihood Estimation **Author:** David McCoy
+> Likelihood Estimation **Author:** [David
+> McCoy](https://davidmccoy.org)
 
 ------------------------------------------------------------------------
 
@@ -157,15 +158,7 @@ First load the package and other packages needed
 library(CVtreeMLE)
 library(sl3)
 library(pre)
-#> 
-#> Attaching package: 'pre'
-#> The following object is masked from 'package:sl3':
-#> 
-#>     importance
 library(partykit)
-#> Loading required package: grid
-#> Loading required package: libcoin
-#> Loading required package: mvtnorm
 library(kableExtra)
 library(ggplot2)
 
@@ -423,7 +416,7 @@ sim_results <- CVtreeMLE(
 
 proc.time() - ptm
 #>    user  system elapsed 
-#>  54.366   7.316 615.434
+#>  82.715  16.385 738.672
 ```
 
 Note that above, there are default estimators for all parameters if they

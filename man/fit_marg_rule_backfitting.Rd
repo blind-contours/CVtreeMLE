@@ -76,16 +76,18 @@ w <- c("age", "sex", "bmi")
 sls <- create_sls()
 w_stack <- sls$W_stack
 tree_stack <- sls$A_stack
-example_output <- fit_marg_rule_backfitting(mix_comps = mix_comps,
-                                                     at = data,
-                                                     w = w,
-                                                     y = "y",
-                                                     w_stack = w_stack,
-                                                     tree_stack = tree_stack,
-                                                     fold = 1,
-                                                     max_iter = 1,
-                                                     verbose = FALSE,
-                                                     parallel_cv = FALSE,
-                                                     seed = 6442)
+example_output <- fit_marg_rule_backfitting(
+  mix_comps = mix_comps,
+  at = data,
+  w = w,
+  y = "y",
+  w_stack = w_stack,
+  tree_stack = tree_stack,
+  fold = 1,
+  max_iter = 1,
+  verbose = FALSE,
+  parallel_cv = FALSE,
+  seed = 6442
+)
 
 }
