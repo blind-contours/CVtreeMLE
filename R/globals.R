@@ -1,16 +1,14 @@
 utils::globalVariables(c(
   "fold_k",
   "n_folds",
-  "test",
+  "fold_results_mix_rules",
+  "mix_fold_data",
+  "fold_results_marg_rules",
+  "fold_results_marginal_data",
   "direction",
-  "p1",
-  "p8",
-  "n",
-  "n_stable_tree",
   "all_folds",
   "coefficient",
-  "QbarAW_combo",
-  "y_scaled",
-  "raw_outcome",
-  "comb_rule"
+  "p1",
+  "p8",
+  "test"
 ))

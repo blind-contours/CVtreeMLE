@@ -158,15 +158,17 @@
 #' colnames(x) <- c("A1", "A2", "W1", "W2")
 #' y_prob <- plogis(3 * sin(x[, 1]) + sin(x[, 2]), sin(x[, 4]))
 #' Y <- rbinom(n = n, size = 1, prob = y_prob)
-#' data <- as.data.frame(cbind(x,Y))
+#' data <- as.data.frame(cbind(x, Y))
 #'
-#' CVtreeMLE_fit <- CVtreeMLE(data = data,
-#'                           w = c("W1", "W2"),
-#'                           a = c("A1", "A2"),
-#'                           y = "Y",
-#'                           family = "binomial",
-#'                           parallel = FALSE,
-#'                           n_folds = 2)
+#' CVtreeMLE_fit <- CVtreeMLE(
+#'   data = data,
+#'   w = c("W1", "W2"),
+#'   a = c("A1", "A2"),
+#'   y = "Y",
+#'   family = "binomial",
+#'   parallel = FALSE,
+#'   n_folds = 2
+#' )
 #'
 #' @return Object of class \code{CVtreeMLE}, containing a list of table results
 #' for: marginal ATEs, mixture ATEs, RMSE of marginal model fits, RMSE of
@@ -216,7 +218,6 @@ CVtreeMLE <- function(w,
                       max_iter = 5,
                       verbose = FALSE,
                       h_aw_trunc_lvl = 10) {
-
   if (any(sapply(data[, a], is.factor))) {
     print("Factor variable detected in exposures, converting to numeric")
     data[, a] <- sapply(data[, a], as.numeric)
@@ -278,35 +279,33 @@ CVtreeMLE <- function(w,
   data$folds <- create_cv_folds(n_folds, data[, y])
 
   if (parallel == TRUE) {
-    if(parallel_type == "multi_session") {
-    future::plan(future::multisession,
-                 workers = num_cores,
-                 gc = TRUE)
-    }else {
+    if (parallel_type == "multi_session") {
+      future::plan(future::multisession,
+        workers = num_cores,
+        gc = TRUE
+      )
+    } else {
       future::plan(future::multicore,
-                   workers = num_cores,
-                   gc = TRUE)
+        workers = num_cores,
+        gc = TRUE
+      )
     }
   } else {
     future::plan(future::sequential,
-                 gc = TRUE)
+      gc = TRUE
+    )
   }
 
   data <- as.data.frame(data)
 
+  # Set up lists to store data in the CV
+
   fold_results_mix_rules <- list()
-  fold_results_marg_rules <- list()
-  fold_results_marg_directions <- list()
-
   mix_fold_data <- list()
-  mix_fold_directions <- list()
 
+  fold_results_marg_rules <- list()
   fold_results_marginal_data <- list()
 
-  fold_results_marginal_combo_data <- list()
-
-  fold_results_mix_combo_data <- list()
-  fold_results_mix_Sls <- list()
 
   # Iterative Back-fitting on Mixture ---------------------------
 
@@ -315,42 +314,50 @@ CVtreeMLE <- function(w,
   }
 
   fold_mixture_rules <- furrr::future_map(unique(data$folds),
-                                              function(fold_k) {
+    function(fold_k) {
+      at <- data[data$folds != fold_k, ]
 
-    at <- data[data$folds != fold_k, ]
+      rules <-
+        fit_mix_rule_backfitting(
+          at = at,
+          a = a,
+          w = w,
+          y = y,
+          direction = direction,
+          w_stack,
+          fold = fold_k,
+          max_iter,
+          verbose,
+          parallel_cv = parallel_cv,
+          seed = seed
+        )
 
-    rules <-
-      fit_mix_rule_backfitting(
-        at = at,
-        a = a,
-        w = w,
-        y = y,
-        direction = direction,
-        w_stack,
-        fold = fold_k,
-        max_iter,
-        verbose,
-        parallel_cv = parallel_cv,
-        seed = seed
-      )
-
-    rules
-  }, .options = furrr::furrr_options(seed = seed, packages = c("CVtreeMLE",
-                                                               "pre",
-                                                               "sl3")))
-  mixture_rules <- purrr::map(fold_mixture_rules,
-                               c("rules"))
+      rules
+    },
+    .options = furrr::furrr_options(seed = seed, packages = c(
+      "CVtreeMLE",
+      "pre",
+      "sl3"
+    ))
+  )
+  mixture_rules <- purrr::map(
+    fold_mixture_rules,
+    c("rules")
+  )
   mixture_rules <- do.call(rbind, mixture_rules)
-  mixture_models <- purrr::map(fold_mixture_rules,
-                              c("model"))
+  mixture_models <- purrr::map(
+    fold_mixture_rules,
+    c("model")
+  )
 
 
   fold_mixture_rules <- mixture_rules[
-    mixture_rules$description != "No Rules Found", ]
+    mixture_rules$description != "No Rules Found",
+  ]
 
   fold_mixture_rules$description <- round_rules(fold_mixture_rules$description)
 
-  mixture_RMSE <- calc_mixture_rule_rmses(fold_mixture_rules)
+  mixture_rmse <- calc_mixture_rule_rmses(fold_mixture_rules)
 
   if (dim(fold_mixture_rules)[1] == 0) {
     no_mixture_rules <- TRUE
@@ -359,9 +366,9 @@ CVtreeMLE <- function(w,
   }
 
   if (verbose) {
-      print("Mixture results found")
-      print(fold_mixture_rules)
-    }
+    print("Mixture results found")
+    print(fold_mixture_rules)
+  }
 
   # Iterative Back-fitting on Marginals ---------------------------
 
@@ -372,48 +379,57 @@ CVtreeMLE <- function(w,
 
   if (fit_marginals == TRUE) {
     fold_marginal_rules <- furrr::future_map(unique(data$folds),
-                                             function(fold_k) {
+      function(fold_k) {
+        at <- data[
+          data$folds != fold_k,
+        ]
 
-                                               at <- data[
-                                                 data$folds != fold_k, ]
+        marg_decisions <-
+          fit_marg_rule_backfitting(
+            mix_comps = which_marginals,
+            at = at,
+            w = w,
+            y = y,
+            w_stack = w_stack,
+            tree_stack = a_stack,
+            fold = fold_k,
+            max_iter = max_iter,
+            verbose = verbose,
+            parallel_cv = parallel_cv,
+            seed = seed
+          )
 
-                                               marg_decisions <-
-                                                 fit_marg_rule_backfitting(
-                                                 mix_comps = which_marginals,
-                                                 at = at,
-                                                 w = w,
-                                                 y = y,
-                                                 w_stack = w_stack,
-                                                 tree_stack = a_stack,
-                                                 fold = fold_k,
-                                                 max_iter = max_iter,
-                                                 verbose = verbose,
-                                                 parallel_cv = parallel_cv,
-                                                 seed = seed
-                                               )
+        marg_decisions
+      },
+      .options =
+        furrr::furrr_options(
+          seed = seed,
+          packages = c(
+            "CVtreeMLE",
+            "partykit", "sl3"
+          )
+        )
+    )
 
-                                               marg_decisions
-                                             }, .options =
-                                               furrr::furrr_options(
-                                                 seed = seed,
-                                                 packages = c("CVtreeMLE",
-                                                              "partykit", "sl3"
-                                                              )
-                                                 ))
+    marginal_rules <- purrr::map(
+      fold_marginal_rules,
+      c("marginal_df")
+    )
 
-    marginal_rules <- purrr::map(fold_marginal_rules,
-                                 c("marginal_df"))
-
-    marginal_models <- purrr::map(fold_marginal_rules,
-                                  c("models"))
+    marginal_models <- purrr::map(
+      fold_marginal_rules,
+      c("models")
+    )
 
     marginal_rules <- do.call(rbind, marginal_rules)
 
     filt_fold_marginal_rules <- filter_marginal_rules(marginal_rules, n_folds)
-    filt_fold_marginal_rules$rules <- round_rules(filt_fold_marginal_rules$rules)
-    marginal_RMSE <- calc_marginal_rule_rmses(data = filt_fold_marginal_rules)
+    filt_fold_marginal_rules$rules <- round_rules(
+      filt_fold_marginal_rules$rules)
+    marginal_rmse <- calc_marginal_rule_rmses(
+      data = filt_fold_marginal_rules)
 
-    backfit_model_RMSEs <- rbind(marginal_RMSE, mixture_RMSE)
+    backfit_model_rmses <- rbind(marginal_rmse, mixture_rmse)
 
     if (dim(filt_fold_marginal_rules)[1] == 0) {
       no_marginal_rules <- TRUE
@@ -425,9 +441,8 @@ CVtreeMLE <- function(w,
       print("Marginal results found")
       print(filt_fold_marginal_rules)
     }
-
-  }else{
-    backfit_model_RMSEs <- mixture_RMSE
+  } else {
+    backfit_model_rmses <- mixture_rmse
     filt_fold_marginal_rules <- data.frame(matrix(ncol = 2, nrow = 0))
     x <- c("rule", "fold")
     colnames(filt_fold_marginal_rules) <- x
@@ -451,7 +466,6 @@ CVtreeMLE <- function(w,
   }
 
   results <- furrr::future_map(unique(data$folds), function(fold_k) {
-    # for (fold_k in unique(data$folds)) {
 
     at <- data[data$folds != fold_k, ]
     av <- data[data$folds == fold_k, ]
@@ -514,66 +528,25 @@ CVtreeMLE <- function(w,
     fold_results_marginal_data[[paste("Fold", fold_k)]] <- marg_nuisance_params
     fold_results_marg_rules[[paste("Fold", fold_k)]] <- marg_decisions
 
-    marginal_data <- marg_nuisance_params
-
-    rules_evaluated_on_training <-
-      evaluate_marginal_rules(
-        data = at,
-        marg_decisions = marg_decisions,
-        no_marg_rules,
-        mix_comps = a
-      )
-
-    rules_evaluated_on_valiation <-
-      evaluate_marginal_rules(
-        data = av,
-        marg_decisions = marg_decisions,
-        no_marg_rules,
-        mix_comps = a
-      )
-
-    marg_rule_train <- rules_evaluated_on_training$marginals
-    marg_rule_valid <- rules_evaluated_on_valiation$marginals
-
-    at_w_rule_evals <- rules_evaluated_on_training$data
-    av_w_rule_evals <- rules_evaluated_on_valiation$data
-
-    comb_results <- est_comb_exposure(at = at,
-                                      av = av,
-                                      y = y,
-                                      w = w,
-                                      marg_rule_train = marg_rule_train,
-                                      marg_rule_valid = marg_rule_valid,
-                                      no_marg_rules = no_marg_rules,
-                                      aw_stack = aw_stack,
-                                      family = family,
-                                      parallel_cv = parallel_cv,
-                                      seed = seed)
-
-    fold_results_marginal_combo_data[[
-      paste("Fold", fold_k)]] <- comb_results$data
-
-
     results_list <- list(
       fold_results_mix_rules,
       mix_fold_data,
       fold_results_marg_rules,
-      fold_results_marginal_data,
-      fold_results_marginal_combo_data
+      fold_results_marginal_data
     )
 
     names(results_list) <- c(
       "mix rules",
       "mix data",
       "marg rules",
-      "marg data",
-      "marg combo data")
+      "marg data"
+    )
 
     results_list
-
-
-  }, .options = furrr::furrr_options(seed = seed, packages = c("CVtreeMLE",
-                                                              "sl3")))
+  }, .options = furrr::furrr_options(seed = seed, packages = c(
+    "CVtreeMLE",
+    "sl3"
+  )))
 
   # Aggregate results ---------------------------
 
@@ -583,11 +556,8 @@ CVtreeMLE <- function(w,
   mix_data <- purrr::map(results, c("mix data"))
   mix_rules <- purrr::map(results, c("mix rules"))
 
-  marg_combo_data <- purrr::map(results, c("marg combo data"))
-
 
   if (no_mixture_rules == FALSE) {
-
     # Calculate mixture ATEs ---------------------------
 
     mixture_results <- calc_mixtures_ate(
@@ -599,7 +569,6 @@ CVtreeMLE <- function(w,
     )
 
     group_list <- mixture_results$group_list
-    mixture_data_list <- mixture_results$mixture_data_list
     mixture_results <- mixture_results$results
 
     # Calculate v-fold mixture ATEs ---------------------------
@@ -609,30 +578,29 @@ CVtreeMLE <- function(w,
       input_mix_data = mix_data,
       y = y,
       n_folds = n_folds
-      )
+    )
 
     v_fold_mixture_results <- v_fold_mixture_results
     v_fold_mixture_results_w_pooled <- meta_mix_results(v_fold_mixture_results,
-                                                                mix_comps = a,
-                                                                n_folds,
-                                                                data = data)
+      mix_comps = a,
+      n_folds,
+      data = data
+    )
 
     # Create union mixture rules ---------------------------
 
-      mixture_results <- common_mixture_rules(group_list,
-                                                 data = data,
-                                                 mix_comps = a,
-                                                 mixture_results,
-                                                 n_folds = n_folds,
-                                                 no_mixture_rules
+    mixture_results <- common_mixture_rules(group_list,
+      data = data,
+      mix_comps = a,
+      mixture_results,
+      n_folds = n_folds,
+      no_mixture_rules
     )
 
     mix_rules <- unlist(mix_rules, recursive = FALSE, use.names = FALSE)
     mix_rules <- mix_rules[!sapply(mix_rules, is.null)]
     mix_rules <-
       data.table::rbindlist(mix_rules)
-
-
   } else {
     mixture_results <- NA
     mixture_rules <- NA
@@ -643,37 +611,41 @@ CVtreeMLE <- function(w,
     # Calculate marginal ATEs ---------------------------
 
     marginal_results <- calc_marginal_ate(marginal_data,
-                                          mix_comps = a,
-                                          marginal_rules,
-                                          y = y,
-                                          n_folds)
+      mix_comps = a,
+      marginal_rules,
+      y = y,
+      n_folds
+    )
 
-    updated_marginal_data <- marginal_results$data
     marginal_results <- marginal_results$marginal_results
 
     # Calculate marginal v-fold ATEs ---------------------------
 
     v_fold_marginal_results <- calc_v_fold_marginal_ate(marginal_data,
-                                                        mix_comps = a,
-                                                        marginal_rules,
-                                                        y,
-                                                        n_folds)
+      mix_comps = a,
+      marginal_rules,
+      y,
+      n_folds
+    )
 
     v_fold_marginal_results <- v_fold_marginal_results$marginal_results
 
     v_fold_marginal_results_w_pooled <- compute_meta_marg_results(
-                              v_fold_marginal_results = v_fold_marginal_results,
-                              mix_comps = a,
-                              data = data,
-                              n_folds = n_folds)
+      v_fold_marginal_results = v_fold_marginal_results,
+      mix_comps = a,
+      data = data,
+      n_folds = n_folds
+    )
 
-    v_fold_marginal_results_w_pooled <- do.call(rbind,
-                                                v_fold_marginal_results_w_pooled
-                                                )
+    v_fold_marginal_results_w_pooled <- do.call(
+      rbind,
+      v_fold_marginal_results_w_pooled
+    )
 
     v_fold_marginal_results_w_pooled$var <- stringr::str_extract(
       string = v_fold_marginal_results_w_pooled$Comparison,
-                                      pattern = paste(a, collapse = "|"))
+      pattern = paste(a, collapse = "|")
+    )
 
     # Create union marginals rules ---------------------------
 
@@ -687,32 +659,38 @@ CVtreeMLE <- function(w,
 
     # Parse out ref results ---------------------------
     non_ref_rules <- total_marginal_rules[
-      !stringr::str_detect(total_marginal_rules$`Variable Quantile`, "_1"), ]
+      !stringr::str_detect(total_marginal_rules$`Variable Quantile`, "_1"),
+    ]
 
     non_ref_rules <- non_ref_rules[
-      order(non_ref_rules$`Variable Quantile`), ]
+      order(non_ref_rules$`Variable Quantile`),
+    ]
 
     ref_rules <- total_marginal_rules[
-      stringr::str_detect(total_marginal_rules$`Variable Quantile`, "_1"), ]
+      stringr::str_detect(total_marginal_rules$`Variable Quantile`, "_1"),
+    ]
 
     # TODO: This breaks if there is "_1" in the exposure variable names - fix
 
     marginal_results <- marginal_results[order(rownames(marginal_results)), ]
     marginal_results <- cbind(marginal_results, non_ref_rules)
 
-    marg_vars <- stringr::str_extract(string =
-                                        marginal_results$`Variable Quantile`,
-                                      pattern = paste(a, collapse = "|"))
+    marg_vars <- stringr::str_extract(
+      string =
+        marginal_results$`Variable Quantile`,
+      pattern = paste(a, collapse = "|")
+    )
 
     marginal_results$var <- marg_vars
 
     marginal_rules <- unlist(marginal_rules,
-                             recursive = FALSE,
-                             use.names = FALSE)
+      recursive = FALSE,
+      use.names = FALSE
+    )
 
     marginal_rules <- marginal_rules[!sapply(marginal_rules, is.null)]
     marginal_rules <- do.call(rbind, marginal_rules)
-  }else {
+  } else {
     marginal_results <- NULL
     v_fold_marginal_results_w_pooled <- NULL
     ref_rules <- NULL
@@ -720,7 +698,7 @@ CVtreeMLE <- function(w,
 
 
   results_list <- list(
-    "Model RMSEs" = backfit_model_RMSEs,
+    "Model RMSEs" = backfit_model_rmses,
     "Pooled TMLE Marginal Results" = marginal_results,
     "V-Specific Marg Results" = v_fold_marginal_results_w_pooled,
     "Pooled TMLE Mixture Results" = mixture_results,

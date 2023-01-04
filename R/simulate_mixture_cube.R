@@ -100,11 +100,8 @@ simulate_mixture_cube <- function(n_obs = 500,
   ## create a covariate
 
   age <- rnorm(n_obs, 37, 3)
-  # age <- (age - mean(age)) / sd(age)
   bmi <- rnorm(n_obs, 20, 1)
-  # bmi <- (bmi - mean(bmi)) / sd(bmi)
   sex <- as.numeric(purrr::rbernoulli(n_obs, 0.5))
-  # sex <- (sex - mean(sex)) / sd(sex)
   covars <- data.frame(age, bmi, sex)
   ## probabilities
   b0i <- round(rnorm(8, 0.3, 0.01), 2)

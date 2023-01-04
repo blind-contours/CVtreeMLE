@@ -94,6 +94,9 @@ is being started by CVtreeMLE. During the iterative backfitting procedure
 the iteration in each fold along with the difference in model fit and
 rules determined will be printed. After the iterative backfitting procedures
 a table of rules determined in each fold will be printed.}
+
+\item{h_aw_trunc_lvl}{Level to truncate the clever covariate
+to control variance, default is 10.}
 }
 \value{
 Object of class \code{CVtreeMLE}, containing a list of table results
@@ -224,14 +227,16 @@ x <- matrix(rnorm(n * p), n, p)
 colnames(x) <- c("A1", "A2", "W1", "W2")
 y_prob <- plogis(3 * sin(x[, 1]) + sin(x[, 2]), sin(x[, 4]))
 Y <- rbinom(n = n, size = 1, prob = y_prob)
-data <- as.data.frame(cbind(x,Y))
+data <- as.data.frame(cbind(x, Y))
 
-CVtreeMLE_fit <- CVtreeMLE(data = data,
-                          w = c("W1", "W2"),
-                          a = c("A1", "A2"),
-                          y = "Y",
-                          family = "binomial",
-                          parallel = FALSE,
-                          n_folds = 2)
+CVtreeMLE_fit <- CVtreeMLE(
+  data = data,
+  w = c("W1", "W2"),
+  a = c("A1", "A2"),
+  y = "Y",
+  family = "binomial",
+  parallel = FALSE,
+  n_folds = 2
+)
 
 }

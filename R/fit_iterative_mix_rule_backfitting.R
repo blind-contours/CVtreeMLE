@@ -224,7 +224,6 @@ fit_mix_rule_backfitting <- function(at,
 
   rules <- pre_boot_df %>% dplyr::filter(.data$boot_num == iter)
   rules <- rules[!is.na(rules$test), ]
-  # rules <- rules[!rules$test == 0, ]
 
   if (direction == "positive") {
     rules <- rules %>%
@@ -235,7 +234,7 @@ fit_mix_rule_backfitting <- function(at,
       dplyr::group_by(test) %>%
       dplyr::slice_min(n = 1, coefficient)
   }
-  rules <- rules[str_detect(rules$rule, "rule"),]
+  rules <- rules[str_detect(rules$rule, "rule"), ]
   rules$fold <- fold
 
   backfit_resids <- (at[, y] - pre_model_preds_offset)^2

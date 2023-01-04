@@ -132,7 +132,7 @@ niehs_results <- CVtreeMLE(
   a = c(paste("X", seq(7), sep = "")),
   y = "Y",
   fit_marginals = TRUE,
-  which_marginals = "X1", 
+  which_marginals = "X1",
   n_folds = 5,
   seed = seed,
   parallel_cv = TRUE,

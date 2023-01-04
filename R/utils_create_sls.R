@@ -9,11 +9,9 @@
 #' @export
 
 create_sls <- function() {
-  # mean_lrnr <- sl3::Lrnr_mean$new()
   lrnr_ranger <- sl3::Lrnr_ranger$new()
   lrnr_glm <- sl3::make_learner(sl3::Lrnr_glm)
   lrnr_elasticnet <- sl3::make_learner(sl3::Lrnr_glmnet, alpha = .5)
-  lrnr_xgboost <- sl3::make_learner(sl3::Lrnr_xgboost)
 
   grid_params <- list(
     max_depth = c(3, 5, 8),
