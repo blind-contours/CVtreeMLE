@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# `CVtreeMLE` \<img src=“man/figures/CVtreeMLE_sticker.png height=”300” align=“right”/\>
+# `CVtreeMLE` <img src="man/figures/CVtreeMLE_sticker.png" height="300" align="right"/>
 
 <!-- badges: start -->
 
@@ -20,8 +20,6 @@ developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.re
 license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4070042.svg)](https://doi.org/10.5281/zenodo.4070042) -->
 <!-- [![DOI](https://joss.theoj.org/papers/10.21105/joss.02447/status.svg)](https://doi.org/10.21105/joss.02447) -->
-[![Codecov test
-coverage](https://codecov.io/gh/blind-contours/CVtreeMLE/branch/main/graph/badge.svg)](https://app.codecov.io/gh/blind-contours/CVtreeMLE?branch=main)
 <!-- badges: end -->
 
 > Efficient Estimation of the Causal Effects of Joint Exposure using
@@ -427,8 +425,9 @@ demanding. Examples of estimators used by default are random forest,
 xgboost, elastic net, and glms. Users can also pass in their own custom
 stacks of learners. We also see here that, using 2 cores with these
 learners on our simulated data with 500 observations and 6 variables,
-our run time is 21 minutes. This can be greatly improved by increasing
-the num_cores parameter.
+our run time is 10 minutes. This can be greatly improved by increasing
+the num_cores parameter. Also in the above example we are not assessing
+for marginal partitions. 
 
 ## Results
 
@@ -611,7 +610,9 @@ mixture_plots <- plot_mixture_results(
 mixture_plots$`M1-M2-M3`
 ```
 
-![](man/figures/README-plot_sim_mixture_results-1.png)<!-- --> This plot
+![](man/figures/README-plot_sim_mixture_results-1.png)<!-- --> 
+  
+This plot
 shows the ATE specific for each fold and for the weighted-mean results
 over the fold with corresponding pooled variance. The rule is the union
 rule which includes all observations that were indicated by the fold
@@ -632,7 +633,7 @@ vignette.
 If you encounter any bugs or have any specific feature requests, please
 [file an issue](https://github.com/blind-contours/CVtreeMLE/issues).
 Further details on filing issues are provided in our [contribution
-guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/main/CONTRIBUTING.md).
+guidelines](https://github.com/blind-contours/CVtreeMLE/blob/main/contributing.md).
 
 ------------------------------------------------------------------------
 
@@ -640,7 +641,7 @@ guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/main/CONTRIBUTIN
 
 Contributions are very welcome. Interested contributors should consult
 our [contribution
-guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/main/CONTRIBUTING.md)
+guidelines](https://github.com/blind-contours/CVtreeMLE/blob/main/contributing.md)
 prior to submitting a pull request.
 
 ------------------------------------------------------------------------
