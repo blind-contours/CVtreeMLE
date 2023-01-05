@@ -657,21 +657,10 @@ guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/main/CONTRIBUTIN
 
 Contributions are very welcome. Interested contributors should consult
 our [contribution
-guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/main/CONTRIBUTING.md)
+guidelines](https://github.com/blind-contours/CVtreeMLE/blob/main/contributing.md)
 prior to submitting a pull request.
 
-------------------------------------------------------------------------
 
-## Citation
-
-After using the `CVtreeMLE` R package, please cite the following:
-
-(**article?**){mccoyd2022CVtreeMLE-joss, author = {McCoy, David B;
-Hubbard, Alan; Van der Laan Mark}, title = {{CVtreeMLE}: Efficient
-Estimation of Mixed Exposures using Data Adaptive Decision Trees and
-Cross-Validated Targeted Maximum Likelihood Estimation in {R}} year =
-{2022}, doi = {TBD}, url = {TBD}, journal = {Journal of Open Source
-Software}, publisher = {The Open Journal} }
 
 ------------------------------------------------------------------------
 
