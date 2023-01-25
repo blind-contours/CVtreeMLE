@@ -165,6 +165,14 @@ install.packages("partykit")
 install.packages("pre")
 ```
 
+`CVtreeMLE` has some other miscellaneous dependencies that are used in the examples as well as in the plotting functions. 
+Likewise, SL3 has a couple dependencies for ML algorithms that must be installed first. As such, please install the packages below:
+
+``` r
+install.packages(c("kableExtra", "ranger", "arm", "xgboost", "nnls", "hrbrthemes", "viridis"))
+
+```
+
 ------------------------------------------------------------------------
 
 ## Example
