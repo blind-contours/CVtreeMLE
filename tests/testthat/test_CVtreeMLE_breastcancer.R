@@ -38,7 +38,6 @@ data <- suppressWarnings(data.frame(lapply(
 data <- data[colnames(data) != "class"]
 
 ptm <- proc.time()
-
 breast_cancr_results <- CVtreeMLE(
   data = data,
   w = w,
@@ -49,10 +48,18 @@ breast_cancr_results <- CVtreeMLE(
   family = "binomial",
   parallel = TRUE,
   num_cores = 2,
-  max_iter = 3
+  max_iter = 1
 )
-
 proc.time() - ptm
+
+## test to make sure the RMSE table for ensemble specific trees has the same
+## trees as the v-fold results, basically that v-fold results are estimated
+## for each data-adaptively identified tree
+
+expect_true(
+  all(names(
+    breast_cancr_results$`V-Specific Mix Results`)
+    %in% breast_cancr_results$`Model RMSEs`$`Var(s)`))
 
 ## test mixture result outputs given interaction exist in this data:
 expect_true(
@@ -61,4 +68,11 @@ expect_true(
 
 expect_true(
   class(breast_cancr_results$`Pooled TMLE Mixture Results`) == "data.frame"
+)
+
+## ensure that a consistent finding has 2 fold specific results and a pooled
+## result
+expect_true(
+  dim(breast_cancr_results$
+        `V-Specific Mix Results`$`cell.shape-cell.size-cl.thickness`)[1] == 3
 )

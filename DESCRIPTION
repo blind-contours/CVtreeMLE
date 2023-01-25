@@ -14,11 +14,9 @@ License: MIT + file LICENSE
 Depends: 
     R (>= 2.10)
 Imports: 
-    assertthat,
     cvTools,
     data.table,
     dplyr,
-    foreach,
     future,
     Hmisc,
     magrittr,
@@ -41,7 +39,12 @@ Suggests:
     xml2,
     mlbench,
     kableExtra,
-    covr
+    covr,
+    ranger, 
+    xgboost,
+    nnls,
+    assertthat,
+    mlbench
 Remotes: tlverse/sl3@devel
 Encoding: UTF-8
 LazyData: true

@@ -4,10 +4,6 @@ library(sl3)
 library(partykit)
 library(pre)
 
-
-# simulation code from ph 295, fall 2016 --
-# https://github.com/wilsoncai1992/ph295-lab/blob/master/lab3/lab3_lecture.rmd
-
 # structural equation for w_1
 # takes as input a vector u_w1 and returns a vector evaluating
 # f_{w,1}(u_w1)
