@@ -58,8 +58,10 @@ proc.time() - ptm
 
 expect_true(
   all(names(
-    breast_cancr_results$`V-Specific Mix Results`)
-    %in% breast_cancr_results$`Model RMSEs`$`Var(s)`))
+    breast_cancr_results$`V-Specific Mix Results`
+  )
+  %in% breast_cancr_results$`Model RMSEs`$`Var(s)`)
+)
 
 ## test mixture result outputs given interaction exist in this data:
 expect_true(
@@ -74,5 +76,5 @@ expect_true(
 ## result
 expect_true(
   dim(breast_cancr_results$
-        `V-Specific Mix Results`$`cell.shape-cell.size-cl.thickness`)[1] == 3
+    `V-Specific Mix Results`$`cell.shape-cell.size-cl.thickness`)[1] == 3
 )

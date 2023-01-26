@@ -425,9 +425,11 @@ CVtreeMLE <- function(w,
 
     filt_fold_marginal_rules <- filter_marginal_rules(marginal_rules, n_folds)
     filt_fold_marginal_rules$rules <- round_rules(
-      filt_fold_marginal_rules$rules)
+      filt_fold_marginal_rules$rules
+    )
     marginal_rmse <- calc_marginal_rule_rmses(
-      data = filt_fold_marginal_rules)
+      data = filt_fold_marginal_rules
+    )
 
     backfit_model_rmses <- rbind(marginal_rmse, mixture_rmse)
 
@@ -466,7 +468,6 @@ CVtreeMLE <- function(w,
   }
 
   results <- furrr::future_map(unique(data$folds), function(fold_k) {
-
     at <- data[data$folds != fold_k, ]
     av <- data[data$folds == fold_k, ]
 

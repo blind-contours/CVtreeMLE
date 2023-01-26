@@ -31,8 +31,6 @@ expect_true("M1-M2-M3" %in% sim_results$`Pooled TMLE Mixture Results`$Vars)
 ## the true ARE is 6 - ensure our max region estimate is close to truth for
 ## the simulation
 expect_equal(max(sim_results$`Pooled TMLE Mixture Results`$`Mixture ATE`),
-             6,
-             tolerance = 0.2
+  6,
+  tolerance = 0.2
 )
-
-

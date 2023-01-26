@@ -31,7 +31,9 @@ Imports:
     ggplot2,
     furrr,
     hrbrthemes,
-    viridis
+    viridis,
+    assertthat, 
+    foreach
 Suggests:
     rmarkdown,
     knitr,
@@ -42,9 +44,7 @@ Suggests:
     covr,
     ranger, 
     xgboost,
-    nnls,
-    assertthat,
-    mlbench
+    nnls
 Remotes: tlverse/sl3@devel
 Encoding: UTF-8
 LazyData: true
