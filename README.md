@@ -142,19 +142,27 @@ allows ensemble machine learning to be used for nuisance parameter
 estimation and `sl3` is not on CRAN the `CVtreeMLE` package is not
 available on CRAN and must be downloaded here.
 
-For the latest features, install the most recent *stable version*  
-of `CVtreeMLE`from GitHub via
-[`remotes`](https://CRAN.R-project.org/package=remotes):
-
-``` r
-remotes::install_github("blind-contours/CVtreeMLE@main")
-```
+First - download the `sl3` package. `CVtreeMLE` uses this package
+to build ensemble machine learneres for each nuisance parameter. 
 
 `CVtreeMLE` uses newly added decision tree estimators added to `sl3` so
-please download sl3 from:
+please download sl3 from devel. First install these packages before `sl3`.
+
+``` r
+install.packages(c("ranger", "arm"))
+
+```
+
+Now install `sl3` on devel:
 
 ``` r
 remotes::install_github("tlverse/sl3@devel")
+```
+
+Make sure `sl3` installs correctly then install `CVtreeMLE`
+
+``` r
+remotes::install_github("blind-contours/CVtreeMLE@main")
 ```
 
 `CVtreeMLE` also uses the predictive rules ensemble package and the
@@ -169,7 +177,7 @@ install.packages("pre")
 Likewise, SL3 has a couple dependencies for ML algorithms that must be installed first. As such, please install the packages below:
 
 ``` r
-install.packages(c("kableExtra", "ranger", "arm", "xgboost", "nnls", "hrbrthemes", "viridis"))
+install.packages(c("kableExtra", "xgboost", "nnls", "hrbrthemes", "viridis"))
 
 ```
 
