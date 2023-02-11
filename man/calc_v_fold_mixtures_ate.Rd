@@ -18,8 +18,6 @@ across the folds}
 \item{n_folds}{Number of folds used in cross-validation}
 }
 \value{
-Rules object. TODO: add more detail here.
-
 A data frame of mixture results for each variable level combination
 for each fold
 }

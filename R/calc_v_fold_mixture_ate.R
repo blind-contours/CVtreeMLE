@@ -14,7 +14,6 @@
 #' @param n_folds Number of folds used in cross-validation
 #' @importFrom data.table rbindlist
 #' @importFrom dplyr group_by
-#' @return Rules object. TODO: add more detail here.
 #' @importFrom stats as.formula glm p.adjust plogis predict qlogis qnorm
 #' @importFrom stats qunif rnorm runif
 #' @importFrom rlang :=
