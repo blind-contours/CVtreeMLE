@@ -142,15 +142,22 @@ allows ensemble machine learning to be used for nuisance parameter
 estimation and `sl3` is not on CRAN the `CVtreeMLE` package is not
 available on CRAN and must be downloaded here.
 
-First - download the `sl3` package. `CVtreeMLE` uses this package
-to build ensemble machine learneres for each nuisance parameter. 
+There are many depedencies for `CVtreeMLE` so it's easier to break up 
+installation of the various packages to ensure proper installation. 
 
-`CVtreeMLE` uses newly added decision tree estimators added to `sl3` so
-please download sl3 from devel. First install these packages before `sl3`.
+First install the decision tree estimators used in the data-adaptive
+region discovery of the exposure space: 
 
 ``` r
-install.packages(c("ranger", "arm"))
+install.packages("partykit")
+install.packages("pre")
+```
 
+`CVtreeMLE` uses the `sl3` package to build ensemble machine learneres for each nuisance parameter. 
+We hve to install off the development branch, first download these two packages for `sl3`
+
+``` r
+install.packages(c("ranger", "arm", "xgboost", "nnls"))
 ```
 
 Now install `sl3` on devel:
@@ -165,19 +172,10 @@ Make sure `sl3` installs correctly then install `CVtreeMLE`
 remotes::install_github("blind-contours/CVtreeMLE@main")
 ```
 
-`CVtreeMLE` also uses the predictive rules ensemble package and the
-partykit package for decision trees which the analyst can download via:
-
-``` r
-install.packages("partykit")
-install.packages("pre")
-```
-
 `CVtreeMLE` has some other miscellaneous dependencies that are used in the examples as well as in the plotting functions. 
-Likewise, SL3 has a couple dependencies for ML algorithms that must be installed first. As such, please install the packages below:
 
 ``` r
-install.packages(c("kableExtra", "xgboost", "nnls", "hrbrthemes", "viridis"))
+install.packages(c("kableExtra", "hrbrthemes", "viridis"))
 
 ```
 
