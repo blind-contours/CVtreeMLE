@@ -142,34 +142,40 @@ allows ensemble machine learning to be used for nuisance parameter
 estimation and `sl3` is not on CRAN the `CVtreeMLE` package is not
 available on CRAN and must be downloaded here.
 
-For the latest features, install the most recent *stable version*  
-of `CVtreeMLE`from GitHub via
-[`remotes`](https://CRAN.R-project.org/package=remotes):
+There are many depedencies for `CVtreeMLE` so it's easier to break up 
+installation of the various packages to ensure proper installation. 
 
-``` r
-remotes::install_github("blind-contours/CVtreeMLE@main")
-```
-
-`CVtreeMLE` uses newly added decision tree estimators added to `sl3` so
-please download sl3 from:
-
-``` r
-remotes::install_github("tlverse/sl3@devel")
-```
-
-`CVtreeMLE` also uses the predictive rules ensemble package and the
-partykit package for decision trees which the analyst can download via:
+First install the decision tree estimators used in the data-adaptive
+region discovery of the exposure space: 
 
 ``` r
 install.packages("partykit")
 install.packages("pre")
 ```
 
-`CVtreeMLE` has some other miscellaneous dependencies that are used in the examples as well as in the plotting functions. 
-Likewise, SL3 has a couple dependencies for ML algorithms that must be installed first. As such, please install the packages below:
+`CVtreeMLE` uses the `sl3` package to build ensemble machine learneres for each nuisance parameter. 
+We hve to install off the development branch, first download these two packages for `sl3`
 
 ``` r
-install.packages(c("kableExtra", "ranger", "arm", "xgboost", "nnls", "hrbrthemes", "viridis"))
+install.packages(c("ranger", "arm", "xgboost", "nnls"))
+```
+
+Now install `sl3` on devel:
+
+``` r
+remotes::install_github("tlverse/sl3@devel")
+```
+
+Make sure `sl3` installs correctly then install `CVtreeMLE`
+
+``` r
+remotes::install_github("blind-contours/CVtreeMLE@main")
+```
+
+`CVtreeMLE` has some other miscellaneous dependencies that are used in the examples as well as in the plotting functions. 
+
+``` r
+install.packages(c("kableExtra", "hrbrthemes", "viridis"))
 
 ```
 
