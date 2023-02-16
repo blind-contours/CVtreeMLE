@@ -122,30 +122,45 @@ Below we simulate data for a "mixture cube" and show basic results from
 
 ## Installation
 
-_Note:_ Because `CVtreeMLE` package (currently) depends on `sl3` that allows 
-ensemble machine learning to be used for 
-nuisance parameter estimation and `sl3` is not on CRAN the `CVtreeMLE` package 
-is not available on CRAN and must be downloaded here. 
+*Note:* Because `CVtreeMLE` package (currently) depends on `sl3` that
+allows ensemble machine learning to be used for nuisance parameter
+estimation and `sl3` is not on CRAN the `CVtreeMLE` package is not
+available on CRAN and must be downloaded here.
 
-For the latest features, install the most recent _stable version_  
-of `CVtreeMLE`from GitHub via
-[`remotes`](https://CRAN.R-project.org/package=remotes):
+There are many dependencies for `CVtreeMLE` so it's easier to break up 
+installation of the various packages to ensure proper installation. 
 
-```{r gh-master-installation, eval = FALSE}
-remotes::install_github("blind-contours/CVtreeMLE@main")
+First install the decision tree estimators used in the data-adaptive
+region discovery of the exposure space: 
+
+```{r tree-packages, eval = FALSE}
+install.packages("partykit")
+install.packages("pre")
 ```
 
-`CVtreeMLE` uses newly added decision tree estimators added to `sl3` so please 
-download sl3 from:
-```{r sl3_install, eval = FALSE}
+`CVtreeMLE` uses the `sl3` package to build ensemble machine learners for each nuisance parameter. 
+We have to install off the development branch, first download these two packages for `sl3`
+
+```{r super-learner-packages, eval = FALSE}
+install.packages(c("ranger", "arm", "xgboost", "nnls"))
+```
+
+Now install `sl3` on devel:
+
+```{r sl3_devel, eval = FALSE}
 remotes::install_github("tlverse/sl3@devel")
 ```
 
-`CVtreeMLE` also uses the predictive rules ensemble package and the partykit
-package for decision trees which the analyst can download via:
-```{r party_pre_install, eval = FALSE}
-install.packages("partykit")
-install.packages("pre")
+Make sure `sl3` installs correctly then install `CVtreeMLE`
+
+```{r CVtreeMLE_install,  eval = FALSE}
+remotes::install_github("blind-contours/CVtreeMLE@main")
+```
+
+`CVtreeMLE` has some other miscellaneous dependencies that are used in the examples as well as in the plotting functions. 
+
+```{r msc_package,  eval = FALSE}
+install.packages(c("kableExtra", "hrbrthemes", "viridis"))
 ```
 
 ---

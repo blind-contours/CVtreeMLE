@@ -1,8 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# R/`CVtreeMLE` <img src="man/figures/CVtreeMLE_sticker.png" height="300" align="right"/>
-
+# `CVtreeMLE` \<img src=“man/figures/CVtreeMLE_sticker.png height=”300” align=“right”/\>
 
 <!-- badges: start -->
 
@@ -142,19 +141,20 @@ allows ensemble machine learning to be used for nuisance parameter
 estimation and `sl3` is not on CRAN the `CVtreeMLE` package is not
 available on CRAN and must be downloaded here.
 
-There are many depedencies for `CVtreeMLE` so it's easier to break up 
-installation of the various packages to ensure proper installation. 
+There are many dependencies for `CVtreeMLE` so it’s easier to break up
+installation of the various packages to ensure proper installation.
 
 First install the decision tree estimators used in the data-adaptive
-region discovery of the exposure space: 
+region discovery of the exposure space:
 
 ``` r
 install.packages("partykit")
 install.packages("pre")
 ```
 
-`CVtreeMLE` uses the `sl3` package to build ensemble machine learneres for each nuisance parameter. 
-We hve to install off the development branch, first download these two packages for `sl3`
+`CVtreeMLE` uses the `sl3` package to build ensemble machine learners
+for each nuisance parameter. We have to install off the development
+branch, first download these two packages for `sl3`
 
 ``` r
 install.packages(c("ranger", "arm", "xgboost", "nnls"))
@@ -172,11 +172,11 @@ Make sure `sl3` installs correctly then install `CVtreeMLE`
 remotes::install_github("blind-contours/CVtreeMLE@main")
 ```
 
-`CVtreeMLE` has some other miscellaneous dependencies that are used in the examples as well as in the plotting functions. 
+`CVtreeMLE` has some other miscellaneous dependencies that are used in
+the examples as well as in the plotting functions.
 
 ``` r
 install.packages(c("kableExtra", "hrbrthemes", "viridis"))
-
 ```
 
 ------------------------------------------------------------------------
@@ -447,7 +447,7 @@ sim_results <- CVtreeMLE(
 
 proc.time() - ptm
 #>    user  system elapsed 
-#>  54.595   7.885 624.751
+#>  57.222   7.298 647.401
 ```
 
 Note that above, there are default estimators for all parameters if they
@@ -663,7 +663,7 @@ vignette.
 If you encounter any bugs or have any specific feature requests, please
 [file an issue](https://github.com/blind-contours/CVtreeMLE/issues).
 Further details on filing issues are provided in our [contribution
-guidelines](https://github.com/blind-contours/CVtreeMLE/blob/main/contributing.md).
+guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/main/CONTRIBUTING.md).
 
 ------------------------------------------------------------------------
 
@@ -671,10 +671,21 @@ guidelines](https://github.com/blind-contours/CVtreeMLE/blob/main/contributing.m
 
 Contributions are very welcome. Interested contributors should consult
 our [contribution
-guidelines](https://github.com/blind-contours/CVtreeMLE/blob/main/contributing.md)
+guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/main/CONTRIBUTING.md)
 prior to submitting a pull request.
 
+------------------------------------------------------------------------
 
+## Citation
+
+After using the `CVtreeMLE` R package, please cite the following:
+
+(**article?**){mccoyd2022CVtreeMLE-joss, author = {McCoy, David B;
+Hubbard, Alan; Van der Laan Mark}, title = {{CVtreeMLE}: Efficient
+Estimation of Mixed Exposures using Data Adaptive Decision Trees and
+Cross-Validated Targeted Maximum Likelihood Estimation in {R}} year =
+{2022}, doi = {TBD}, url = {TBD}, journal = {Journal of Open Source
+Software}, publisher = {The Open Journal} }
 
 ------------------------------------------------------------------------
 
