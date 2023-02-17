@@ -110,7 +110,7 @@ together; the [`pre` package](https://github.com/marjoleinF/pre)[@Fokkema2020a]
 is used to fit rule
 ensembles. In backfitting procedure to find thresholds in each mixture component
 individually, a Super Learner of decision trees generated from the 
-[`partykit` package](http://partykit.r-forge.r-project.org/partykit/)[partykit2015] are 
+[`partykit` package](http://partykit.r-forge.r-project.org/partykit/)[@partykit2015] are 
 created. In each case, the goal is to find the best fitting decision tree 
 from which we extract decision tree rules, we then calculate the ATE for 
 these rules.
