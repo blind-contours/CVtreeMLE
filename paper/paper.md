@@ -20,9 +20,9 @@ authors:
     orcid: 0000-0003-1432-5511
     affiliation: 2
 affiliations:
-  - name: Division of Environmental Health Sciences, University of California, Berkeley
+  - name: Division of Environmental Health Sciences, University of California, Berkeley, CA, United States of America
     index: 1
-  - name: Department of Biostatistics, University of California, Berkeley
+  - name: Department of Biostatistics, University of California, Berkeley, CA, United States of America
     index: 2
 date: 05 January 2022
 bibliography: paper.bib
