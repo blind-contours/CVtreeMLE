@@ -15,12 +15,7 @@ pull_out_rule_vars <- function(x, a) {
     x_split <- strsplit(x, " ")[[1]]
     hits <- x_split[grep(paste(a, collapse = "|"), x_split)]
     hits <- sort(unique(hits))
-    if (length(hits) == 1) {
-      hits <- 0
-    } else {
-      hits <- paste(hits, collapse = "-")
-    }
-    return(hits)
+    hits <- paste(hits, collapse = "-")
   } else {
     hits <- NA
   }

@@ -7,7 +7,7 @@ bibliography: ../inst/REFERENCES.bib
 vignette: >
   %\VignetteIndexEntry{Evaluating Causal Effects of Mixed Exposures using Data Adaptive Decision Trees and CV-TMLE}
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+  %\VignetteEncoding{UTF-8} 
 ---
 
 ```{r, include = FALSE}

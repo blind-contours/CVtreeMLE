@@ -350,7 +350,6 @@ CVtreeMLE <- function(w,
     c("model")
   )
 
-
   fold_mixture_rules <- mixture_rules[
     mixture_rules$description != "No Rules Found",
   ]
