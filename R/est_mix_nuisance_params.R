@@ -22,6 +22,7 @@
 #' @param seed Seed number
 #' @importFrom magrittr %>%
 #' @importFrom dplyr group_by filter top_n
+#' @importFrom stringr str_trim str_split
 #' @return A list of dataframes where the nuisance parameters are added to
 #' the raw data.
 
@@ -31,6 +32,7 @@
 est_mix_nuisance_params <- function(at,
                                     av,
                                     w,
+                                    a,
                                     y,
                                     no_mix_rules,
                                     aw_stack,
@@ -43,39 +45,80 @@ est_mix_nuisance_params <- function(at,
     future::plan(future::sequential, gc = TRUE)
   }
 
+  identify_w_in_rule <- function(rule_description, w){
+    # Split the rule description by "&" and trim white spaces
+    split_rule <- str_trim(unlist(str_split(rule_description, "&")))
+
+    # Check which of the split elements contain variables from w
+    variable_present <- sapply(split_rule, function(rule_part) {
+      # Extract the variable name by splitting by spaces and taking the first element
+      var_name <- unlist(str_split(rule_part, " "))[1]
+      return(var_name %in% w)
+    })
+
+    # Return the elements that contain variables from w
+    return(split_rule[variable_present])
+  }
+
   set.seed(seed)
 
-  at_mix <- at
-  av_mix <- av
-
   if (no_mix_rules != TRUE) {
-    at_rules_eval <-
-      evaluate_mixture_rules(data = at_mix, rules = rules)
-    av_rules_eval <-
-      evaluate_mixture_rules(data = av_mix, rules = rules)
 
     mix_interaction_data <- list()
 
-    for (interaction in seq(dim(at_rules_eval)[2])) {
-      interaction_rule <- at_rules_eval[, interaction]
+    for (interaction in seq(dim(rules)[1])) {
+      rule_data <- rules[interaction,]
+      if (rule_data$effect_modifiers == 1) {
+        w_rule <- paste(identify_w_in_rule(rule_data$description, w), collapse = " & ")
+        a_rule <- paste(identify_w_in_rule(rule_data$description, a), collapse = " & ")
+        # For 'at' dataset
+        subset_at <- subset(at, eval(parse(text=w_rule)))
 
-      if (dim(table(interaction_rule)) == 2) {
-        at_mix$A_mix <- interaction_rule
-        av_mix$A_mix <- av_rules_eval[, interaction]
+        # For 'av' dataset
+        subset_av <- subset(av, eval(parse(text=w_rule)))
+
+        interaction_rule_at <- subset_at %>%
+          dplyr::transmute(A = ifelse(eval(parse(text = a_rule)), 1, 0))
+
+
+        interaction_rule_av <- subset_av %>%
+          dplyr::transmute(A = ifelse(eval(parse(text = a_rule)), 1, 0))
+
+        at_mix <- subset_at
+        av_mix <- subset_av
+
+
+      }else{
+
+        at_mix <- at
+        av_mix <- av
+
+        interaction_rule_at <- at_mix %>%
+          dplyr::transmute(A = ifelse(eval(parse(text = rule_data$description)), 1, 0))
+
+        interaction_rule_av <- av_mix %>%
+          dplyr::transmute(A = ifelse(eval(parse(text = rule_data$description)), 1, 0))
+      }
+
+      if (dim(table(interaction_rule_at)) == 2) {
+        at_mix$A_mix <- interaction_rule_at
+        av_mix$A_mix <- interaction_rule_av
 
         task_at <- sl3::make_sl3_Task(
           data = at_mix,
           covariates = w,
           outcome = "A_mix",
           outcome_type = "binomial",
-          folds = 2
+          folds = 2,
+          drop_missing_outcome = TRUE
         )
 
         task_av <- sl3::make_sl3_Task(
           data = av_mix,
           covariates = w,
           outcome = "A_mix",
-          outcome_type = "binomial"
+          outcome_type = "binomial",
+          drop_missing_outcome = TRUE
         )
 
         sl <- sl3::Lrnr_sl$new(
@@ -99,32 +142,28 @@ est_mix_nuisance_params <- function(at,
           covariates = c(w, "A_mix"),
           outcome = y,
           outcome_type = family,
-          folds = 2
+          folds = 2,
+          drop_missing_outcome = TRUE
         )
 
-        x_m1 <- x_m0 <- av_mix
+        x_m1 <- av_mix
         x_m1$A_mix <- 1 # under exposure
-        x_m0$A_mix <- 0 # under control
+        # x_m0$A_mix <- 0 # under control
 
         task_av <- sl3::make_sl3_Task(
           data = av_mix,
           covariates = c(w, "A_mix"),
           outcome = y,
-          outcome_type = family
+          outcome_type = family,
+          drop_missing_outcome = TRUE
         )
 
         task_av_1 <- sl3::make_sl3_Task(
           data = x_m1,
           covariates = c(w, "A_mix"),
           outcome = y,
-          outcome_type = family
-        )
-
-        task_av_0 <- sl3::make_sl3_Task(
-          data = x_m0,
-          covariates = c(w, "A_mix"),
-          outcome = y,
-          outcome_type = family
+          outcome_type = family,
+          drop_missing_outcome = TRUE
         )
 
         sl <- sl3::Lrnr_sl$new(
@@ -136,12 +175,10 @@ est_mix_nuisance_params <- function(at,
 
         qbar_aw <- sl_fit$predict(task_av)
         qbar_1w <- sl_fit$predict(task_av_1)
-        qbar_0w <- sl_fit$predict(task_av_0)
 
         ## add Qbar to the AV dataset
         av_mix$qbar_aw <- qbar_aw
         av_mix$qbar_1w <- qbar_1w
-        av_mix$qbar_0w <- qbar_0w
 
         av_mix$ghat_1w <- ghat_1w
         av_mix$h_aw <- h_aw

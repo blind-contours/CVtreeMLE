@@ -24,9 +24,11 @@ CVtreeMLE(
   parallel_cv = TRUE,
   parallel_type = "multi_session",
   num_cores = 2,
-  max_iter = 5,
+  max_iter = 10,
   verbose = FALSE,
-  h_aw_trunc_lvl = 10
+  h_aw_trunc_lvl = 10,
+  thresh_only_exposures = FALSE,
+  pooled_rule_type = "average"
 )
 }
 \arguments{
@@ -97,6 +99,11 @@ a table of rules determined in each fold will be printed.}
 
 \item{h_aw_trunc_lvl}{Level to truncate the clever covariate
 to control variance, default is 10.}
+
+\item{pooled_rule_type}{is "average" or "union" how to construct the rule across
+folds. The average take the average cutpoints and returns an average rule with lower
+and upper bounds for each cutpoint. The union rule creates a new rule that is the
+space that contains all the rules found across the fold and is therefore more conservative.}
 }
 \value{
 Object of class \code{CVtreeMLE}, containing a list of table results

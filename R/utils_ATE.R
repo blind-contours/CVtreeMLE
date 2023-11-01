@@ -18,7 +18,7 @@ calc_ate_estimates <- function(data,
                                y,
                                p_adjust_n,
                                v_fold = FALSE) {
-  data[ate_var] <- data$qbar_1w_star - data$qbar_0w_star
+  data[ate_var] <- data$qbar_1w_star - data[,y]
 
   thetas <-
     tapply(data[[ate_var]], data$folds, mean, na.rm = TRUE)
@@ -33,8 +33,8 @@ calc_ate_estimates <- function(data,
   }
 
   ics <- base::by(data, data$folds, function(data) {
-    result <- data["h_aw"] * (data[y] - data["qbar_aw_star"]) +
-      data["qbar_1w_star"] - data["qbar_0w_star"] - data["thetas"]
+    result <- (data["h_aw"] * (data[,y] - data["qbar_1w_star"]) +
+      (data["qbar_1w_star"] - data["thetas"])) - (data[y] - mean(data[,y]))
     result
   })
 
@@ -103,15 +103,15 @@ calc_clever_covariate <- function(ghat_1_w,
     ghat_1_w[ghat_1_w < 0.0001] <- 0.001
     ghat_1_w[ghat_1_w > 0.999] <- 0.99
 
-    ghat_0_w <- 1 - ghat_1_w
+    # ghat_0_w <- 1 - ghat_1_w
 
-    ghat_aw <- rep(NA, n)
-    ghat_aw[data[exposure] == 1] <- ghat_1_w[data[exposure] == 1]
-    ghat_aw[data[exposure] == 0] <- ghat_0_w[data[exposure] == 0]
+    # ghat_aw <- rep(NA, n)
+    # ghat_aw[data[exposure] == 1] <- ghat_1_w[data[exposure] == 1]
+    # ghat_aw[data[exposure] == 0] <- ghat_0_w[data[exposure] == 0]
 
-    h_aw <-
-      as.numeric(data[exposure] == 1) / ghat_1_w -
-      as.numeric(data[exposure] == 0) / ghat_0_w
+    h_aw <- 1 / ghat_1_w
+      # as.numeric(data[exposure] == 1) / ghat_1_w -
+      # as.numeric(data[exposure] == 0) / ghat_0_w
 
     h_aw <-
       ifelse(h_aw > h_aw_trunc_lvl, h_aw_trunc_lvl, h_aw)
@@ -119,13 +119,12 @@ calc_clever_covariate <- function(ghat_1_w,
     h_aw <-
       ifelse(h_aw < -h_aw_trunc_lvl, -h_aw_trunc_lvl, h_aw)
   } else {
-    n <- length(ghat_1_w)
+    # n <- length(ghat_1_w)
 
-    ghat_aw <- rep(NA, n)
+    # ghat_aw <- rep(NA, n)
     ghat_aw[data[exposure] == 1] <- ghat_1_w[data[exposure] == 1]
 
-    h_aw <-
-      as.numeric(data[exposure] == 1) / ghat_1_w
+    h_aw <- 1 / ghat_1_w
 
     h_aw <-
       ifelse(h_aw > h_aw_trunc_lvl, h_aw_trunc_lvl, h_aw)
@@ -157,7 +156,7 @@ calc_clever_covariate <- function(ghat_1_w,
 #'  the returned values are bounded to machine precision. This is intended to
 #'  avoid numerical instability issues.
 #' @export
-fit_least_fav_submodel <- function(h_aw, data, y, qbar_aw, qbar_1w, qbar_0w) {
+fit_least_fav_submodel <- function(h_aw, data, y, qbar_aw, qbar_1w) {
   data$y_scaled <- scale_to_unit(data[y])[[1]]
 
   logit_update <-
@@ -170,11 +169,9 @@ fit_least_fav_submodel <- function(h_aw, data, y, qbar_aw, qbar_1w, qbar_0w) {
   epsilon <- logit_update$coef
   qbar_aw_star <- qbar_aw + epsilon * h_aw
   qbar_1w_star <- qbar_1w + epsilon * h_aw
-  qbar_0w_star <- qbar_0w + epsilon * h_aw
+  # qbar_0w_star <- qbar_0w + epsilon * h_aw
 
   return(list(
     "qbar_aw_star" = qbar_aw_star,
-    "qbar_1w_star" = qbar_1w_star,
-    "qbar_0w_star" = qbar_0w_star
-  ))
+    "qbar_1w_star" = qbar_1w_star))
 }

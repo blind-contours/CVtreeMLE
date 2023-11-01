@@ -219,17 +219,17 @@ calc_empir_truth <- function(data, rule, exposure_dim){
       region_comp_probs <- data_A[, c(regions_inv)]
     }
 
-    ave_region_outcome <-
+    region_ave_outcome <-
       mean(data_A$outcome_true * (data_A$A / (region_probs)))
 
     ave_compl_outcome <-
       mean(data_A$outcome_true * (data_A$A_inv / (region_comp_probs)))
 
-    ate <- ave_region_outcome - ave_compl_outcome
+    ate <- region_ave_outcome - ave_compl_outcome
 
     results_ate <- ate
     }else{
-      results_ate <- NA
+      region_ave_outcome <- NA
     }
 
     }else{
@@ -240,7 +240,11 @@ calc_empir_truth <- function(data, rule, exposure_dim){
       nonregion_ave_outcome <- mean(subset(data_A, A == 0)$y)
       results_ate <- region_ave_outcome - nonregion_ave_outcome
     }
-  return(results_ate)
+
+
+  pie <- region_ave_outcome - mean(data_A$outcome_true)
+
+  return(pie)
 }
 
 

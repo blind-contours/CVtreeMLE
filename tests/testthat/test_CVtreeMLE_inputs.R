@@ -99,3 +99,4 @@ expect_error(cvtreemle_results <- CVtreeMLE(
   parallel = TRUE,
   verbose = FALSE
 ))
+

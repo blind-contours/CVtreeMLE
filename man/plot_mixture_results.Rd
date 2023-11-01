@@ -4,13 +4,13 @@
 \alias{plot_mixture_results}
 \title{Create dot-whisker plots for the mixture results found}
 \usage{
-plot_mixture_results(v_intxn_results, hjust)
+plot_mixture_results(model, hjust)
 }
 \arguments{
-\item{v_intxn_results}{Table of the interaction results for a mixture}
-
 \item{hjust}{Horizontal adjustment of rule placement on plots relative to
 point estimate}
+
+\item{v_intxn_results}{Table of the interaction results for a mixture}
 }
 \description{
 Create dot-whisker plots for the mixture results found

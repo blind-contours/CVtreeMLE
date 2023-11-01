@@ -1,0 +1,359 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={Dissertation\_Code},
+  pdfauthor={David McCoy},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Dissertation\_Code}
+\author{David McCoy}
+\date{2023-06-22}
+
+\begin{document}
+\maketitle
+
+\hypertarget{example}{%
+\subsection{Example}\label{example}}
+
+First load the package and other packages needed
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(CVtreeMLE)}
+\FunctionTok{library}\NormalTok{(sl3)}
+\FunctionTok{library}\NormalTok{(pre)}
+\FunctionTok{library}\NormalTok{(partykit)}
+\FunctionTok{library}\NormalTok{(kableExtra)}
+\FunctionTok{library}\NormalTok{(ggplot2)}
+
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{429153}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{simulate-data}{%
+\subsection{Simulate Data}\label{simulate-data}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sim\_data }\OtherTok{\textless{}{-}} \FunctionTok{simulate\_mixture\_cube}\NormalTok{(}
+  \AttributeTok{n\_obs =} \DecValTok{800}\NormalTok{,}
+  \AttributeTok{splits =} \FunctionTok{c}\NormalTok{(}\FloatTok{0.99}\NormalTok{, }\FloatTok{2.0}\NormalTok{, }\FloatTok{2.5}\NormalTok{),}
+  \AttributeTok{mins =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{),}
+  \AttributeTok{maxs =} \FunctionTok{c}\NormalTok{(}\DecValTok{3}\NormalTok{, }\DecValTok{4}\NormalTok{, }\DecValTok{5}\NormalTok{),}
+  \AttributeTok{subspace\_assoc\_strength\_betas =} \FunctionTok{c}\NormalTok{(}
+    \DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{,}
+    \DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{6}\NormalTok{, }\DecValTok{0}
+\NormalTok{  )}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Let's take a look at the data:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{head}\NormalTok{(sim\_data)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##           age        bmi        sex        M1         M2        M3          y
+## 1  0.01651435 -0.4227082 -1.0221195 1.7594922 0.03442708 2.7936966 -0.9910446
+## 2  0.19072911  0.4842019  0.9771362 0.1961772 2.34932053 1.3962661  1.1728384
+## 3 -0.18790449  0.4828171 -1.0221195 0.4488381 0.04331044 2.6834768 -1.2116326
+## 4 -0.19596384 -1.1133632 -1.0221195 0.1387679 2.78777587 0.6990761 -1.2167154
+## 5  0.26243848  0.6081797  0.9771362 1.6475103 1.33051234 1.6460804  1.2452379
+## 6 -1.32782405 -1.0698419 -1.0221195 1.4097762 0.00406810 2.8495084 -2.3520191
+\end{verbatim}
+
+Using the \texttt{simulate\_mixture\_cube} we generate 800 observations
+that are exposed to three variables with min values being 0 for all and
+max values being 3,4, and 5. In each variable we define split points
+0.99, 2.0, and 2.5. Given the eight regions in the cube, the
+\texttt{subspace\_assoc\_strength\_betas} parameter is where we put the
+outcome in a specific region.
+
+The indices correspond to an area in the cube:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  All mixtures lower than specified thresholds
+\item
+  M1 is higher but M2 and M3 are lower
+\item
+  M2 is higher but M1 and M3 are lower
+\item
+  M1 and M2 are higher and M3 is lower
+\item
+  M3 is higher and M1 and M2 are lower
+\item
+  M1 and M3 are higher and M2 is lower
+\item
+  M2 and M3 are higher and M1 is lower
+\item
+  All mixtures are higher than thresholds
+\end{enumerate}
+
+So here - we put 6 at index 7 which means the outcome is 6 when M2 and
+M3 are higher and M1 is lower than their respective split points. The
+outcome is 0 in all other regions.
+
+\hypertarget{run-cvtreemle}{%
+\subsection{\texorpdfstring{Run
+\texttt{CVtreeMLE}}{Run CVtreeMLE}}\label{run-cvtreemle}}
+
+We will now pass the simulated data and variable names for each node in
+O = W,A,Y to the \texttt{CVtreeMLE} function.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ptm }\OtherTok{\textless{}{-}} \FunctionTok{proc.time}\NormalTok{()}
+
+\NormalTok{sim\_results }\OtherTok{\textless{}{-}} \FunctionTok{CVtreeMLE}\NormalTok{(}
+  \AttributeTok{data =}\NormalTok{ sim\_data,}
+  \AttributeTok{w =} \FunctionTok{c}\NormalTok{(}\StringTok{"age"}\NormalTok{, }\StringTok{"sex"}\NormalTok{, }\StringTok{"bmi"}\NormalTok{),}
+  \AttributeTok{a =} \FunctionTok{c}\NormalTok{(}\FunctionTok{paste}\NormalTok{(}\StringTok{"M"}\NormalTok{, }\FunctionTok{seq}\NormalTok{(}\DecValTok{3}\NormalTok{), }\AttributeTok{sep =} \StringTok{""}\NormalTok{)),}
+  \AttributeTok{y =} \StringTok{"y"}\NormalTok{,}
+  \AttributeTok{n\_folds =} \DecValTok{5}\NormalTok{,}
+  \AttributeTok{parallel\_cv =} \ConstantTok{TRUE}\NormalTok{,}
+  \AttributeTok{seed =} \DecValTok{2333}\NormalTok{,}
+  \AttributeTok{parallel\_type =} \StringTok{"multi\_session"}\NormalTok{,}
+  \AttributeTok{family =} \StringTok{"continuous"}\NormalTok{,}
+  \AttributeTok{num\_cores =} \DecValTok{6}
+\NormalTok{)}
+
+\FunctionTok{proc.time}\NormalTok{() }\SpecialCharTok{{-}}\NormalTok{ ptm}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    user  system elapsed 
+##  95.819  24.804 447.939
+\end{verbatim}
+
+Note that above, there are default estimators for all parameters if they
+are not passed to the function. Here we just use the out of the box
+estimators that are defined in \texttt{utils\_create\_sls.R}. These
+estimators are chosen to be both non-parametric but also not too
+computationally demanding. Examples of estimators used by default are
+random forest, xgboost, elastic net, and glms. Users can also pass in
+their own custom stacks of learners. We also see here that, using 6
+cores with these learners on our simulated data with 800 observations
+and 6 variables, our run time is 6 minutes. This can be greatly improved
+by increasing the num\_cores parameter.
+
+\hypertarget{results}{%
+\subsection{Results}\label{results}}
+
+We can look at the pooled TMLE results for this model. Let's see if
+\texttt{CVtreeMLE} identified the current rule in all our folds:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{mixture\_results }\OtherTok{\textless{}{-}}\NormalTok{ sim\_results}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{Pooled TMLE Mixture Results}\StringTok{\textasciigrave{}}
+\NormalTok{mixture\_results }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{filter}\NormalTok{(Proportion\_Folds }\SpecialCharTok{==} \FloatTok{1.0}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   Mixture ATE Standard Error Lower CI Upper CI P-value P-value Adj     Vars
+## 1       3.259          0.158    2.949    3.568       0           0    M1-M2
+## 2       5.935          0.037    5.862    6.007       0           0 M1-M2-M3
+##    RMSE
+## 1 2.128
+## 2 1.069
+##                                                                         Union_Rule
+## 1                            M1 >= 0.002 & M1 <= 0.966 & M2 >= 1.336 & M2 <= 3.968
+## 2 M1 >= 0.002 & M1 <= 0.989 & M2 >= 1.966 & M2 <= 3.968 & M3 >= 2.436 & M3 <= 4.99
+##   Proportion_Folds
+## 1                1
+## 2                1
+\end{verbatim}
+
+Above, the estimated mixture ATE for this rule is 5.94 (5.84 - 6.03),
+which covers our true mixture ATE used to generate the data which was 6.
+The estimated mixture ATE is interpreted as: the average counterfactual
+mean outcome if all individuals were exposed to the rule shown in
+\texttt{Union\ Rule} compared to if all individuals were unexposed is
+5.94. That is, those individuals who are exposed to this rule have an
+outcome that is 5.94 higher compared to those that are not exposed to
+this rule. The standard error, confidence intervals and p-values are
+derived from the influence curve of this estimator.
+
+We can also look at the v-fold specific results. This gives the analyst
+the ability to investigate how stable the estimates and rules are. These
+results are the same as standard sample splitting techniques and
+therefore have proper variance estimates and p-values. Below we show the
+v-fold specific interactions found with fold specific estimates of our
+ATE target parameter and variance estimates from the fold specific IC.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{mixture\_v\_results }\OtherTok{\textless{}{-}}\NormalTok{ sim\_results}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{V{-}Specific Mix Results}\StringTok{\textasciigrave{}}
+\NormalTok{mixture\_v\_results}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{M1{-}M2{-}M3}\StringTok{\textasciigrave{}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##     ate    se lower_ci upper_ci p_val p_val_adj  rmse
+## 1 5.893 0.066   5.7630   6.0230     0         0 1.184
+## 2 5.946 0.043   5.8610   6.0300     0         0 0.997
+## 3 5.946 0.109   5.7320   6.1600     0         0 1.178
+## 4 5.940 0.114   5.7160   6.1630     0         0 1.300
+## 5 5.948 0.071   5.8090   6.0880     0         0 1.113
+## 6 5.935 0.190   5.5627   6.3077     0         0 1.089
+##                                                                           mix_rule
+## 1                                            M3 > 2.468 & M2 > 1.975 & M1 <= 0.986
+## 2                                            M3 > 2.481 & M1 <= 0.995 & M2 > 1.975
+## 3                                            M2 > 2.006 & M3 > 2.408 & M1 <= 0.985
+## 4                                            M3 > 2.481 & M2 > 1.966 & M1 <= 0.986
+## 5                                            M3 > 2.481 & M2 > 1.975 & M1 <= 0.989
+## 6 M1 >= 0.002 & M1 <= 0.989 & M2 >= 1.966 & M2 <= 3.968 & M3 >= 2.436 & M3 <= 4.99
+##     fold variables
+## 1      1  M1-M2-M3
+## 2      2  M1-M2-M3
+## 3      3  M1-M2-M3
+## 4      4  M1-M2-M3
+## 5      5  M1-M2-M3
+## 6 Pooled  M1-M2-M3
+\end{verbatim}
+
+In v-fold specific results we also give a pooled estimate. This is
+different than the pooled TMLE estimate. Here we simply take the
+weighted average of the fold specific ATEs and the harmonic mean of the
+variances. This is similar to meta-analysis approaches.
+
+We can plot our v-fold mixture results findings using the
+\texttt{plot\_mixture\_results} function. This will return a list of
+plots with names corresponding to the interactions found.
+
+This plot shows the ATE specific for each fold and for the weighted-mean
+results over the fold with corresponding pooled variance. The rule is
+the union rule which includes all observations that were indicated by
+the fold specific rules.
+
+\texttt{CVtreeMLE} also data-adaptively identifies thresholds in the
+marginal space. This feature is described in the vignette. In the
+marginal setting, partitions are found for each mixture variable
+individually and the ATE is in reference to the baseline (lowest leaf)
+value.
+
+Additional details for this and other features are given in the
+vignette.
+
+\end{document}

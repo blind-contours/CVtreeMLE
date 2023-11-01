@@ -9,7 +9,11 @@
 #'
 #' @export
 
-plot_mixture_results <- function(v_intxn_results, hjust) {
+plot_mixture_results <- function(model, hjust) {
+
+  v_intxn_results <- model$`V-Specific Mix Results`
+  pooled_intxn_results <- model$`Pooled TMLE Mixture Results`
+
   plot_list <- list()
   for (i in seq(v_intxn_results)) {
     intxn_results <- v_intxn_results[[i]]

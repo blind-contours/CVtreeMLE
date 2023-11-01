@@ -54,13 +54,11 @@ calc_v_fold_mixtures_ate <- function(input_mix_rules,
         y = y,
         data = mix_data,
         qbar_aw = mix_data$qbar_aw,
-        qbar_1w = mix_data$qbar_1w,
-        qbar_0w = mix_data$qbar_0w
-      )
+        qbar_1w = mix_data$qbar_1w)
 
       mix_data$qbar_aw_star <- flux_results$qbar_aw_star
       mix_data$qbar_1w_star <- flux_results$qbar_1w_star
-      mix_data$qbar_0w_star <- flux_results$qbar_0w_star
+      # mix_data$qbar_0w_star <- flux_results$qbar_0w_star
 
       ate_results <- calc_ate_estimates(
         data = mix_data,

@@ -121,8 +121,7 @@ calc_marginal_ate <- function(marginal_data,
       data = marg_mix,
       y = y,
       qbar_aw = marg_mix$qbar_aw,
-      qbar_1w = marg_mix$qbar_1w,
-      qbar_0w = marg_mix$qbar_0w
+      qbar_1w = marg_mix$qbar_1w
     )
 
     ## back-scale Y

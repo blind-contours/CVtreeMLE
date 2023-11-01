@@ -4,7 +4,7 @@
 \alias{fit_least_fav_submodel}
 \title{Least Favorable Submodel}
 \usage{
-fit_least_fav_submodel(h_aw, data, y, qbar_aw, qbar_1w, qbar_0w)
+fit_least_fav_submodel(h_aw, data, y, qbar_aw, qbar_1w)
 }
 \arguments{
 \item{h_aw}{\code{numeric} vector of values for the clever covariate}

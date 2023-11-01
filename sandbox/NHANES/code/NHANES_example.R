@@ -20,12 +20,15 @@ nhanes_data_telomere_na_thresh[, metals] <- na_mean(nhanes_data_telomere_na_thre
 
 outcome <- "mean_telomere"
 
-covariates <- c("age_screen_years", "gender", "race", "educ_level",
-                "marital_status", "alc_gm_1999", "cotinine_ng_ml", "bmi_kg_m2",
-                "fam_poverty_ratio", "systolic_1", "diastolic_1", "birth_country",
+covariates <- c("age_screen_years", "gender", "race", "alc_gm_1999", "cotinine_ng_ml", "bmi_kg_m2",
+                "fam_poverty_ratio", "systolic_1", "diastolic_1",
                 "avg_daily_physical_act", "muscle_training",
                 "vigorous_intense_30_days", "fasting_glucose_mg_dl",
                 "two_year_exam_weight", "two_year_interview_weight")
+
+nhanes_data_telomere_na_thresh[, covariates] <- na_mean(nhanes_data_telomere_na_thresh[, covariates])                                # Replace NA in all columns
+nhanes_data_telomere_na_thresh <- nhanes_data_telomere_na_thresh[, apply(nhanes_data_telomere_na_thresh, 2, function(x) !any(is.na(x)))]
+
 
 
 nhanes_results_neg <- CVtreeMLE(data = as.data.frame(nhanes_data_telomere_na_thresh),
@@ -40,16 +43,17 @@ nhanes_results_neg <- CVtreeMLE(data = as.data.frame(nhanes_data_telomere_na_thr
                            parallel = TRUE,
                            family = "continuous",
                            num_cores = 7,
-                           max_iter = 10)
+                           max_iter = 10,
+                           thresh_only_exposures = FALSE)
 
 nhanes_results_neg$`Pooled TMLE Mixture Results` %>%
-  dplyr::filter(Proportion_Folds >= 0.7)
+  dplyr::filter(Proportion_Folds >= 0.5)
 
 mixture_plots <- plot_mixture_results(
-  v_intxn_results = nhanes_results_neg$`V-Specific Mix Results`,
+  model = nhanes_results_neg,
   hjust = 0.8)
-mixture_plots$`cadmium-thallium`
 
+mixture_plots$`age_screen_years-cadmium`
 
 qcomp <- qgcomp(Y~X1*X2*X3*X4*X5*X6*X7+Z+Z2+Z3, expnms=c(paste("X", seq(1,7), sep = "")),
               data = niehs_data,q=4, degree = 2, B=10)

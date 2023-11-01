@@ -8,6 +8,7 @@ est_mix_nuisance_params(
   at,
   av,
   w,
+  a,
   y,
   no_mix_rules,
   aw_stack,

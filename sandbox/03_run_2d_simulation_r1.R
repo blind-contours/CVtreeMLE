@@ -15,8 +15,9 @@ Sys.unsetenv("GITHUB_PAT")
 devtools::install(upgrade = "never")
 
 # simulation parameters
-n_sim <- 20 # number of simulations
-n_obs <- c(200, 350, 500, 750, 1000, 1500, 2000, 3000, 5000)
+n_sim <- 100 # number of simulations
+n_obs <- c(200, 350, 500, 750, 1000, 1500, 2000, 3000, 5000, 10000, 20000)
+exposure_dim <- 2
 
 # Establish globals ---------------------------
 
@@ -60,8 +61,8 @@ for (i in m1_seq) {
     for (k in m1_dir) {
       for (l in m2_dir) {
         rule <- (paste("region1 ",k, i, "&", "region2", l, j))
-        ate_res <- calc_empir_truth(data, rule)
-        result_list[[iter]] <- c(rule, ate_res)
+        region_res <- calc_empir_truth(data, rule, exposure_dim = 2)
+        result_list[[iter]] <- c(rule, region_res)
         iter <- iter + 1
 
       }
@@ -70,11 +71,11 @@ for (i in m1_seq) {
 }
 
 result_df <- as.data.frame(do.call(rbind,result_list))
-colnames(result_df) <- c("Rule", "EY_region", "EY_compl", "ATE")
-result_df$ATE <- as.numeric(result_df$ATE)
-p0_max_ate <- result_df[which.max(result_df$ATE),]
+colnames(result_df) <- c("Rule", "EY_region")
+result_df$EY_region <- as.numeric(result_df$EY_region)
+p0_max_ate <- result_df[which.max(result_df$EY_region),]
 true_rule <- p0_max_ate$Rule
-true_ate <- p0_max_ate$ATE
+true_ate <- p0_max_ate$EY_region
 # perform simulation across sample sizes
 sim_results_df <- data.frame()
 
@@ -108,7 +109,8 @@ for (sample_size in n_obs) {
                               seed = seed,
                               P_0_data = P_0_data_filt,
                               true_rule = true_rule,
-                              true_ate = true_ate)
+                              true_ate = true_ate,
+                              exposure_dim = exposure_dim)
 
     est_out$n_obs <- sample_size
 

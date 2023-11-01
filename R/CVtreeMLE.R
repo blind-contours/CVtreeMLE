@@ -60,6 +60,10 @@
 #' @param num_cores If using parallel, the number of cores to parallelize over
 #' @param h_aw_trunc_lvl Level to truncate the clever covariate
 #' to control variance, default is 10.
+#' @param pooled_rule_type is "average" or "union" how to construct the rule across
+#' folds. The average take the average cutpoints and returns an average rule with lower
+#' and upper bounds for each cutpoint. The union rule creates a new rule that is the
+#' space that contains all the rules found across the fold and is therefore more conservative.
 #' @details The function performs the following functions.
 #'  \enumerate{
 #'  \item Imputes missing values with the mean and creates dummy indicator
@@ -215,9 +219,11 @@ CVtreeMLE <- function(w,
                       parallel_cv = TRUE,
                       parallel_type = "multi_session",
                       num_cores = 2,
-                      max_iter = 5,
+                      max_iter = 10,
                       verbose = FALSE,
-                      h_aw_trunc_lvl = 10) {
+                      h_aw_trunc_lvl = 10,
+                      thresh_only_exposures = FALSE,
+                      pooled_rule_type = "average") {
   if (any(sapply(data[, a], is.factor))) {
     print("Factor variable detected in exposures, converting to numeric")
     data[, a] <- sapply(data[, a], as.numeric)
@@ -317,20 +323,37 @@ CVtreeMLE <- function(w,
     function(fold_k) {
       at <- data[data$folds != fold_k, ]
 
-      rules <-
-        fit_mix_rule_backfitting(
-          at = at,
-          a = a,
-          w = w,
-          y = y,
-          direction = direction,
-          w_stack,
-          fold = fold_k,
-          max_iter,
-          verbose,
-          parallel_cv = parallel_cv,
-          seed = seed
-        )
+      if (thresh_only_exposures == FALSE) {
+        rules <-
+          fit_pre_algorithm(
+            at = at,
+            a = a,
+            w = w,
+            y = y,
+            direction = direction,
+            w_stack,
+            fold = fold_k,
+            max_iter,
+            verbose,
+            parallel_cv = parallel_cv,
+            seed = seed
+          )
+      } else {
+        rules <-
+          fit_mix_rule_backfitting(
+            at = at,
+            a = a,
+            w = w,
+            y = y,
+            direction = direction,
+            w_stack,
+            fold = fold_k,
+            max_iter,
+            verbose,
+            parallel_cv = parallel_cv,
+            seed = seed
+          )
+      }
 
       rules
     },
@@ -491,6 +514,7 @@ CVtreeMLE <- function(w,
       at = at,
       av = av,
       w = w,
+      a = a,
       y = y,
       no_mix_rules = no_mix_rules,
       aw_stack = aw_stack,
@@ -580,22 +604,33 @@ CVtreeMLE <- function(w,
       n_folds = n_folds
     )
 
-    v_fold_mixture_results <- v_fold_mixture_results
-    v_fold_mixture_results_w_pooled <- meta_mix_results(v_fold_mixture_results,
-      mix_comps = a,
-      n_folds,
-      data = data
-    )
+    # v_fold_mixture_results <- v_fold_mixture_results
 
-    # Create union mixture rules ---------------------------
+    # v_fold_mixture_results_w_pooled <- meta_mix_results(
+    #   v_fold_mixture_results = v_fold_mixture_results,
+    #   mix_comps = c(a, w),
+    #   n_folds,
+    #   data = data
+    # )
 
-    mixture_results <- common_mixture_rules(group_list,
-      data = data,
-      mix_comps = a,
-      mixture_results,
-      n_folds = n_folds,
-      no_mixture_rules
-    )
+    # Create pooled mixture rules ---------------------------
+
+    if (pooled_rule_type == "average") {
+      mixture_results <- average_mixture_rules(group_list = group_list,
+                                               data = data,
+                                               mix_comps = c(a,w),
+                                               n_folds,
+                                               mixture_results
+      )
+    } else {
+      mixture_results <- common_mixture_rules(group_list,
+        data = data,
+        mix_comps = c(a, w),
+        mixture_results,
+        n_folds = n_folds,
+        no_mixture_rules
+      )
+    }
 
     mix_rules <- unlist(mix_rules, recursive = FALSE, use.names = FALSE)
     mix_rules <- mix_rules[!sapply(mix_rules, is.null)]
@@ -699,15 +734,10 @@ CVtreeMLE <- function(w,
 
   results_list <- list(
     "Model RMSEs" = backfit_model_rmses,
-    "Pooled TMLE Marginal Results" = marginal_results,
-    "V-Specific Marg Results" = v_fold_marginal_results_w_pooled,
     "Pooled TMLE Mixture Results" = mixture_results,
-    "V-Specific Mix Results" = v_fold_mixture_results_w_pooled,
-    "Pooled Marginal Refs" = ref_rules,
+    "V-Specific Mix Results" = v_fold_mixture_results,
     "Mixture Rules" = mix_rules,
-    "Marginal Rules" = marginal_rules,
-    "Mixture Models" = mixture_models,
-    "Marginal Models" = marginal_models
+    "Mixture Models" = mixture_models
   )
 
   class(results_list) <- "CVtreeMLE"

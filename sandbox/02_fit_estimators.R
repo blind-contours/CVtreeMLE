@@ -14,52 +14,48 @@ fit_estimators <- function(data,
                            w = covars,
                            a = exposures,
                            y = outcome,
-                           n_folds = 5,
+                           n_folds = 10,
                            num_cores = 20,
                            family = "continuous",
                            direction = "positive",
                            parallel = TRUE,
                            parallel_cv = FALSE,
-                           seed = seed)
+                           seed = seed,
+                           max_iter = 10)
 
-  max_ate_index <- which.max(abs(
-    sim_results$`Pooled TMLE Mixture Results`$`Mixture ATE`))
+  tmle_pooled_mixture_results <- sim_results$`Pooled TMLE Mixture Results`[sim_results$`Pooled TMLE Mixture Results`$Vars == "region1-region2", ]
 
   ## tmle pooled results ------------------------
-  tmle_pooled_mixture_results <- sim_results$`Pooled TMLE Mixture Results`[max_ate_index,]
+  # tmle_pooled_mixture_results <- sim_results$`Pooled TMLE Mixture Results`[max_ate_index,]
   tmle_pooled_lower <- tmle_pooled_mixture_results$`Lower CI`
   tmle_pooled_upper <- tmle_pooled_mixture_results$`Upper CI`
   tmle_pooled_ate <- tmle_pooled_mixture_results$`Mixture ATE`
-  tmle_pooled_mix_decisions <- tmle_pooled_mixture_results$Union_Rule
+  tmle_pooled_mix_decisions <- tmle_pooled_mixture_results$Average_Rule
 
   ## tmle v-specific results ------------------------
-  tmle_v_mixture_results <- sim_results$`V-Specific Mix Results`[[target_var_set]]
-  tmle_v_fold_mixture_results <- tmle_v_mixture_results[tmle_v_mixture_results$fold != "Pooled",]
+  tmle_v_fold_mixture_results <- sim_results$`V-Specific Mix Results`[sim_results$`V-Specific Mix Results`$variables == "region1-region2", ]
+  # tmle_v_fold_mixture_results <- tmle_v_mixture_results[tmle_v_mixture_results$fold != "Pooled",]
   v_spec_mean_ate <- mean(tmle_v_fold_mixture_results$ate)
   v_spec_mean_lower <- mean(tmle_v_fold_mixture_results$lower_ci)
   v_spec_mean_upper <- mean(tmle_v_fold_mixture_results$upper_ci)
 
-  ## pooled results ------------------------
-  v_pooled_mixture_results <- tmle_v_mixture_results[tmle_v_mixture_results$fold == "Pooled",]
-  v_pooled_ate <- v_pooled_mixture_results$ate
-  v_pooled_lower <- v_pooled_mixture_results$lower_ci
-  v_pooled_upper <- v_pooled_mixture_results$upper_ci
 
   ate_results <- list("tmle_pooled_ate" = tmle_pooled_ate,
-                      "v_spec_mean_ate" = v_spec_mean_ate,
-                      "v_pooled_ate" = v_pooled_ate)
+                      "v_spec_mean_ate" = v_spec_mean_ate)
 
   lower_ci_results <-  list("tmle_pooled_lower" = tmle_pooled_lower,
-                            "v_spec_mean_lower" = v_spec_mean_lower,
-                            "v_pooled_lower" = v_pooled_lower)
+                            "v_spec_mean_lower" = v_spec_mean_lower)
 
   upper_ci_results <-  list("tmle_pooled_upper" = tmle_pooled_upper,
-                            "v_spec_mean_upper" = v_spec_mean_upper,
-                            "v_pooled_upper" = v_pooled_upper)
+                            "v_spec_mean_upper" = v_spec_mean_upper)
 
   ## calc DA empirical truth ------------------------
 
+  tmle_pooled_mix_decisions <- gsub("\\(.*?\\)", "", tmle_pooled_mix_decisions)
+
+
   da_p0_truth <- calc_empir_truth(P_0_data, tmle_pooled_mix_decisions, exposure_dim)
+
 
   tmle_pooled_da_bias <- da_p0_truth - tmle_pooled_ate
   tmle_pooled_gt_bias <- true_ate - tmle_pooled_ate
@@ -74,15 +70,10 @@ fit_estimators <- function(data,
   v_spec_gt_mean_bias <- mean(tmle_v_fold_mixture_results$ate -
                                true_ate)
 
-  v_pooled_da_bias <- v_pooled_mixture_results$ate - da_p0_truth
-  v_pooled_gt_bias <- v_pooled_mixture_results$ate - true_ate
-
   bias_results <- list("tmle_pooled_da_bias" = tmle_pooled_da_bias,
                        "tmle_pooled_gt_bias" = tmle_pooled_gt_bias,
                        "v_spec_da_mean_bias" = v_spec_da_mean_bias,
-                       "v_spec_gt_mean_bias" = v_spec_gt_mean_bias,
-                       "v_pooled_da_bias" = v_pooled_da_bias,
-                       "v_pooled_gt_bias" = v_pooled_gt_bias)
+                       "v_spec_gt_mean_bias" = v_spec_gt_mean_bias)
 
   ## calc DA empirical truth ------------------------
 
@@ -128,20 +119,11 @@ fit_estimators <- function(data,
                                      <= true_ate & true_ate
                                      <= tmle_v_fold_mixture_results$upper_ci), 1, 0))
 
-  pooled_da_cov <- ifelse(
-    (v_pooled_lower <= true_ate & true_ate <= v_pooled_upper), 1,0
-  )
-
-  pooled_gt_cov <- ifelse(
-    (v_pooled_lower <= da_p0_truth & da_p0_truth <= v_pooled_upper), 1,0
-  )
 
   coverage_results <- list("tmle_pooled_gt_coverage" = tmle_pooled_gt_coverage,
                            "tmle_pooled_da_coverage" = tmle_pooled_da_coverage,
                            "v_spec_mean_da_cov" = v_spec_mean_da_cov,
-                           "v_spec_mean_gt_cov" = v_spec_mean_gt_cov,
-                           "pooled_da_cov" = pooled_da_cov,
-                           "pooled_gt_cov" = pooled_gt_cov
+                           "v_spec_mean_gt_cov" = v_spec_mean_gt_cov
                            )
 
 sim_out <- c(ate_results,

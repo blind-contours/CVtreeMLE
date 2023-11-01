@@ -4,7 +4,7 @@ library(sl3)
 library(pre)
 library(partykit)
 
-sim_data <- simulate_mixture_cube(n_obs = 200)
+sim_data <- simulate_mixture_cube(n_obs = 1000)
 
 ptm <- proc.time()
 
