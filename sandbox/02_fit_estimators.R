@@ -7,41 +7,56 @@ fit_estimators <- function(data,
                            P_0_data,
                            true_rule,
                            true_ate,
+                           true_region,
                            target_var_set,
-                           exposure_dim) {
+                           exposure_dim,
+                           cv,
+                           region,
+                           min_max) {
 
   sim_results <- CVtreeMLE(data = data,
                            w = covars,
                            a = exposures,
                            y = outcome,
-                           n_folds = 10,
+                           n_folds = cv,
                            num_cores = 20,
                            family = "continuous",
-                           direction = "positive",
                            parallel = TRUE,
-                           parallel_cv = FALSE,
+                           parallel_cv = TRUE,
                            seed = seed,
-                           max_iter = 10)
+                           region = region,
+                           min_max = "min",
+                           min_obs = 50)
 
-  tmle_pooled_mixture_results <- sim_results$`Pooled TMLE Mixture Results`[sim_results$`Pooled TMLE Mixture Results`$Vars == "region1-region2", ]
+  tmle_pooled_mixture_results <- sim_results$`Pooled TMLE Mixture Results`[which.min(sim_results$`Pooled TMLE Mixture Results`$`Mixture ATE`), ]
+  tmle_pooled_mixture_results <- na.omit(tmle_pooled_mixture_results)
+  rule_mean_results <- sim_results$`Mixture Rules`
 
   ## tmle pooled results ------------------------
   # tmle_pooled_mixture_results <- sim_results$`Pooled TMLE Mixture Results`[max_ate_index,]
   tmle_pooled_lower <- tmle_pooled_mixture_results$`Lower CI`
   tmle_pooled_upper <- tmle_pooled_mixture_results$`Upper CI`
   tmle_pooled_ate <- tmle_pooled_mixture_results$`Mixture ATE`
+  tmle_pooled_se <- tmle_pooled_mixture_results$`Standard Error`
   tmle_pooled_mix_decisions <- tmle_pooled_mixture_results$Average_Rule
+  tmle_pooled_CI_range <- tmle_pooled_upper - tmle_pooled_lower
 
   ## tmle v-specific results ------------------------
-  tmle_v_fold_mixture_results <- sim_results$`V-Specific Mix Results`[sim_results$`V-Specific Mix Results`$variables == "region1-region2", ]
+  tmle_v_fold_mixture_results <- sim_results$`V-Specific Mix Results`
+  tmle_v_fold_mixture_results <- na.omit(tmle_v_fold_mixture_results)
   # tmle_v_fold_mixture_results <- tmle_v_mixture_results[tmle_v_mixture_results$fold != "Pooled",]
   v_spec_mean_ate <- mean(tmle_v_fold_mixture_results$ate)
+  v_spec_mean_se <- mean(tmle_v_fold_mixture_results$se)
   v_spec_mean_lower <- mean(tmle_v_fold_mixture_results$lower_ci)
   v_spec_mean_upper <- mean(tmle_v_fold_mixture_results$upper_ci)
+  v_spec_CI_range <- v_spec_mean_upper - v_spec_mean_lower
 
 
   ate_results <- list("tmle_pooled_ate" = tmle_pooled_ate,
                       "v_spec_mean_ate" = v_spec_mean_ate)
+
+  se_results <- list("tmle_pooled_se" = tmle_pooled_se,
+                     "v_spec_mean_se" = v_spec_mean_se)
 
   lower_ci_results <-  list("tmle_pooled_lower" = tmle_pooled_lower,
                             "v_spec_mean_lower" = v_spec_mean_lower)
@@ -54,18 +69,19 @@ fit_estimators <- function(data,
   tmle_pooled_mix_decisions <- gsub("\\(.*?\\)", "", tmle_pooled_mix_decisions)
 
 
-  da_p0_truth <- calc_empir_truth(P_0_data, tmle_pooled_mix_decisions, exposure_dim)
+  da_p0_truth <- calc_empir_truth(data = P_0_data, rule = tmle_pooled_mix_decisions, exposure_dim = exposure_dim)
 
 
-  tmle_pooled_da_bias <- da_p0_truth - tmle_pooled_ate
+  tmle_pooled_da_bias <- da_p0_truth$pie - tmle_pooled_ate
   tmle_pooled_gt_bias <- true_ate - tmle_pooled_ate
 
   tmle_v_rule_spec_ates <- do.call(rbind,
                               lapply(X = tmle_v_fold_mixture_results$mix_rule,
                                      calc_empir_truth, data = P_0_data, exposure_dim = exposure_dim))
+  tmle_v_rule_spec_ates <- as.data.frame(tmle_v_rule_spec_ates)
 
   v_spec_da_mean_bias <- mean(tmle_v_fold_mixture_results$ate -
-                             tmle_v_rule_spec_ates)
+                             unlist(tmle_v_rule_spec_ates$pie))
 
   v_spec_gt_mean_bias <- mean(tmle_v_fold_mixture_results$ate -
                                true_ate)
@@ -108,11 +124,11 @@ fit_estimators <- function(data,
   )
 
   tmle_pooled_da_coverage = ifelse(
-    (tmle_pooled_lower <= da_p0_truth & da_p0_truth <= tmle_pooled_upper), 1,0
+    (tmle_pooled_lower <= da_p0_truth$pie & da_p0_truth$pie <= tmle_pooled_upper), 1,0
   )
 
   v_spec_mean_da_cov <- mean(ifelse((tmle_v_fold_mixture_results$lower_ci
-               <= tmle_v_rule_spec_ates & tmle_v_rule_spec_ates
+               <= tmle_v_rule_spec_ates$pie & tmle_v_rule_spec_ates$pie
                <= tmle_v_fold_mixture_results$upper_ci), 1, 0))
 
   v_spec_mean_gt_cov <- mean(ifelse((tmle_v_fold_mixture_results$lower_ci
@@ -126,7 +142,12 @@ fit_estimators <- function(data,
                            "v_spec_mean_gt_cov" = v_spec_mean_gt_cov
                            )
 
+  rule_min_bias <- mean(true_region - rule_mean_results$coefficient)
+
+
+
 sim_out <- c(ate_results,
+             se_results,
              lower_ci_results,
              upper_ci_results,
              bias_results,
@@ -134,8 +155,11 @@ sim_out <- c(ate_results,
              coverage_results,
              "true_ate" = true_ate,
              "true_pooled_da_ate" = da_p0_truth,
-             "true_fold_da_ate" = mean(tmle_v_rule_spec_ates),
-             "da rule" = tmle_pooled_mix_decisions)
+             "true_fold_da_ate" = mean(unlist(tmle_v_rule_spec_ates$pie)),
+             "da rule" = tmle_pooled_mix_decisions,
+             "rule_min_bias" = rule_min_bias,
+             "pooled_tmle_CI_range" = tmle_pooled_CI_range,
+             "v_spec_tmle_CI_range" = v_spec_CI_range)
 
   return(sim_out)
 }

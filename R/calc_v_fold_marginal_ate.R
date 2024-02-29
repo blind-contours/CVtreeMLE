@@ -122,7 +122,7 @@ calc_v_fold_marginal_ate <- function(marginal_data,
       y = y,
       qbar_aw = marg_mix$qbar_aw,
       qbar_1w = marg_mix$qbar_1w
-      )
+    )
 
     # ## back-scale Y
     # qbar_aw_star <- scale_to_original(scaled_vals = flux_results$qbar_aw_star,

@@ -14,9 +14,6 @@ CVtreeMLE(
   w_stack = NULL,
   aw_stack = NULL,
   a_stack = NULL,
-  fit_marginals = FALSE,
-  which_marginals = a,
-  direction = "positive",
   n_folds,
   seed = 6442,
   family,
@@ -24,11 +21,11 @@ CVtreeMLE(
   parallel_cv = TRUE,
   parallel_type = "multi_session",
   num_cores = 2,
-  max_iter = 10,
-  verbose = FALSE,
-  h_aw_trunc_lvl = 10,
-  thresh_only_exposures = FALSE,
-  pooled_rule_type = "average"
+  h_aw_trunc_lvl = 50,
+  pooled_rule_type = "average",
+  min_max = "min",
+  region = NULL,
+  min_obs = 25
 )
 }
 \arguments{
@@ -58,18 +55,6 @@ the iterative backfitting for \code{Y|A}, this should be an SL3 object.
 If not provided, \code{utils_create_sls} is used to create default
 decision tree estimators used in the ensemble.}
 
-\item{fit_marginals}{TRUE/FALSE whether or not to find cut-points at
-ATEs for each data-adaptive level of the dose-response relationship for
-each individual exposure. Default is FALSE.}
-
-\item{which_marginals}{If fit marginals is TRUE, which marginals should
-CVtreeMLE identify partition nodes in? Takes in a list of the exposures.}
-
-\item{direction}{Positive or negative, whether to select the tree with the
-maximum (positive) coefficient attached to it in the ensemble or the
-minimum (negative). If positive, positive ATEs are given, if negative,
-negative ATEs are given.}
-
 \item{n_folds}{Number of cross-validation folds.}
 
 \item{seed}{Pass in a seed number for consistency of results. If not provided
@@ -88,22 +73,32 @@ which type of parallelization to do \code{multi_session} or \code{multicore}}
 
 \item{num_cores}{If using parallel, the number of cores to parallelize over}
 
-\item{max_iter}{Max number of iterations of iterative backfitting algorithm.
-Default is \code{5}.}
+\item{h_aw_trunc_lvl}{Level to truncate the clever covariate
+to control variance, default is 10.}
+
+\item{pooled_rule_type}{is "average" or "union" how to construct the rule
+across folds. The average take the average cutpoints and returns an average
+rule with lower and upper bounds for each cutpoint. The union rule creates
+a new rule that is the space that contains all the rules found across the
+fold and is therefore more conservative.}
+
+\item{fit_marginals}{TRUE/FALSE whether or not to find cut-points at
+ATEs for each data-adaptive level of the dose-response relationship for
+each individual exposure. Default is FALSE.}
+
+\item{which_marginals}{If fit marginals is TRUE, which marginals should
+CVtreeMLE identify partition nodes in? Takes in a list of the exposures.}
+
+\item{direction}{Positive or negative, whether to select the tree with the
+maximum (positive) coefficient attached to it in the ensemble or the
+minimum (negative). If positive, positive ATEs are given, if negative,
+negative ATEs are given.}
 
 \item{verbose}{If true, a message will be printed indicating what process
 is being started by CVtreeMLE. During the iterative backfitting procedure
 the iteration in each fold along with the difference in model fit and
 rules determined will be printed. After the iterative backfitting procedures
 a table of rules determined in each fold will be printed.}
-
-\item{h_aw_trunc_lvl}{Level to truncate the clever covariate
-to control variance, default is 10.}
-
-\item{pooled_rule_type}{is "average" or "union" how to construct the rule across
-folds. The average take the average cutpoints and returns an average rule with lower
-and upper bounds for each cutpoint. The union rule creates a new rule that is the
-space that contains all the rules found across the fold and is therefore more conservative.}
 }
 \value{
 Object of class \code{CVtreeMLE}, containing a list of table results

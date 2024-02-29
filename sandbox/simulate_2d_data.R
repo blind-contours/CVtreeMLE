@@ -146,7 +146,7 @@ assign_outcomes <- function(exposure_grid, c_matrix, data){
 
   outcomes <- apply(exposure_grid[,1:2], 1, gen_outcome, c_matrix)
 
-  empty_outcomes <- as.data.frame(matrix(data = NA, ncol = 1, nrow = n))
+  empty_outcomes <- as.data.frame(matrix(data = NA, ncol = 1, nrow = nrow(data)))
 
   cubes_outcomes <- cbind.data.frame(exposure_grid, outcomes)
 
@@ -186,6 +186,51 @@ assign_outcomes <- function(exposure_grid, c_matrix, data){
 
 }
 
+assign_outcomes_pwc <- function(exposure_grid, c_matrix, data) {
+
+  gen_outcome <- function(exposure, c_matrix){
+    outcome <- exposure %*% c_matrix %*% exposure
+  }
+
+  # Calculate outcomes using the gen_outcome function
+  outcomes <- apply(exposure_grid[, 1:2], 1, gen_outcome, c_matrix)
+
+  # Combine outcomes with the exposure grid
+  exposure_grid$outcome <- outcomes
+
+  # Calculate regional means of confounders
+  regional_means <- aggregate(cbind(age, bmi, sex) ~ Label, data = data, FUN = mean)
+
+  # Match regional means to exposure grid using the 'labels' column
+  exposure_grid <- merge(exposure_grid, regional_means, by.x = "labels", by.y = "Label")
+
+  # Apply the constant regional confounding effect to the outcomes
+  exposure_grid$outcome <- exposure_grid$outcome +
+    0.2 * exposure_grid$age +
+    0.4 * exposure_grid$sex
+
+  # Now bind with the original data, ensuring that the merge is by 'Label' from data and 'labels' from exposure_grid
+  data_w_outcomes <- merge(data, exposure_grid[, c("labels", "outcome")], by.x = "Label", by.y = "labels", all.x = TRUE)
+
+  # Rename the columns appropriately
+  names(data_w_outcomes)[which(names(data_w_outcomes) == "outcome")] <- "outcome_true"
+
+  regions <- t(as.data.frame(
+    sapply(data_w_outcomes$Label,
+           str_split, pattern = " ")))
+
+  data_w_outcomes$region1 <- as.numeric(regions[,1])
+  data_w_outcomes$region2 <- as.numeric(regions[,2])
+
+
+  # Return the list of data with outcomes and the cubes_outcomes
+  return(list("data" = data_w_outcomes,
+              "cubes_outcomes" = exposure_grid))
+}
+
+
+
+
 # Calc empirical truth treating each region as a threshold -----------------
 
 calc_empir_truth <- function(data, rule, exposure_dim){
@@ -222,6 +267,9 @@ calc_empir_truth <- function(data, rule, exposure_dim){
     region_ave_outcome <-
       mean(data_A$outcome_true * (data_A$A / (region_probs)))
 
+    region_var_outcome <-
+      var(data_A$outcome_true * (data_A$A / (region_probs)))
+
     ave_compl_outcome <-
       mean(data_A$outcome_true * (data_A$A_inv / (region_comp_probs)))
 
@@ -244,7 +292,7 @@ calc_empir_truth <- function(data, rule, exposure_dim){
 
   pie <- region_ave_outcome - mean(data_A$outcome_true)
 
-  return(pie)
+  return(list("pie" = pie, "region_mean" = region_ave_outcome))
 }
 
 

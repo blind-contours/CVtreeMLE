@@ -4,13 +4,7 @@
 \alias{calc_mixtures_ate}
 \title{Calculate the ATE for each mixture rule}
 \usage{
-calc_mixtures_ate(
-  input_mix_rules,
-  input_mix_data,
-  y,
-  n_folds,
-  no_mixture_rules
-)
+calc_mixtures_ate(input_mix_rules, input_mix_data, y, n_folds)
 }
 \arguments{
 \item{input_mix_rules}{List of dataframes of rules found for a mixture

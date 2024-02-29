@@ -29,24 +29,21 @@ average_mixture_rules <- function(group_list,
                                   mix_comps = mix_comps,
                                   n_folds,
                                   mixture_results) {
-
   average_rules <- list()
   fold_proportions <- list()
 
   for (i in seq_along(group_list)) {
-
     group <- as.data.frame(group_list[[i]])
     proportion_in_fold <- nrow(group) / n_folds
     fold_proportions[i] <- proportion_in_fold
 
-    # If group contains only one rule, add it to the list and skip further processing
     if (nrow(group) == 1) {
       average_rules[[i]] <- group$description[1]
       next
     }
 
     vars <- mix_comps[mix_comps %in%
-                        strsplit(group$description[1], split = " ")[[1]]]
+      strsplit(group$description[1], split = " ")[[1]]]
 
     avg_rule_list <- list()
 
@@ -55,7 +52,6 @@ average_mixture_rules <- function(group_list,
       all_max_values <- numeric()
 
       for (rule in group$description) {
-
         pattern_for_min <- paste0(var, "\\s*>\\s*(\\d+\\.?\\d*)")
         pattern_for_max <- paste0(var, "\\s*<=\\s*(\\d+\\.?\\d*)")
 
@@ -73,16 +69,15 @@ average_mixture_rules <- function(group_list,
         }
       }
 
-      if (is_empty(all_min_values)) {
+      if (rlang::is_empty(all_min_values)) {
         mean <- round(mean(all_max_values, na.rm = TRUE), 3)
         min <- round(min(all_max_values, na.rm = TRUE), 3)
         max <- round(max(all_max_values, na.rm = TRUE), 3)
 
         avg_rule_for_var <- paste0(var, " <=", mean, "(", min, ",", max, ")")
-
       }
 
-      if (is_empty(all_max_values)) {
+      if (rlang::is_empty(all_max_values)) {
         mean <- round(mean(all_min_values, na.rm = TRUE), 3)
         min <- round(min(all_min_values, na.rm = TRUE), 3)
         max <- round(max(all_min_values, na.rm = TRUE), 3)
@@ -90,14 +85,17 @@ average_mixture_rules <- function(group_list,
         avg_rule_for_var <- paste0(var, " >=", mean, "(", min, ",", max, ")")
       }
 
+      if (exists("avg_rule_for_var") == FALSE) {
+        avg_rule_for_var <- "No Rule"
+      }
+
 
       if (avg_rule_for_var != "") {
         avg_rule_list <- c(avg_rule_list, avg_rule_for_var)
       }
 
-    average_rules[[i]] <- paste(avg_rule_list, collapse = " & ")
-  }
-
+      average_rules[[i]] <- paste(avg_rule_list, collapse = " & ")
+    }
   }
 
   mixture_results$Average_Rule <- unlist(average_rules)
@@ -105,8 +103,3 @@ average_mixture_rules <- function(group_list,
 
   return(mixture_results)
 }
-
-
-
-
-

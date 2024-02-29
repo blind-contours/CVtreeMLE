@@ -10,7 +10,6 @@ est_mix_nuisance_params(
   w,
   a,
   y,
-  no_mix_rules,
   aw_stack,
   family,
   rules,
@@ -28,8 +27,6 @@ est_mix_nuisance_params(
 
 \item{y}{The outcome variable}
 
-\item{no_mix_rules}{TRUE/FALSE indicator for if no mixture rules were found}
-
 \item{aw_stack}{Super Learner library for fitting Q (outcome mechanism) and
 g (treatment mechanism)}
 
@@ -43,6 +40,8 @@ g (treatment mechanism)}
 
 \item{h_aw_trunc_lvl}{Truncation level of the clever covariate (induces more
 bias to reduce variance)}
+
+\item{no_mix_rules}{TRUE/FALSE indicator for if no mixture rules were found}
 }
 \value{
 A list of dataframes where the nuisance parameters are added to

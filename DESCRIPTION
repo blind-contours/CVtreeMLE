@@ -32,8 +32,9 @@ Imports:
     furrr,
     hrbrthemes,
     viridis,
-    assertthat, 
-    foreach
+    assertthat,
+    foreach,
+    ranger
 Suggests:
     rmarkdown,
     knitr,
@@ -42,7 +43,6 @@ Suggests:
     mlbench,
     kableExtra,
     covr,
-    ranger, 
     xgboost,
     nnls
 Remotes: tlverse/sl3@devel

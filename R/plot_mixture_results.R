@@ -10,7 +10,6 @@
 #' @export
 
 plot_mixture_results <- function(model, hjust) {
-
   v_intxn_results <- model$`V-Specific Mix Results`
   pooled_intxn_results <- model$`Pooled TMLE Mixture Results`
 

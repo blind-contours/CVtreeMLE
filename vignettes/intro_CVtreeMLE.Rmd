@@ -31,23 +31,24 @@ splits the full data into a training set used to define the parameter,
 and an estimation sample in which estimates are derived given the parameter 
 identified in training. Of course this approach can be costly when new samples
 are collected for the estimation data or loses power when the full data is 
-simply split. Our proposed approach for decision trees applied to mixtures,
+simply split. Our proposed approach for a decision tree applied to mixtures,
 aims to preserve the data-adaptive part of the sample splitting algorithm 
 but we define an average of the data-adaptive parameter estimates across 
 estimation samples based on arbitrary splits in K-fold cross-validation. 
 In this way, one can still use the power of the entire dataset.
 The `CVtreeMLE` package implements decision tree algorithms for computing 
-thresholds in exposures that best explain an outcome while flexibly adjusting
-for covariates. The nodes in decision trees are represented as a binary 
+thresholds in exposures that maximize or minimize the outcome while flexibly adjusting
+for covariates. The nodes in the decision tree are represented as a binary 
 exposures
 for which targeted minimum loss-based estimates (TMLE)  are derived for 
 the counterfactual mean outcome difference if all individual were exposed 
-to the rule compared to if no one was exposed to the mixture.
+to the rule compared to the observed outcome under observed exposure distribution. We call our estimate the ARE, the average regional exposure effect. 
 
-Two types of results are given for decision trees identified in the mixture 
-and marginal space of the exposure. K-fold specific results give the ATE and
-variance estimates for a fold specific set of rules. The pooled ATE takes the
-average across folds to gain power (reduce variance). We give both so that 
+Two types of results are given for the region found to minimize or maximize the expected outcome. K-fold specific results for a given ARE and
+variance estimates for a fold specific region. The pooled ARE takes the
+average across folds to gain power (reduce variance). The pooled ARE estimates the oracle target parameter which is the region that maximizes or minimizes the expected outcome. This of course can change across the folds and therefore this estimate, if there is inconcistency in the region estiamted, can lead to an amalgamation of different regions. However, if there is strong signal for a particular region, the same exposures will be used in the region and therefore the pooled parameter gains power, leveraging the k-fold specific estimates. 
+
+We give both so that 
 researchers can look to see how consistent rules are given sample splitting 
 which adds information to the pooled result. 
 
@@ -57,6 +58,13 @@ or the earlier work of @vdl2011targeted, @vdl2018targeted, and
 @vdl2022targeted. For more background on data-adaptive target parameters see 
 @Hubbard2016 and chapter 9 in @vdl2018targeted.
 
+Briefly, what this package will do is first, given the provided data it will partition 
+the data into folds based on the n_folds parameter provided. In the training fold, 
+we apply a custom decision tree that greedily partitions the exposure space, at each partition
+it uses g-computation to estimate the expected outcome for that region controlling for covariates. 
+It finds the region that maximizes or minimizes the expected outcome. This is done for each fold. 
+Then for each region that maximizes or minimizes the expected outcome in each fold, we estimate the effect comparing the expected outcome if everyone was forced to be in that region compared to the observed outcome under observed exposure. This is the ARE. This is done for each fold and we also pool across the folds. This procedure is done with CV-TMLE. The output are thresholds and the accompanying ARE for the region that has the maximimum or minimum expected outcome. 
+
 To start, let's load the packages we'll need and set a seed for simulation.
 We will use a real-world data example with known ground-truth to show the 
 functionality of `CVtreeMLE`.
@@ -65,8 +73,6 @@ functionality of `CVtreeMLE`.
 library(data.table)
 library(CVtreeMLE)
 library(sl3)
-library(pre)
-library(partykit)
 library(kableExtra)
 library(dplyr)
 library(ggplot2)
@@ -136,198 +142,51 @@ niehs_results <- CVtreeMLE(
   parallel_cv = TRUE,
   parallel = TRUE,
   family = "continuous",
-  num_cores = 2,
-  max_iter = 5
+  num_cores = 8,
+  min_max = "min",
+  min_obs = 25
 )
 proc.time() - ptm
 ```
 
 ## Mixture Results
 
-We can look at the pooled TMLE results for this model, let's focus on the 
-results that are found consistently across all the folds. By consistent we mean
-rules that have the same sets of variables with the same direction of effect 
-across all the folds. Weaker interactions may only be found in some folds, here
-we will focus on the strongest: 
+First let's look at the oracle estimate. This is the pooled CV-TMLE estimates for our parameter which is the region that maximizes or minimizes the expected outcome - again this could be different if there is incosistencies in estimates across the folds. 
 
 ```{r pooled_mixture_results}
-pooled_mixture_results <- niehs_results$`Pooled TMLE Mixture Results`
+pooled_mixture_results <- niehs_results$`Oracle Region Results`
 
 pooled_mixture_results %>%
-  dplyr::filter(Proportion_Folds == 1.0) %>%
-  dplyr::arrange(desc(`Mixture ATE`)) %>%
-  kableExtra::kbl(caption = "Pooled TMLE Mixture Results") %>%
+  kableExtra::kbl(caption = "Oracle Mixture Results") %>%
   kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
 ```
 
-Above, the pooled mixture ATE for each rule is given. Let's focus on the last 
-row that has $X_5*X_7$. The Mixture ATE shows the ATE, or the expected mean 
-outcome difference if all individuals were exposed to the mixture rule compared 
-to if no individuals were exposed to the mixture rule. So in the last row the
-ATE is 5.7 which means the endocrine disruption outcome is 5.7 higher
-if all individuals were exposed to the thresholds shown in union rule compared
-to if no individuals were exposed to this rule. 
+This shows that the estimate for the pooled region that minimizes the expected outcome is -3.77, which is not significant. 
 
-This ATE is calculated by pooling the nuisance parameter values across the 
-validation folds and 
-doing a TMLE update on the initial counterfactuals across the full data. 
-Standard error, CIs and P-values are derived from the efficient influence
-function. Because rules may deviate from fold to fold we create a union
-rule. To see this more clearly let's look at the fold specific results for 
-this so-called interaction: 
 
-```{r fold_specific_mixture_results}
-vfold_mixture_results <- niehs_results$`V-Specific Mix Results`
+We can look at what regions comprise this oracle region: 
 
-vfold_mixture_results$`X5-X7` %>%
-  kableExtra::kbl(caption = "X5 and X7 Interaction") %>%
+```{r region_specific_pooling}
+region_specific_pooling <- niehs_results$`Pooled TMLE Mixture Results`
+
+region_specific_pooling %>%
+  kableExtra::kbl(caption = "Region Specific Mixture Results") %>%
   kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
 ```
-Above we see the fold specific results for $X_5 * X_7$. Let's focus on $X_5$ in 
-the rules listed under _mix_rule_. Here we see that in fold 1 the threshold
-for $X_5$ is 1.888, in fold 2 it's 0.318 etc. Of these thresholds we select
-the highest because this value covers observations indicated by lower 
-thresholds. This is because, in the case of $X_5$ the direction is 
-less than or equal to. What happens under the hood is, for rules that have the
-same variables, we create a new rule that is rule 1 OR rule 2 OR ... and then
-look at the min and max of each variable within this rule - this creates the 
-union rule which encompasses all observations indicated by the rules across the
-folds.
+This shows 80\% of the folds find a region for X2 and 20\% for X1, this becomes more consistent if higher folds are used. 
 
-So in our union rule the threshold for $X_5$ is 3.4 because 
-this threshold covers all other observations indicated by slightly lower
-rules in the other folds. The same is true for $X_7$ but we select the 
-lower threshold because the direction is $>=$. This is why in the first table
-the union rule is X5 < 3.4 & X7 > 0.135. This rule covers all observations
-indicated by the fold specific rules used to generate the ATE. 
 
-Overall, the ATE for this rule is 5.7 for the pooled TMLE estimate. 
-We see this is different than if we were to simply take a weighted average which
-is shown in the pooled row above in the fold specific results.
+```{r k_fold_results}
+k_fold_results <- niehs_results$`V-Specific Mix Results`
 
-What happens is that the nuisance parameters 
-used to generate the v-fold specific results are instead pooled and a TMLE
-update is done across all the validation data. This is why the results for 
-the pooled TMLE update are different compared to the pooled result shown in 
-the v-fold specific table, this is the weighted average across the folds, 
-similar to a meta-analysis. 
-
-## Plotting Fold Specific Mixture Trees
-
-If the user wants to extract plots of the rules found in the `pre` model for 
-each fold we can plot results from the model.
-
-Here we will plot some rules found in the first fold - the indices we pass 
-here are for the fold that we want to extract models for. Using the `pre` plot 
-method, we can plot the rules in the ensemble as simple 
-decision trees. Here, we plot the nine most important basis functions through 
-specification of the nterms argument.
-
-```{r mixture_plots,  fig.height = 7, fig.width = 6}
-fold_1_model <- niehs_results$`Mixture Models`[[1]]
-plot(fold_1_model, nterms = 9, cex = .5)
-```
-
-The purpose of this plotting procedure is to allow the user some method for
-investigating the best fitting model found in the mixture interative backfitting
-procedure. Also, these plots can be used if the user wants to include them 
-as figures with the v-fold specific ATE for the specific rule. 
-
-## Comparing Mixture Rules to Ground-Truth
-
-In terms of toxicology, there are the following kinds of interaction 
-(relative to concentration addition) in this data:
-
-* X1 and X2 TEF (toxic equivalent factor), a special case of concentration 
-addition (both increase Y)
-* X1 and X4 competitive antagonism (similarly for X2 and X4) - found
-* X1 and X5 competitive antagonism (similarly for X2 and X4) - found
-* X1 and X7 supra-additive ("synergy") (similarly for X2 and X7) - found
-* X4 and X5 TEF, a type of concentration addition (both decrease y)
-* X4 and X7 antagonism (unusual kind) (similarly for X5 and X7) - found
-
-As we can see, $X_5 * X_7$ is listed as having antagonism. This is 
-picked up in `CVtreeMLE` because the thresholds that define the ATE are for 
-regions where $X_7$ is high and $X_5$ is low. Thus the impact is greater in 
-this region because $X_5$ antagonizes the effect of $X_7$. As such, we would
-expect a threshold determined where $X_5$ is low and $X_7$ is high.
-
-Let's look at the consistent rules found by `CVtreeMLE`, we defined consistent
-as found in 80% of the folds. Of course, more consistent results will be found
-if using 10-fold CV compared to 5 but we can use this as an example: 
-
-```{r consistent_mixture_results}
-pooled_mixture_results %>%
-  dplyr::filter(Proportion_Folds >= 0.8) %>%
-  dplyr::arrange(desc(`Mixture ATE`)) %>%
-  kableExtra::kbl(caption = "Consistent Pooled TMLE Mixture Results") %>%
+k_fold_results %>%
+  kableExtra::kbl(caption = "K-fold Results") %>%
   kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
 ```
-So here we see that, when using 5-fold CV, we detect 4 of the 6 built-in 
-interactions. 
-
-## Plotting Mixture Results
-
-We can plot our v-fold mixture results findings using the `plot_mixture_results`
-function. This will plot a dot and whisker plot showing the ATE and CIs 
-for each rule in the fold with the rule overlaid on the plot.
-
-We first run the `plot_mixture_results` function to get a list of plots for 
-each mixture rule found.
-
-```{r plot_mixture_results_dot_whisker, fig.height = 3, fig.width = 8}
-mixture_plots <- plot_mixture_results(
-  v_intxn_results = niehs_results$`V-Specific Mix Results`,
-  hjust = 0.8
-)
-mixture_plots$`X1-X7`
-```
-
-The goal of this plot is to give users a visual inspection of how consistent 
-results are for a specific rule. 
-
-Above we see the ATE estimates for thresholds determined in $X_1*X_7$. Overlaid
-on these dot-whisker plots is the rule determined in each of the folds. 
-On the Y-axis, Pooled is the overall pooled estimate. This is a weighted average
-of the ATEs across the folds with the harmonic mean of the variances. This is
-different compared to the pooled TMLE result and we give this estimate for 
-plotting purposes and to show the benefit of using the pooled TMLE estimate 
-which has the lowest variance. 
-
-## Reporting Mixture Results 
-
-Here we give an example of how to report results from `CVtreeMLE` using the 
-$X_7*X_5$ results found. 
-
-We used cross-validated decision trees with targeted maximum likelihood
-estimation to assess for sets of thresholds in the mixed exposure space that 
-resulted in most severe outcomes. These regions were determined using the 
-best fitting decision tree applied to the mixed exposure while flexibly 
-adjusting for covariates using ensemble machine learning. `CVtreeMLE` found
-thresholds in $X_5$ and $X_7$ in 100% of the folds, meaning that a exposure 
-region between these two variables consistently predicts more severe outcomes. 
-The ATE for this region was 5.7 meaning that, the outcome was 5.7 higher
-if all individuals were exposed to this region compared to if no individuals
-were exposed to this region. This effect was significant at p < 0.001 with 
-95% CI between 3.9-7.6. The region that includes all the individuals used
-in this ATE estimate was: X5 > 0.05 & X5 < 3.4 & X7 > 0.135 & X7 < 4.886. 
-
-There was some fluctuation of the fold specific thresholds used in this 
-mixture rule. For X5 threshold values 1.888, 3.189, 3.437, 3.098, and 0.699. 
-_3.4_ was used in the union rule because it encompasses all the observations
-indicated from the other rules. For X7, threshold values 0.669, 0.247, 0.204,
-0.132, and 0.355 were found and therefore _0.132_ was used as the lower bound 
-which encompasses all these observations. 
-
-Overall our results show that individuals who are exposed to levels of X5 at 
-levels less than 3.4 and X7 at levels greater than 0.132 have outcomes that 
-are 5.7 higher compared to those who are not exposed to this combination 
-of exposures. 
-
 
 ## Estimate Stability
 
-Because we are identifying thresholds in the marginal and mixture space
+Because we are identifying thresholds mixture space
 data-adaptively using the training data as we rotate through the folds, 
 `CVtreeMLE` will give, in the event that a signal actually exists, more 
 consistent results when higher n_fold values are used. Thus, we recommend using
@@ -359,9 +218,9 @@ multiple cores to be in use, the number which is equal to num_cores with
 high CPU usage on each core because the data and models are copied to 
 each core. This is different from multicore where the data is not copied. 
 As we saw above, in this example, a dataset with 500 observations and 7 
-exposures took about 30 minutes with 5 folds. Thus, when using 10-fold CV, 
+exposures took about 5 minutes with 5 folds. Thus, when using 10-fold CV, 
 which we recommend, on a standard environmental epidemiology data set of 500-
-1000 observations, `CVtreeMLE` should run within 2-4 hours on a modern local 
+1000 observations, `CVtreeMLE` should run easily on a modern local 
 machine. 
 
 ## References

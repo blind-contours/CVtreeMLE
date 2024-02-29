@@ -44,8 +44,6 @@
 #' @param seed Pass in a seed number for consistency of results. If not provided
 #' a default seed is generated.
 #' @param family Family ('binomial' or 'continuous').
-#' @param max_iter Max number of iterations of iterative backfitting algorithm.
-#' Default is `5`.
 #' @param verbose If true, a message will be printed indicating what process
 #' is being started by CVtreeMLE. During the iterative backfitting procedure
 #' the iteration in each fold along with the difference in model fit and
@@ -60,10 +58,11 @@
 #' @param num_cores If using parallel, the number of cores to parallelize over
 #' @param h_aw_trunc_lvl Level to truncate the clever covariate
 #' to control variance, default is 10.
-#' @param pooled_rule_type is "average" or "union" how to construct the rule across
-#' folds. The average take the average cutpoints and returns an average rule with lower
-#' and upper bounds for each cutpoint. The union rule creates a new rule that is the
-#' space that contains all the rules found across the fold and is therefore more conservative.
+#' @param pooled_rule_type is "average" or "union" how to construct the rule
+#' across folds. The average take the average cutpoints and returns an average
+#' rule with lower and upper bounds for each cutpoint. The union rule creates
+#' a new rule that is the space that contains all the rules found across the
+#' fold and is therefore more conservative.
 #' @details The function performs the following functions.
 #'  \enumerate{
 #'  \item Imputes missing values with the mean and creates dummy indicator
@@ -209,9 +208,6 @@ CVtreeMLE <- function(w,
                       w_stack = NULL,
                       aw_stack = NULL,
                       a_stack = NULL,
-                      fit_marginals = FALSE,
-                      which_marginals = a,
-                      direction = "positive",
                       n_folds,
                       seed = 6442,
                       family,
@@ -219,11 +215,11 @@ CVtreeMLE <- function(w,
                       parallel_cv = TRUE,
                       parallel_type = "multi_session",
                       num_cores = 2,
-                      max_iter = 10,
-                      verbose = FALSE,
-                      h_aw_trunc_lvl = 10,
-                      thresh_only_exposures = FALSE,
-                      pooled_rule_type = "average") {
+                      h_aw_trunc_lvl = 50,
+                      pooled_rule_type = "average",
+                      min_max = "min",
+                      region = NULL,
+                      min_obs = 25) {
   if (any(sapply(data[, a], is.factor))) {
     print("Factor variable detected in exposures, converting to numeric")
     data[, a] <- sapply(data[, a], as.numeric)
@@ -255,10 +251,6 @@ CVtreeMLE <- function(w,
 
   if (!family %in% c("binomial", "continuous")) {
     stop('Family must be either "binomial" or "continuous".')
-  }
-
-  if (!direction %in% c("positive", "negative")) {
-    stop('Direction has to be "positive" or "negative".')
   }
 
   set.seed(seed)
@@ -309,77 +301,67 @@ CVtreeMLE <- function(w,
   fold_results_mix_rules <- list()
   mix_fold_data <- list()
 
-  fold_results_marg_rules <- list()
-  fold_results_marginal_data <- list()
+
+  if (is.null(region)) {
+    fold_mixture_rules <- furrr::future_map(unique(data$folds),
+      function(fold_k) {
+        at <- data[data$folds != fold_k, ]
+
+        rules <-
+          fit_min_ave_tree_algorithm(
+            at = at,
+            a = a,
+            w = w,
+            y = y,
+            family = family,
+            fold = fold_k,
+            parallel_cv = parallel_cv,
+            min_max = min_max,
+            min_obs = min_obs
+          )
 
 
-  # Iterative Back-fitting on Mixture ---------------------------
+        rules
+      },
+      .options = furrr::furrr_options(seed = seed, packages = c(
+        "CVtreeMLE",
+        "ranger"
+      ))
+    )
 
-  if (verbose) {
-    print("-----Starting Iterative Backfitting of Exposures on Covariates-----")
+    mixture_rules <- purrr::map(
+      fold_mixture_rules,
+      c("rules")
+    )
+    mixture_rules <- do.call(rbind, mixture_rules)
+
+    fold_mixture_rules <- mixture_rules[
+      mixture_rules$description != "No Rules Found",
+    ]
+
+    fold_mixture_rules$description <- round_rules(
+      fold_mixture_rules$description
+    )
+  } else {
+    fold_mixture_rules <- data.frame(
+      rule = rep("rule1", n_folds),
+      coefficient = rep(NA, n_folds),
+      description = rep(region, n_folds),
+      test = sort(paste(
+        str_extract_all(region, paste(c(a, w),
+          collapse = "|"
+        ))[[1]],
+        collapse = "-"
+      )),
+      direction = rep(NA, n_folds),
+      fold = 1:n_folds,
+      RMSE = rep(NA, n_folds),
+      effect_modifiers = as.numeric(str_detect(region, paste(w,
+        collapse = "|"
+      )))
+    )
   }
 
-  fold_mixture_rules <- furrr::future_map(unique(data$folds),
-    function(fold_k) {
-      at <- data[data$folds != fold_k, ]
-
-      if (thresh_only_exposures == FALSE) {
-        rules <-
-          fit_pre_algorithm(
-            at = at,
-            a = a,
-            w = w,
-            y = y,
-            direction = direction,
-            w_stack,
-            fold = fold_k,
-            max_iter,
-            verbose,
-            parallel_cv = parallel_cv,
-            seed = seed
-          )
-      } else {
-        rules <-
-          fit_mix_rule_backfitting(
-            at = at,
-            a = a,
-            w = w,
-            y = y,
-            direction = direction,
-            w_stack,
-            fold = fold_k,
-            max_iter,
-            verbose,
-            parallel_cv = parallel_cv,
-            seed = seed
-          )
-      }
-
-      rules
-    },
-    .options = furrr::furrr_options(seed = seed, packages = c(
-      "CVtreeMLE",
-      "pre",
-      "sl3"
-    ))
-  )
-  mixture_rules <- purrr::map(
-    fold_mixture_rules,
-    c("rules")
-  )
-  mixture_rules <- do.call(rbind, mixture_rules)
-  mixture_models <- purrr::map(
-    fold_mixture_rules,
-    c("model")
-  )
-
-  fold_mixture_rules <- mixture_rules[
-    mixture_rules$description != "No Rules Found",
-  ]
-
-  fold_mixture_rules$description <- round_rules(fold_mixture_rules$description)
-
-  mixture_rmse <- calc_mixture_rule_rmses(fold_mixture_rules)
 
   if (dim(fold_mixture_rules)[1] == 0) {
     no_mixture_rules <- TRUE
@@ -387,126 +369,20 @@ CVtreeMLE <- function(w,
     no_mixture_rules <- FALSE
   }
 
-  if (verbose) {
-    print("Mixture results found")
-    print(fold_mixture_rules)
-  }
 
-  # Iterative Back-fitting on Marginals ---------------------------
-
-  if (verbose) {
-    print("-----Starting Iterative Backfitting of Each Exposure on Covariates to
-          Determine if Partitioning Nodes Exist-----")
-  }
-
-  if (fit_marginals == TRUE) {
-    fold_marginal_rules <- furrr::future_map(unique(data$folds),
-      function(fold_k) {
-        at <- data[
-          data$folds != fold_k,
-        ]
-
-        marg_decisions <-
-          fit_marg_rule_backfitting(
-            mix_comps = which_marginals,
-            at = at,
-            w = w,
-            y = y,
-            w_stack = w_stack,
-            tree_stack = a_stack,
-            fold = fold_k,
-            max_iter = max_iter,
-            verbose = verbose,
-            parallel_cv = parallel_cv,
-            seed = seed
-          )
-
-        marg_decisions
-      },
-      .options =
-        furrr::furrr_options(
-          seed = seed,
-          packages = c(
-            "CVtreeMLE",
-            "partykit", "sl3"
-          )
-        )
-    )
-
-    marginal_rules <- purrr::map(
-      fold_marginal_rules,
-      c("marginal_df")
-    )
-
-    marginal_models <- purrr::map(
-      fold_marginal_rules,
-      c("models")
-    )
-
-    marginal_rules <- do.call(rbind, marginal_rules)
-
-    filt_fold_marginal_rules <- filter_marginal_rules(marginal_rules, n_folds)
-    filt_fold_marginal_rules$rules <- round_rules(
-      filt_fold_marginal_rules$rules
-    )
-    marginal_rmse <- calc_marginal_rule_rmses(
-      data = filt_fold_marginal_rules
-    )
-
-    backfit_model_rmses <- rbind(marginal_rmse, mixture_rmse)
-
-    if (dim(filt_fold_marginal_rules)[1] == 0) {
-      no_marginal_rules <- TRUE
-    } else {
-      no_marginal_rules <- FALSE
-    }
-
-    if (verbose) {
-      print("Marginal results found")
-      print(filt_fold_marginal_rules)
-    }
-  } else {
-    backfit_model_rmses <- mixture_rmse
-    filt_fold_marginal_rules <- data.frame(matrix(ncol = 2, nrow = 0))
-    x <- c("rule", "fold")
-    colnames(filt_fold_marginal_rules) <- x
-    no_marginal_rules <- TRUE
-    marginal_rules <- NULL
-    marginal_models <- NULL
-  }
-
-
-  if (no_marginal_rules == TRUE && no_mixture_rules == TRUE) {
-    return("No Mixture or Marginal Rules Found")
+  if (no_mixture_rules == TRUE) {
+    return("No Mixture Threshold Found")
   }
 
 
   # Estimate nuisance parameters ---------------------------
 
 
-  if (verbose) {
-    print("-----Starting Fitting Estimators to the Rules Determined to Calculate
-          the Average Treatment Effects of Terminal Nodes in Trees-----")
-  }
-
   results <- furrr::future_map(unique(data$folds), function(fold_k) {
     at <- data[data$folds != fold_k, ]
     av <- data[data$folds == fold_k, ]
 
     rules <- filter_rules(fold_mixture_rules, fold_k = fold_k)
-    marg_decisions <- filter_rules(filt_fold_marginal_rules, fold_k = fold_k)
-
-    if (dim(rules)[1] == 0) {
-      no_mix_rules <- TRUE
-    } else {
-      no_mix_rules <- FALSE
-    }
-
-    if (dim(marg_decisions)[1] == 0) {
-      no_marg_rules <- TRUE
-    } else {
-      no_marg_rules <- FALSE
-    }
 
     fold_results_mix_rules[[paste("Fold", fold_k)]] <- rules
 
@@ -516,7 +392,6 @@ CVtreeMLE <- function(w,
       w = w,
       a = a,
       y = y,
-      no_mix_rules = no_mix_rules,
       aw_stack = aw_stack,
       family = family,
       rules = rules,
@@ -529,41 +404,14 @@ CVtreeMLE <- function(w,
 
     mix_fold_data[[paste("Fold", fold_k)]] <- mix_interaction_data
 
-
-    marg_nuisance_params <- est_marg_nuisance_params(
-      at = at,
-      av = av,
-      w = w,
-      y = y,
-      aw_stack = aw_stack,
-      family = family,
-      a = a,
-      no_marg_rules = no_marg_rules,
-      marg_decisions = marg_decisions,
-      parallel_cv = parallel_cv,
-      seed = seed,
-      h_aw_trunc_lvl = h_aw_trunc_lvl
-    )
-
-    non_ref_rules <- marg_decisions[marg_decisions$quantile > 1, ]
-
-    names(marg_nuisance_params) <- non_ref_rules$var_quant_group
-
-    fold_results_marginal_data[[paste("Fold", fold_k)]] <- marg_nuisance_params
-    fold_results_marg_rules[[paste("Fold", fold_k)]] <- marg_decisions
-
     results_list <- list(
       fold_results_mix_rules,
-      mix_fold_data,
-      fold_results_marg_rules,
-      fold_results_marginal_data
+      mix_fold_data
     )
 
     names(results_list) <- c(
       "mix rules",
-      "mix data",
-      "marg rules",
-      "marg data"
+      "mix data"
     )
 
     results_list
@@ -572,172 +420,76 @@ CVtreeMLE <- function(w,
     "sl3"
   )))
 
-  # Aggregate results ---------------------------
-
-  marginal_data <- purrr::map(results, c("marg data"))
-  marginal_rules <- purrr::map(results, c("marg rules"))
 
   mix_data <- purrr::map(results, c("mix data"))
   mix_rules <- purrr::map(results, c("mix rules"))
 
+  mixture_results <- calc_mixtures_ate(
+    input_mix_rules = mix_rules,
+    input_mix_data = mix_data,
+    y = y,
+    n_folds = n_folds
+  )
 
-  if (no_mixture_rules == FALSE) {
-    # Calculate mixture ATEs ---------------------------
+  group_list <- mixture_results$group_list
+  inv_var_mixture_results <- mixture_results$inv_var_results
+  oracle_region_results <- mixture_results$region_results
 
-    mixture_results <- calc_mixtures_ate(
-      input_mix_rules = mix_rules,
-      input_mix_data = mix_data,
-      y = y,
+  mixture_results <- mixture_results$results
+
+  v_fold_mixture_results <- calc_v_fold_mixtures_ate(
+    input_mix_rules = mix_rules,
+    input_mix_data = mix_data,
+    y = y,
+    n_folds = n_folds
+  )
+
+  if (pooled_rule_type == "average") {
+    mixture_results <- average_mixture_rules(
+      group_list = group_list,
+      data = data,
+      mix_comps = c(a, w),
       n_folds = n_folds,
-      no_mixture_rules = no_mixture_rules
+      mixture_results = mixture_results
     )
 
-    group_list <- mixture_results$group_list
-    mixture_results <- mixture_results$results
-
-    # Calculate v-fold mixture ATEs ---------------------------
-
-    v_fold_mixture_results <- calc_v_fold_mixtures_ate(
-      input_mix_rules = mix_rules,
-      input_mix_data = mix_data,
-      y = y,
-      n_folds = n_folds
+    inv_var_mixture_results <- average_mixture_rules(
+      group_list = group_list,
+      data = data,
+      mix_comps = c(a, w),
+      n_folds,
+      inv_var_mixture_results
     )
-
-    # v_fold_mixture_results <- v_fold_mixture_results
-
-    # v_fold_mixture_results_w_pooled <- meta_mix_results(
-    #   v_fold_mixture_results = v_fold_mixture_results,
-    #   mix_comps = c(a, w),
-    #   n_folds,
-    #   data = data
-    # )
-
-    # Create pooled mixture rules ---------------------------
-
-    if (pooled_rule_type == "average") {
-      mixture_results <- average_mixture_rules(group_list = group_list,
-                                               data = data,
-                                               mix_comps = c(a,w),
-                                               n_folds,
-                                               mixture_results
-      )
-    } else {
-      mixture_results <- common_mixture_rules(group_list,
-        data = data,
-        mix_comps = c(a, w),
-        mixture_results,
-        n_folds = n_folds,
-        no_mixture_rules
-      )
-    }
-
-    mix_rules <- unlist(mix_rules, recursive = FALSE, use.names = FALSE)
-    mix_rules <- mix_rules[!sapply(mix_rules, is.null)]
-    mix_rules <-
-      data.table::rbindlist(mix_rules)
   } else {
-    mixture_results <- NA
-    mixture_rules <- NA
-    v_fold_mixture_results_w_pooled <- NA
+    mixture_results <- common_mixture_rules(group_list,
+      data = data,
+      mix_comps = c(a, w),
+      mixture_results,
+      n_folds = n_folds,
+      no_mixture_rules
+    )
+
+    inv_var_mixture_results <- common_mixture_rules(group_list,
+      data = data,
+      mix_comps = c(a, w),
+      inv_var_mixture_results,
+      n_folds = n_folds,
+      no_mixture_rules
+    )
   }
 
-  if (no_marginal_rules == FALSE) {
-    # Calculate marginal ATEs ---------------------------
-
-    marginal_results <- calc_marginal_ate(marginal_data,
-      mix_comps = a,
-      marginal_rules,
-      y = y,
-      n_folds
-    )
-
-    marginal_results <- marginal_results$marginal_results
-
-    # Calculate marginal v-fold ATEs ---------------------------
-
-    v_fold_marginal_results <- calc_v_fold_marginal_ate(marginal_data,
-      mix_comps = a,
-      marginal_rules,
-      y,
-      n_folds
-    )
-
-    v_fold_marginal_results <- v_fold_marginal_results$marginal_results
-
-    v_fold_marginal_results_w_pooled <- compute_meta_marg_results(
-      v_fold_marginal_results = v_fold_marginal_results,
-      mix_comps = a,
-      data = data,
-      n_folds = n_folds
-    )
-
-    v_fold_marginal_results_w_pooled <- do.call(
-      rbind,
-      v_fold_marginal_results_w_pooled
-    )
-
-    v_fold_marginal_results_w_pooled$var <- stringr::str_extract(
-      string = v_fold_marginal_results_w_pooled$Comparison,
-      pattern = paste(a, collapse = "|")
-    )
-
-    # Create union marginals rules ---------------------------
-
-    total_marginal_rules <- find_common_marginal_rules(
-      fold_rules = marginal_rules,
-      data = data,
-      mix_comps = a,
-      marginal_results = marginal_results,
-      n_folds = n_folds
-    )
-
-    # Parse out ref results ---------------------------
-    non_ref_rules <- total_marginal_rules[
-      !stringr::str_detect(total_marginal_rules$`Variable Quantile`, "_1"),
-    ]
-
-    non_ref_rules <- non_ref_rules[
-      order(non_ref_rules$`Variable Quantile`),
-    ]
-
-    ref_rules <- total_marginal_rules[
-      stringr::str_detect(total_marginal_rules$`Variable Quantile`, "_1"),
-    ]
-
-    # TODO: This breaks if there is "_1" in the exposure variable names - fix
-
-    marginal_results <- marginal_results[order(rownames(marginal_results)), ]
-    marginal_results <- cbind(marginal_results, non_ref_rules)
-
-    marg_vars <- stringr::str_extract(
-      string =
-        marginal_results$`Variable Quantile`,
-      pattern = paste(a, collapse = "|")
-    )
-
-    marginal_results$var <- marg_vars
-
-    marginal_rules <- unlist(marginal_rules,
-      recursive = FALSE,
-      use.names = FALSE
-    )
-
-    marginal_rules <- marginal_rules[!sapply(marginal_rules, is.null)]
-    marginal_rules <- do.call(rbind, marginal_rules)
-  } else {
-    marginal_results <- NULL
-    v_fold_marginal_results_w_pooled <- NULL
-    ref_rules <- NULL
-  }
+  mix_rules <- unlist(mix_rules, recursive = FALSE, use.names = FALSE)
+  mix_rules <- mix_rules[!sapply(mix_rules, is.null)]
+  mix_rules <-
+    data.table::rbindlist(mix_rules)
 
 
   results_list <- list(
-    "Model RMSEs" = backfit_model_rmses,
     "Pooled TMLE Mixture Results" = mixture_results,
+    "Pooled TMLE Inver Variance Results" = inv_var_mixture_results,
     "V-Specific Mix Results" = v_fold_mixture_results,
-    "Mixture Rules" = mix_rules,
-    "Mixture Models" = mixture_models
+    "Oracle Region Results" = oracle_region_results,
+    "Mixture Rules" = mix_rules
   )
 
   class(results_list) <- "CVtreeMLE"

@@ -6,7 +6,7 @@ library(tidyr)
 library(hrbrthemes)
 library(viridis)
 
-n_obs <- c(200, 350, 500, 750, 1000, 1500, 2000, 3000, 5000)
+n_obs <- c(300, 500, 750, 1000, 1500, 2000, 5000)
 
 sim_results_1 <- readRDS(
   here("sandbox/data/CVtreeMLE_run_1.rds")
@@ -28,8 +28,31 @@ sim_results_5 <- readRDS(
   here("sandbox/data/CVtreeMLE_run_5.rds")
 )
 
-sim_results <- rbind(sim_results_1, sim_results_2, sim_results_3)
+sim_results_6 <- readRDS(
+  here("sandbox/data/CVtreeMLE_run_6.rds")
+)
 
+sim_results_7 <- readRDS(
+  here("sandbox/data/CVtreeMLE_run_7.rds")
+)
+
+sim_results_8 <- readRDS(
+  here("sandbox/data/CVtreeMLE_run_8.rds")
+)
+
+sim_results_9 <- readRDS(
+  here("sandbox/data/CVtreeMLE_run_9.rds")
+)
+
+sim_results_10 <- readRDS(
+  here("sandbox/data/CVtreeMLE_run_10.rds")
+)
+
+sim_results_11 <- readRDS(
+  here("sandbox/data/CVtreeMLE_run_11.rds")
+)
+
+sim_results <- rbind(sim_results_1, sim_results_2)
 
 sim_statistics <- sim_results %>%
   group_by(n_obs) %>%
@@ -38,55 +61,33 @@ sim_statistics <- sim_results %>%
     abs_tmle_pooled_gt_bias = abs(mean(tmle_pooled_gt_bias)),
     abs_v_spec_da_mean_bias = abs(mean(v_spec_da_mean_bias)),
     abs_v_spec_gt_mean_bias = abs(mean(v_spec_gt_mean_bias)),
-    abs_v_pooled_da_bias = abs(mean(v_pooled_da_bias)),
-    abs_v_pooled_gt_bias = abs(mean(v_pooled_gt_bias)),
+    pooled_tmle_CI_range = mean(pooled_tmle_CI_range),
+    v_spec_tmle_CI_range = mean(v_spec_tmle_CI_range),
+    abs_tree_mean_bias = abs(mean(rule_min_bias)),
     tmle_pooled_sd = sd(tmle_pooled_ate),
     v_spec_mean_sd = sd(v_spec_mean_ate),
-    v_pooled_mean_sd = sd(v_pooled_ate),
     tmle_pooled_da_mse = abs_tmle_pooled_da_bias^2 + tmle_pooled_sd^2,
     tmle_pooled_gt_mse = abs_tmle_pooled_gt_bias^2 + tmle_pooled_sd^2,
     v_spec_da_mean_mse = abs_v_spec_da_mean_bias^2 + v_spec_mean_sd^2,
     v_spec_gt_mean_mse = abs_v_spec_gt_mean_bias^2 + v_spec_mean_sd^2,
-    v_pooled_da_mse = abs_v_pooled_da_bias^2 + v_pooled_mean_sd^2,
-    v_pooled_gt_mse = abs_v_pooled_gt_bias^2 + v_pooled_mean_sd^2,
     tmle_pooled_da_z_bias = mean(tmle_pooled_da_bias)/tmle_pooled_sd,
     tmle_pooled_gt_z_bias = mean(tmle_pooled_gt_bias)/tmle_pooled_sd,
     v_spec_da_z_bias = mean(v_spec_da_mean_bias)/v_spec_mean_sd,
     v_spec_gt_z_bias = mean(v_spec_gt_mean_bias)/v_spec_mean_sd,
-    v_pooled_da_z_bias = mean(v_pooled_da_bias) /v_pooled_mean_sd,
-    v_pooled_gt_z_bias = mean(v_pooled_gt_bias) /v_pooled_mean_sd,
     tmle_pooled_gt_coverage = mean(tmle_pooled_gt_coverage),
     tmle_pooled_da_coverage = mean(tmle_pooled_da_coverage),
     v_spec_mean_da_cov = mean(v_spec_mean_da_cov),
     v_spec_mean_gt_cov = mean(v_spec_mean_gt_cov),
-    v_pooled_da_cov = mean(pooled_da_cov),
-    v_pooled_gt_cov = mean(pooled_gt_cov),
     True_pos = mean(`True Pos`),
     True_neg = mean(`True Neg`),
     False_pos = mean(`False Pos`),
     False_neg = mean(`False Neg`),
     tmle_pooled_sd = sd(tmle_pooled_ate),
-    v_spec_mean_sd = sd(v_spec_mean_ate),
-    v_pooled_mean_sd = sd(v_pooled_ate),
-    tmle_pooled_da_z_bias = tmle_pooled_da_bias/tmle_pooled_sd,
-    tmle_pooled_gt_z_bias = tmle_pooled_gt_bias/tmle_pooled_sd,
-    v_spec_da_z_bias = v_spec_da_mean_bias/v_spec_mean_sd,
-    v_spec_gt_z_bias = v_spec_gt_mean_bias/v_spec_mean_sd,
-    v_pooled_da_z_bias = v_pooled_da_bias /v_pooled_mean_sd,
-    v_pooled_gt_z_bias = v_pooled_gt_bias /v_pooled_mean_sd,
-    sqrt_n_abs_tmle_pooled_da_bias = sqrt(n_obs) * abs_tmle_pooled_da_bias,
-    sqrt_n_abs_tmle_pooled_gt_bias = sqrt(n_obs) * abs_tmle_pooled_gt_bias,
-    sqrt_n_abs_v_spec_da_mean_bias = sqrt(n_obs) * abs_v_spec_da_mean_bias,
-    sqrt_n_abs_v_spec_gt_mean_bias = sqrt(n_obs) * abs_v_spec_gt_mean_bias,
-    sqrt_n_abs_v_pooled_da_bias = sqrt(n_obs) * abs_v_pooled_da_bias,
-    sqrt_n_abs_v_pooled_gt_bias = sqrt(n_obs) * abs_v_pooled_gt_bias,
-    n_tmle_pooled_da_mse = n_obs*tmle_pooled_da_mse,
-    n_tmle_pooled_gt_mse = n_obs*tmle_pooled_gt_mse,
-    n_v_spec_da_mean_mse = n_obs*v_spec_da_mean_mse,
-    n_v_spec_gt_mean_mse = n_obs*v_spec_gt_mean_mse,
-    n_v_pooled_da_mse = n_obs*v_pooled_da_mse,
-    n_v_spec_mean_gt_cov = n_obs*v_spec_mean_gt_cov)
+    v_spec_mean_sd = sd(v_spec_mean_ate)
+    )
 
+
+sim_statistics <- sim_statistics[sim_statistics$n_obs < 10000 ,]
 
 sim_statistics_long <- sim_statistics %>%
   tidyr::gather(statistic, value, -c(n_obs))
@@ -96,6 +97,7 @@ make_sim_statistics_plot <- function(sim_statistics_long,
                                      stats,
                                      labels,
                                      title) {
+
   filtered_sim_stats <- sim_statistics_long %>%
     filter(
       statistic %in% stats
@@ -105,7 +107,7 @@ make_sim_statistics_plot <- function(sim_statistics_long,
                                  y=value,
                                  group=statistic,
                                  color=statistic)) +
-    geom_line(position = position_jitter(w=0.0, h=0.0)) +
+    geom_smooth(method = "loess", se = FALSE, position = position_jitter(w=0.0, h=0.0)) +
     scale_color_viridis(discrete = TRUE) +
     ggtitle("Popularity of American names in the previous 30 years") +
     theme_ipsum() +
@@ -113,6 +115,46 @@ make_sim_statistics_plot <- function(sim_statistics_long,
     xlab("Number Observations") +
     ggtitle(title)
 
+}
+
+make_bias_plot <- function(sim_statistics_long, stats, title, legend_labels) {
+
+  filtered_sim_stats <- sim_statistics_long %>%
+    filter(
+      statistic %in% stats
+    )
+
+  filtered_sim_stats <- filtered_sim_stats %>%
+    group_by(statistic) %>%
+    mutate(
+      theoretical_bias = ifelse(n_obs == min(n_obs), value, NA)
+    ) %>%
+    fill(theoretical_bias) %>%
+    ungroup() %>%
+    mutate(
+      theoretical_bias = theoretical_bias / sqrt(n_obs / min(n_obs))
+    )
+
+
+  filtered_sim_stats %>%
+    ggplot(aes(x = n_obs, y = value, group = statistic, color = statistic)) +
+    geom_line() +
+    geom_line(aes(y = theoretical_bias), linetype = "dashed") +
+    scale_color_manual(values = viridis(3, option = "plasma"), labels = legend_labels) +
+    labs(
+      title = title,
+      subtitle = "Dashed lines represent the expected bias decrease if the estimators were sqrt(n)-consistent.",
+      x = "Number of Observations",
+      y = "Absolute MSE",
+      color = "Effect"
+    ) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(hjust = 0.5, face = "bold"),
+      axis.title = element_text(face = "bold"),
+      legend.position = "bottom",
+      strip.text = element_text(face = "bold")
+    )
 }
 
 make_density_plot <- function(sim_statistics,
@@ -138,36 +180,83 @@ make_density_plot <- function(sim_statistics,
 
 }
 
-
 plot_labels <- c(
-  "abs_tmle_pooled_da_bias" = "Pooled TMLE (DA)",
-  "abs_v_spec_da_mean_bias" = "Mean Fold TMLE (DA)",
-  "abs_v_pooled_da_bias" = "Harmonic Pooled (DA)"
+  "abs_tree_mean_bias" = "Average Minimum Region Bias From Decision Tree"
 )
 
-CVtreeMLE_DA_bias_plot <- make_sim_statistics_plot(
+CVtreeMLE_DA_bias_plot <- make_bias_plot(
   sim_statistics_long,
   stats = names(plot_labels),
-  labels = plot_labels,
-  title = "DA Bias Measures"
+  title = "Decision Tree Bias",
+  legend_labels = plot_labels
+)
+
+
+plot_labels <- c(
+  "abs_tree_mean_bias" = "Average Minimum Region Bias From Decision Tree"
+)
+
+CVtreeMLE_DA_bias_plot <- make_bias_plot(
+  sim_statistics_long,
+  stats = names(plot_labels),
+  title = "Decision Tree Bias",
+  legend_labels = plot_labels
+)
+
+
+
+plot_labels <- c(
+  "tmle_pooled_da_mse" = "Pooled TMLE (DA)",
+  "v_spec_da_mean_mse" = "Mean Fold TMLE (DA)"
+)
+
+CVtreeMLE_DA_bias_plot <- make_bias_plot(
+  sim_statistics_long,
+  stats = names(plot_labels),
+  title = "DA MSE Measures",
+  legend_labels = plot_labels
 )
 
 plot_labels <- c("abs_tmle_pooled_gt_bias" = "Pooled TMLE (GT)",
-                 "abs_v_spec_gt_mean_bias" = "Mean Fold TMLE (GT)",
-                 "abs_v_pooled_gt_bias" = "Harmonic Pooled (GT)")
+                 "abs_v_spec_gt_mean_bias" = "Mean Fold TMLE (GT)")
 
-CVtreeMLE_GT_bias_plot <- make_sim_statistics_plot(
+CVtreeMLE_GT_bias_plot <- make_bias_plot(
   sim_statistics_long,
   stats = names(plot_labels),
-  labels = plot_labels,
-  title = "GT Bias Measures"
+  legend_labels = plot_labels,
+  title = "GT MSE Measures"
 )
 
+plot_labels <- c("tmle_pooled_gt_mse" = "Pooled TMLE (GT)",
+                 "v_spec_gt_mean_mse" = "Mean Fold TMLE (GT)")
+
+CVtreeMLE_GT_bias_plot <- make_bias_plot(
+  sim_statistics_long,
+  stats = names(plot_labels),
+  legend_labels = plot_labels,
+  title = "GT MSE Measures"
+)
+
+
+plot_labels <- c("tmle_pooled_gt_mse" = "Pooled TMLE (DA)",
+                 "v_spec_da_mean_mse" = "Mean Fold TMLE (DA)")
+
+CVtreeMLE_GT_bias_plot <- make_bias_plot(
+  sim_statistics_long,
+  stats = names(plot_labels),
+  legend_labels = plot_labels,
+  title = "DA MSE Measures"
+)
+
+
+
+
 plot_labels <- c(
-  "True_pos" = "True Positive",
   "True_neg" = "True Negative",
   "False_pos" = "False Positive",
+  "True_pos" = "True Positive",
   "False_neg" = "False Negative"
+
 )
 
 CVtreeMLE_rule_plot <- make_sim_statistics_plot(
@@ -180,7 +269,6 @@ CVtreeMLE_rule_plot <- make_sim_statistics_plot(
 
 plot_labels <- c(
   "tmle_pooled_da_coverage" = "Pooled TMLE (DA)",
-  "v_pooled_da_cov" = "Harmonic Pooled (DA)",
   "v_spec_mean_da_cov" = "Mean Fold (DA)"
 )
 
@@ -192,8 +280,7 @@ CVtreeMLE_DA_cov_plot <- make_sim_statistics_plot(
 )
 
 plot_labels <- c("tmle_pooled_gt_coverage" = "Pooled TMLE (GT)",
-                 "v_spec_mean_gt_cov" = "Mean Fold (GT)",
-                 "v_pooled_gt_cov" =  "Harmonic Pooled (GT)")
+                 "v_spec_mean_gt_cov" = "Mean Fold (GT)")
 
 CVtreeMLE_GT_cov_plot <- make_sim_statistics_plot(
   sim_statistics_long,
@@ -205,9 +292,7 @@ CVtreeMLE_GT_cov_plot <- make_sim_statistics_plot(
 
 plot_labels <- c(
   "tmle_pooled_da_mse" = "Pooled TMLE (DA)",
-  "v_spec_da_mean_mse" = "Mean Fold (DA)",
-  "v_pooled_da_mse" = "Harmonic Pooled (DA)"
-)
+  "v_spec_da_mean_mse" = "Mean Fold (DA)")
 
 CVtreeMLE_DA_mse_plot <- make_sim_statistics_plot(
   sim_statistics_long,
@@ -218,9 +303,7 @@ CVtreeMLE_DA_mse_plot <- make_sim_statistics_plot(
 
 plot_labels <- c(
   "tmle_pooled_gt_mse" = "Pooled TMLE (GT)",
-  "v_spec_gt_mean_mse" = "Mean Fold (GT)",
-  "v_pooled_gt_mse" = "Harmonic Pooled (GT)"
-)
+  "v_spec_gt_mean_mse" = "Mean Fold (GT)")
 
 CVtreeMLE_GT_mse_plot <- make_sim_statistics_plot(
   sim_statistics_long,
@@ -230,8 +313,7 @@ CVtreeMLE_GT_mse_plot <- make_sim_statistics_plot(
 )
 
 plot_labels <- c("sqrt_n_abs_tmle_pooled_gt_bias" = "Pooled TMLE (GT)",
-  "sqrt_n_abs_v_spec_gt_mean_bias" = "Mean Fold (GT)",
-  "sqrt_n_abs_v_pooled_gt_bias" = "Harmonic Pooled (GT)")
+  "sqrt_n_abs_v_spec_gt_mean_bias" = "Mean Fold (GT)")
 
 plot_labels <- c(
   "sqrt_n_abs_tmle_pooled_da_bias" = "Pooled TMLE (DA)",

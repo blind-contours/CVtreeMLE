@@ -15,14 +15,14 @@ Sys.unsetenv("GITHUB_PAT")
 devtools::install(upgrade = "never")
 
 # simulation parameters
-n_sim <- 100 # number of simulations
-n_obs <- c(200, 350, 500, 750, 1000, 1500, 2000, 3000, 5000, 10000, 20000)
+n_sim <- 10 # number of simulations
+n_obs <- c(500, 750, 1000, 1500, 2000, 5000)
 exposure_dim <- 2
 
 # Establish globals ---------------------------
 
 # number of observations to create
-n <- 500000
+n <- 1000000
 
 # number of cuts per exposure
 n_cuts <- 5
@@ -33,7 +33,7 @@ labels <- apply(exposure_grid, 1, paste, collapse = " ")
 exposure_grid <- cbind.data.frame(exposure_grid, labels)
 
 # beta matrix
-c_matrix <- matrix(c(0.2,0.3,0.2,0.5),
+c_matrix <- matrix(c(0.1,0.7,0.8,0.9),
                    ncol  = 2,
                    nrow = 2)
 
@@ -71,15 +71,31 @@ for (i in m1_seq) {
 }
 
 result_df <- as.data.frame(do.call(rbind,result_list))
-colnames(result_df) <- c("Rule", "EY_region")
+colnames(result_df) <- c("Rule", "EY_PIE", "EY_region")
+result_df$EY_PIE <- as.numeric(result_df$EY_PIE)
 result_df$EY_region <- as.numeric(result_df$EY_region)
-p0_max_ate <- result_df[which.max(result_df$EY_region),]
-true_rule <- p0_max_ate$Rule
-true_ate <- p0_max_ate$EY_region
+
+p0_min_ate <- result_df[which.min(result_df$EY_PIE),]
+true_rule <- "region1  <= 1 & region2 <= 1"
+true_ate <- -23.30897
+true_min_ave <- 10.00767
+
 # perform simulation across sample sizes
 sim_results_df <- data.frame()
+cross_validations <- c(2,4,5,10,10,10, 10)
 
-for (sample_size in n_obs) {
+data$A <- ifelse(data$region1 <= 3 & data$region2 <= 1, 1, 0)
+data_1 <- data
+data_1$A <- 1
+
+glm_fit <- glm(outcome_true ~ A*sex*age*bmi, data = data)
+preds <- predict(glm_fit, newdata = data_1)
+true_ate <- mean(preds - data$outcome_true )
+
+
+for (i in seq_along(n_obs)) {
+  sample_size <- n_obs[i]
+  cv <- cross_validations[i]
   # get results in parallel
   results <- list()
   print(sample_size)
@@ -95,7 +111,7 @@ for (sample_size in n_obs) {
       data_sim <-  P_0_data_filt %>%
         slice_sample(n = sample_size)
 
-      n_true <- dim(data_sim[data_sim$Label == "5 5",])
+      n_true <- dim(data_sim[data_sim$Label == "1 1",])
       if (n_true[1] != 0) {
         stop <- TRUE
       }
@@ -105,12 +121,16 @@ for (sample_size in n_obs) {
     est_out <- fit_estimators(data = as.data.frame(data_sim),
                               covars = c("age", "sex", "bmi"),
                               exposures = c("region1", "region2"),
-                              outcome = "outcome_obs",
+                              outcome = "outcome_true",
                               seed = seed,
                               P_0_data = P_0_data_filt,
                               true_rule = true_rule,
                               true_ate = true_ate,
-                              exposure_dim = exposure_dim)
+                              true_region = true_min_ave,
+                              exposure_dim = exposure_dim,
+                              cv = cv,
+                              region = true_rule,
+                              min_max = "max")
 
     est_out$n_obs <- sample_size
 
@@ -126,4 +146,4 @@ for (sample_size in n_obs) {
 # save results to file
 timestamp <- str_replace_all(Sys.time(), " ", "_")
 saveRDS(object = sim_results_df,
-        file = here("sandbox/data", paste0("CVtreeMLE_", "run_1", ".rds")))
+        file = here("sandbox/data", paste0("CVtreeMLE_", "run_13", ".rds")))

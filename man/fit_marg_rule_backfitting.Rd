@@ -84,7 +84,6 @@ example_output <- fit_marg_rule_backfitting(
   w_stack = w_stack,
   tree_stack = tree_stack,
   fold = 1,
-  max_iter = 1,
   verbose = FALSE,
   parallel_cv = FALSE,
   seed = 6442

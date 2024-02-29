@@ -2,6 +2,9 @@ library(stringr)
 library(zoo)
 library(imputeTS)
 library(here)
+library(caret)
+library(corrplot)
+
 
 nhanes_data <- readRDS(here("sandbox/NHANES/output/NHANES_data.RDS"))
 
@@ -15,8 +18,19 @@ nhanes_data_telomere_na_thresh <- as.data.frame(unclass(nhanes_data_telomere_na_
 metals <- c("barium", "cadmium", "cobalt", "cesium", "molybdenum", "lead",
             "antimony", "thallium", "tungsten")
 
-nhanes_data_telomere_na_thresh[, metals] <- na_mean(nhanes_data_telomere_na_thresh[, metals])                                # Replace NA in all columns
+nhanes_data_telomere_na_thresh[, metals] <- na_mean(nhanes_data_telomere_na_thresh[, metals])
 
+cor_matrix <- cor(nhanes_data_telomere_na_thresh[, metals])
+corrplot(cor_matrix, method= "circle")
+
+# Find high correlations
+high_cor <- findCorrelation(cor_matrix, cutoff = 0.8, names = TRUE)
+
+# High correlation exposures for removal
+high_cor
+
+# Also remove them from the main data if needed
+metals <-  metals[!metals %in% high_cor]
 
 outcome <- "mean_telomere"
 
@@ -35,16 +49,14 @@ nhanes_results_neg <- CVtreeMLE(data = as.data.frame(nhanes_data_telomere_na_thr
                            w = covariates,
                            a = metals,
                            y = "mean_telomere",
-                           fit_marginals = FALSE,
                            n_folds = 10,
-                           direction = "negative",
-                           seed = 143421,
+                           seed = 143411,
                            parallel_cv = TRUE,
                            parallel = TRUE,
                            family = "continuous",
-                           num_cores = 7,
-                           max_iter = 10,
-                           thresh_only_exposures = FALSE)
+                           num_cores = 8,
+                           min_max = "min",
+                           min_obs = 25)
 
 nhanes_results_neg$`Pooled TMLE Mixture Results` %>%
   dplyr::filter(Proportion_Folds >= 0.5)

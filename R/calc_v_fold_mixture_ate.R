@@ -35,26 +35,19 @@ calc_v_fold_mixtures_ate <- function(input_mix_rules,
     fold_data <- input_mix_data[[fold]]
     fold_rules <- input_mix_rules[[fold]]
 
+    mix_data <- fold_data[[1]]
     rule_results_list <- list()
 
-    for (rule in seq(fold_data)) {
-      mix_data <- fold_data[[rule]]
-      mix_rule_row <- fold_rules[rule, ]
-      mix_rule <- mix_rule_row$description
-      variables <- mix_rule_row$test
-
-      no_rule_ind <- is.na(mix_rule_row$rule)
-
-      if (no_rule_ind == TRUE) {
-        break
-      }
+      mix_rule <- fold_rules$description
+      variables <- fold_rules$test
 
       flux_results <- fit_least_fav_submodel(
         h_aw = mix_data$h_aw,
         y = y,
         data = mix_data,
         qbar_aw = mix_data$qbar_aw,
-        qbar_1w = mix_data$qbar_1w)
+        qbar_1w = mix_data$qbar_1w
+      )
 
       mix_data$qbar_aw_star <- flux_results$qbar_aw_star
       mix_data$qbar_1w_star <- flux_results$qbar_1w_star
@@ -71,7 +64,7 @@ calc_v_fold_mixtures_ate <- function(input_mix_rules,
       sqrd_resids <- (mix_data$qbar_aw_star - mix_data[y])^2
       rmse <- sqrt(mean(sqrd_resids[, 1], na.rm = TRUE))
 
-      ate <- round(ate_results$ate, 3)
+      are <- round(ate_results$ate, 3)
       se <- round(ate_results$se, 3)
       lower_ci <- round(ate_results$ci[1], 3)
       upper_ci <- round(ate_results$ci[2], 3)
@@ -80,12 +73,11 @@ calc_v_fold_mixtures_ate <- function(input_mix_rules,
       rmse <- round(rmse, 3)
 
       rule_results <- cbind.data.frame(
-        ate, se, lower_ci, upper_ci,
+        are, se, lower_ci, upper_ci,
         p_val, p_val_adj, rmse, mix_rule, fold, variables
       )
 
-      rule_results_list[[rule]] <- rule_results
-    }
+      rule_results_list[[fold]] <- rule_results
 
     fold_results <- do.call(rbind, rule_results_list)
     fold_mixture_results_list[[fold]] <- fold_results

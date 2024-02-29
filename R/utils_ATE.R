@@ -17,35 +17,46 @@ calc_ate_estimates <- function(data,
                                ate_var,
                                y,
                                p_adjust_n,
-                               v_fold = FALSE) {
-  data[ate_var] <- data$qbar_1w_star - data[,y]
+                               v_fold = FALSE,
+                               naive = FALSE) {
+  if (naive == TRUE) {
+    data[, ate_var] <- data$qbar_1w - data[, y]
+  } else {
+    data[, ate_var] <- data$qbar_1w_star - data[, y]
+  }
 
-  thetas <-
-    tapply(data[[ate_var]], data$folds, mean, na.rm = TRUE)
 
   if (v_fold == TRUE) {
+    thetas <-
+      tapply(data[[ate_var]], data$folds, mean, na.rm = TRUE)
     data[, "thetas"] <- thetas
   } else {
-    for (i in seq_along(thetas)) {
-      fold <- names(thetas)[i]
-      data[data$folds == fold, "thetas"] <- thetas[i][[1]]
-    }
+    data[, "thetas"] <- mean(data[, ate_var])
   }
 
-  ics <- base::by(data, data$folds, function(data) {
-    result <- (data["h_aw"] * (data[,y] - data["qbar_1w_star"]) +
-      (data["qbar_1w_star"] - data["thetas"])) - (data[y] - mean(data[,y]))
-    result
-  })
+  theta <- mean(data[, "thetas"])
 
   if (v_fold == TRUE) {
-    data[, "ic"] <- ics
+    ics <- base::by(data, data$folds, function(data) {
+      result <- (data[, "h_aw"] * (data[, y] - data[, "qbar_aw_star"])) +
+        ((data[, "qbar_1w_star"] - data[, y]) - theta) # -
+        #(data[, y] - mean(data[, y]))
+      result
+    })
   } else {
-    for (i in seq(ics)) {
-      fold <- names(thetas)[i]
-      data[data$folds == fold, "ic"] <- ics[fold]
+    if (naive == TRUE) {
+      ics <- (data[, "h_aw"] * (data[, y] - data[, "qbar_aw"]) +
+        (data[, "qbar_1w_star"] - data[, y]) - theta) #-
+       # (data[, y] - mean(data[, y]))
+    } else {
+      ics <- (data[, "h_aw"] * (data[, y] - data[, "qbar_aw_star"])) +
+        ((data[, "qbar_1w_star"] - data[, y]) - theta) #-
+       # (data[, y] - mean(data[, y]))
     }
   }
+
+
+  data[, "ic"] <- ics
 
   n <- dim(data)[1]
   varhat_ic <- stats::var(data$ic, na.rm = TRUE) / n
@@ -53,7 +64,6 @@ calc_ate_estimates <- function(data,
 
   alpha <- 0.05
 
-  theta <- mean(thetas)
   # obtain 95% two-sided confidence intervals:
   ci <- c(
     theta + stats::qnorm(alpha / 2, lower.tail = TRUE) * se,
@@ -63,8 +73,12 @@ calc_ate_estimates <- function(data,
   # p-value
   p_value <- 2 * stats::pnorm(abs(theta / se), lower.tail = FALSE)
 
-  p_value_adjust <-
-    stats::p.adjust(p_value, method = "bonferroni", n = p_adjust_n)
+  if (!is.null(p_adjust_n)) {
+    p_value_adjust <-
+      stats::p.adjust(p_value, method = "bonferroni", n = p_adjust_n)
+  }else{
+    p_value_adjust <- NULL
+  }
 
   return(list(
     "ate" = theta, "se" = se, "ci" = ci, "p_value" = p_value,
@@ -98,20 +112,9 @@ calc_clever_covariate <- function(ghat_1_w,
                                   h_aw_trunc_lvl,
                                   type = "reg") {
   if (type == "reg") {
-    n <- length(ghat_1_w)
-
-    ghat_1_w[ghat_1_w < 0.0001] <- 0.001
-    ghat_1_w[ghat_1_w > 0.999] <- 0.99
-
-    # ghat_0_w <- 1 - ghat_1_w
-
-    # ghat_aw <- rep(NA, n)
-    # ghat_aw[data[exposure] == 1] <- ghat_1_w[data[exposure] == 1]
-    # ghat_aw[data[exposure] == 0] <- ghat_0_w[data[exposure] == 0]
+    # n <- sum(data$A_mix) / nrow(data)
 
     h_aw <- 1 / ghat_1_w
-      # as.numeric(data[exposure] == 1) / ghat_1_w -
-      # as.numeric(data[exposure] == 0) / ghat_0_w
 
     h_aw <-
       ifelse(h_aw > h_aw_trunc_lvl, h_aw_trunc_lvl, h_aw)
@@ -119,10 +122,7 @@ calc_clever_covariate <- function(ghat_1_w,
     h_aw <-
       ifelse(h_aw < -h_aw_trunc_lvl, -h_aw_trunc_lvl, h_aw)
   } else {
-    # n <- length(ghat_1_w)
-
-    # ghat_aw <- rep(NA, n)
-    ghat_aw[data[exposure] == 1] <- ghat_1_w[data[exposure] == 1]
+    n <- sum(data$A_mix) / nrow(data)
 
     h_aw <- 1 / ghat_1_w
 
@@ -161,17 +161,18 @@ fit_least_fav_submodel <- function(h_aw, data, y, qbar_aw, qbar_1w) {
 
   logit_update <-
     stats::glm(
-      y_scaled ~ -1 + h_aw + offset(scale_to_unit(qbar_aw)),
+      y_scaled ~ -1 + h_aw,
       family = "quasibinomial",
-      data = data
+      data = data,
+      weights = scale_to_unit(qbar_aw)
     )
 
   epsilon <- logit_update$coef
   qbar_aw_star <- qbar_aw + epsilon * h_aw
   qbar_1w_star <- qbar_1w + epsilon * h_aw
-  # qbar_0w_star <- qbar_0w + epsilon * h_aw
 
   return(list(
     "qbar_aw_star" = qbar_aw_star,
-    "qbar_1w_star" = qbar_1w_star))
+    "qbar_1w_star" = qbar_1w_star
+  ))
 }

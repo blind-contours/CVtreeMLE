@@ -34,7 +34,6 @@ est_mix_nuisance_params <- function(at,
                                     w,
                                     a,
                                     y,
-                                    no_mix_rules,
                                     aw_stack,
                                     family,
                                     rules,
@@ -45,13 +44,11 @@ est_mix_nuisance_params <- function(at,
     future::plan(future::sequential, gc = TRUE)
   }
 
-  identify_w_in_rule <- function(rule_description, w){
-    # Split the rule description by "&" and trim white spaces
+  identify_w_in_rule <- function(rule_description, w) {
     split_rule <- str_trim(unlist(str_split(rule_description, "&")))
 
     # Check which of the split elements contain variables from w
     variable_present <- sapply(split_rule, function(rule_part) {
-      # Extract the variable name by splitting by spaces and taking the first element
       var_name <- unlist(str_split(rule_part, " "))[1]
       return(var_name %in% w)
     })
@@ -62,147 +59,133 @@ est_mix_nuisance_params <- function(at,
 
   set.seed(seed)
 
-  if (no_mix_rules != TRUE) {
+  mix_interaction_data <- list()
 
-    mix_interaction_data <- list()
+  for (interaction in seq(dim(rules)[1])) {
+    rule_data <- rules[interaction, ]
+    if (rule_data$effect_modifiers == 1) {
+      w_rule <- paste(identify_w_in_rule(rule_data$description, w),
+        collapse = " & "
+      )
+      a_rule <- paste(identify_w_in_rule(rule_data$description, a),
+        collapse = " & "
+      )
+      # For 'at' dataset
+      subset_at <- subset(at, eval(parse(text = w_rule)))
 
-    for (interaction in seq(dim(rules)[1])) {
-      rule_data <- rules[interaction,]
-      if (rule_data$effect_modifiers == 1) {
-        w_rule <- paste(identify_w_in_rule(rule_data$description, w), collapse = " & ")
-        a_rule <- paste(identify_w_in_rule(rule_data$description, a), collapse = " & ")
-        # For 'at' dataset
-        subset_at <- subset(at, eval(parse(text=w_rule)))
+      # For 'av' dataset
+      subset_av <- subset(av, eval(parse(text = w_rule)))
 
-        # For 'av' dataset
-        subset_av <- subset(av, eval(parse(text=w_rule)))
-
-        interaction_rule_at <- subset_at %>%
-          dplyr::transmute(A = ifelse(eval(parse(text = a_rule)), 1, 0))
-
-
-        interaction_rule_av <- subset_av %>%
-          dplyr::transmute(A = ifelse(eval(parse(text = a_rule)), 1, 0))
-
-        at_mix <- subset_at
-        av_mix <- subset_av
+      interaction_rule_at <- subset_at %>%
+        dplyr::transmute(A = ifelse(eval(parse(text = a_rule)), 1, 0))
 
 
-      }else{
+      interaction_rule_av <- subset_av %>%
+        dplyr::transmute(A = ifelse(eval(parse(text = a_rule)), 1, 0))
 
-        at_mix <- at
-        av_mix <- av
+      at_mix <- subset_at
+      av_mix <- subset_av
+    } else {
+      at_mix <- at
+      av_mix <- av
 
-        interaction_rule_at <- at_mix %>%
-          dplyr::transmute(A = ifelse(eval(parse(text = rule_data$description)), 1, 0))
+      interaction_rule_at <- at_mix %>%
+        dplyr::transmute(A = ifelse(eval(parse(text = rule_data$description)),
+          1, 0
+        ))
 
-        interaction_rule_av <- av_mix %>%
-          dplyr::transmute(A = ifelse(eval(parse(text = rule_data$description)), 1, 0))
-      }
-
-      if (dim(table(interaction_rule_at)) == 2) {
-        at_mix$A_mix <- interaction_rule_at
-        av_mix$A_mix <- interaction_rule_av
-
-        task_at <- sl3::make_sl3_Task(
-          data = at_mix,
-          covariates = w,
-          outcome = "A_mix",
-          outcome_type = "binomial",
-          folds = 2,
-          drop_missing_outcome = TRUE
-        )
-
-        task_av <- sl3::make_sl3_Task(
-          data = av_mix,
-          covariates = w,
-          outcome = "A_mix",
-          outcome_type = "binomial",
-          drop_missing_outcome = TRUE
-        )
-
-        sl <- sl3::Lrnr_sl$new(
-          learners = aw_stack,
-          metalearner = sl3::Lrnr_nnls$new()
-        )
-
-        sl_fit <- suppressWarnings(sl$train(task_at))
-
-        ghat_1w <- sl_fit$predict(task_av)
-
-        h_aw <- calc_clever_covariate(
-          ghat_1_w = ghat_1w,
-          data = av_mix,
-          exposure = "A_mix",
-          h_aw_trunc_lvl = h_aw_trunc_lvl
-        )
-
-        task_at <- sl3::make_sl3_Task(
-          data = at_mix,
-          covariates = c(w, "A_mix"),
-          outcome = y,
-          outcome_type = family,
-          folds = 2,
-          drop_missing_outcome = TRUE
-        )
-
-        x_m1 <- av_mix
-        x_m1$A_mix <- 1 # under exposure
-        # x_m0$A_mix <- 0 # under control
-
-        task_av <- sl3::make_sl3_Task(
-          data = av_mix,
-          covariates = c(w, "A_mix"),
-          outcome = y,
-          outcome_type = family,
-          drop_missing_outcome = TRUE
-        )
-
-        task_av_1 <- sl3::make_sl3_Task(
-          data = x_m1,
-          covariates = c(w, "A_mix"),
-          outcome = y,
-          outcome_type = family,
-          drop_missing_outcome = TRUE
-        )
-
-        sl <- sl3::Lrnr_sl$new(
-          learners = aw_stack,
-          metalearner = sl3::Lrnr_nnls$new()
-        )
-
-        sl_fit <- suppressWarnings(sl$train(task_at))
-
-        qbar_aw <- sl_fit$predict(task_av)
-        qbar_1w <- sl_fit$predict(task_av_1)
-
-        ## add Qbar to the AV dataset
-        av_mix$qbar_aw <- qbar_aw
-        av_mix$qbar_1w <- qbar_1w
-
-        av_mix$ghat_1w <- ghat_1w
-        av_mix$h_aw <- h_aw
-
-        mix_interaction_data[[interaction]] <- av_mix
-      } else {
-        av_mix$ghat_1w <- NA
-        av_mix$h_aw <- NA
-        av_mix$qbar_aw <- NA
-        av_mix$qbar_1w <- NA
-        av_mix$qbar_0w <- NA
-        mix_interaction_data[[interaction]] <- av_mix
-      }
+      interaction_rule_av <- av_mix %>%
+        dplyr::transmute(A = ifelse(eval(parse(text = rule_data$description)),
+          1, 0
+        ))
     }
-  } else {
-    mix_interaction_data <- list()
 
-    av_mix$ghat_1w <- NA
-    av_mix$h_aw <- NA
-    av_mix$qbar_aw <- NA
-    av_mix$qbar_1w <- NA
-    av_mix$qbar_0w <- NA
-    mix_interaction_data[[1]] <- av_mix
+    if (dim(table(interaction_rule_at)) == 2) {
+      at_mix$A_mix <- interaction_rule_at
+      av_mix$A_mix <- interaction_rule_av
+
+      other_a <- a[a!= rule_data$test]
+
+      task_at <- sl3::make_sl3_Task(
+        data = at_mix,
+        covariates = w,
+        outcome = "A_mix",
+        outcome_type = "binomial",
+        folds = 10
+      )
+
+      task_av <- sl3::make_sl3_Task(
+        data = av_mix,
+        covariates = w,
+        outcome = "A_mix",
+        outcome_type = "binomial",
+        folds = 10
+      )
+
+      cv_selector <- Lrnr_cv_selector$new(eval_function = loss_squared_error)
+      sl <- Lrnr_sl$new(learners = aw_stack, metalearner = cv_selector)
+
+      sl_fit <- suppressWarnings(sl$train(task_at))
+
+      ghat_1w <- sl_fit$predict(task_av)
+
+      h_aw <- calc_clever_covariate(
+        ghat_1_w = ghat_1w,
+        data = av_mix,
+        exposure = "A_mix",
+        h_aw_trunc_lvl = h_aw_trunc_lvl
+      )
+
+      task_at <- sl3::make_sl3_Task(
+        data = at_mix,
+        covariates = c(w, "A_mix", other_a),
+        outcome = y,
+        outcome_type = family,
+        folds = 10
+      )
+
+      x_m1 <- av_mix
+      x_m1$A_mix <- 1 # under exposure
+
+      task_av <- sl3::make_sl3_Task(
+        data = av_mix,
+        covariates = c(w, "A_mix", other_a),
+        outcome = y,
+        outcome_type = family,
+        folds = 10
+      )
+
+      task_av_1 <- sl3::make_sl3_Task(
+        data = x_m1,
+        covariates = c(w, "A_mix", other_a),
+        outcome = y,
+        outcome_type = family,
+        folds = 10
+      )
+
+      sl_fit <- suppressWarnings(sl$train(task_at))
+
+      qbar_aw <- sl_fit$predict(task_av)
+      qbar_1w <- sl_fit$predict(task_av_1)
+
+      ## add Qbar to the AV dataset
+      av_mix$qbar_aw <- qbar_aw
+      av_mix$qbar_1w <- qbar_1w
+
+      av_mix$ghat_1w <- ghat_1w
+      av_mix$h_aw <- h_aw
+
+      mix_interaction_data[[interaction]] <- av_mix
+    } else {
+      av_mix$ghat_1w <- NA
+      av_mix$h_aw <- NA
+      av_mix$qbar_aw <- NA
+      av_mix$qbar_1w <- NA
+      av_mix$qbar_0w <- NA
+      mix_interaction_data[[interaction]] <- av_mix
+    }
   }
+
 
   return(list(data = mix_interaction_data))
 }

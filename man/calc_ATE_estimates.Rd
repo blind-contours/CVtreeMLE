@@ -4,7 +4,7 @@
 \alias{calc_ate_estimates}
 \title{Calculate the ATE and variance estimates}
 \usage{
-calc_ate_estimates(data, ate_var, y, p_adjust_n, v_fold = FALSE)
+calc_ate_estimates(data, ate_var, y, p_adjust_n, v_fold = FALSE, naive = FALSE)
 }
 \arguments{
 \item{data}{Data frame that includes treatement/exposure}
