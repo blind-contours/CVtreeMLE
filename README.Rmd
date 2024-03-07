@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# `CVtreeMLE` <img src="man/figures/CVtreeMLE_sticker.png height="300" align="right"/>
+# `CVtreeMLE` <img src="man/figures/CVtreeMLE_sticker.png" height="300" align="right"/>
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/blind-contours/CVtreeMLE/workflows/R-CMD-check/badge.svg)](https://github.com/blind-contours/CVtreeMLE/actions)
 [![Coverage Status](https://codecov.io/gh/blind-contours/CVtreeMLE/branch/main/graph/badge.svg?token=HJP5PYQSG4)](https://codecov.io/github/blind-contours/CVtreeMLE?branch=master)
