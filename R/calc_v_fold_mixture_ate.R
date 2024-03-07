@@ -38,46 +38,46 @@ calc_v_fold_mixtures_ate <- function(input_mix_rules,
     mix_data <- fold_data[[1]]
     rule_results_list <- list()
 
-      mix_rule <- fold_rules$description
-      variables <- fold_rules$test
+    mix_rule <- fold_rules$description
+    variables <- fold_rules$test
 
-      flux_results <- fit_least_fav_submodel(
-        h_aw = mix_data$h_aw,
-        y = y,
-        data = mix_data,
-        qbar_aw = mix_data$qbar_aw,
-        qbar_1w = mix_data$qbar_1w
-      )
+    flux_results <- fit_least_fav_submodel(
+      h_aw = mix_data$h_aw,
+      y = y,
+      data = mix_data,
+      qbar_aw = mix_data$qbar_aw,
+      qbar_1w = mix_data$qbar_1w
+    )
 
-      mix_data$qbar_aw_star <- flux_results$qbar_aw_star
-      mix_data$qbar_1w_star <- flux_results$qbar_1w_star
-      # mix_data$qbar_0w_star <- flux_results$qbar_0w_star
+    mix_data$qbar_aw_star <- flux_results$qbar_aw_star
+    mix_data$qbar_1w_star <- flux_results$qbar_1w_star
+    # mix_data$qbar_0w_star <- flux_results$qbar_0w_star
 
-      ate_results <- calc_ate_estimates(
-        data = mix_data,
-        ate_var = "mix_ate",
-        y = y,
-        p_adjust_n = length(input_mix_data),
-        v_fold = TRUE
-      )
+    ate_results <- calc_ate_estimates(
+      data = mix_data,
+      ate_var = "mix_ate",
+      y = y,
+      p_adjust_n = length(input_mix_data),
+      v_fold = TRUE
+    )
 
-      sqrd_resids <- (mix_data$qbar_aw_star - mix_data[y])^2
-      rmse <- sqrt(mean(sqrd_resids[, 1], na.rm = TRUE))
+    sqrd_resids <- (mix_data$qbar_aw_star - mix_data[y])^2
+    rmse <- sqrt(mean(sqrd_resids[, 1], na.rm = TRUE))
 
-      are <- round(ate_results$ate, 3)
-      se <- round(ate_results$se, 3)
-      lower_ci <- round(ate_results$ci[1], 3)
-      upper_ci <- round(ate_results$ci[2], 3)
-      p_val <- round(ate_results$p_value, 6)
-      p_val_adj <- round(ate_results$adj_p_value, 6)
-      rmse <- round(rmse, 3)
+    are <- round(ate_results$ate, 3)
+    se <- round(ate_results$se, 3)
+    lower_ci <- round(ate_results$ci[1], 3)
+    upper_ci <- round(ate_results$ci[2], 3)
+    p_val <- round(ate_results$p_value, 6)
+    p_val_adj <- round(ate_results$adj_p_value, 6)
+    rmse <- round(rmse, 3)
 
-      rule_results <- cbind.data.frame(
-        are, se, lower_ci, upper_ci,
-        p_val, p_val_adj, rmse, mix_rule, fold, variables
-      )
+    rule_results <- cbind.data.frame(
+      are, se, lower_ci, upper_ci,
+      p_val, p_val_adj, rmse, mix_rule, fold, variables
+    )
 
-      rule_results_list[[fold]] <- rule_results
+    rule_results_list[[fold]] <- rule_results
 
     fold_results <- do.call(rbind, rule_results_list)
     fold_mixture_results_list[[fold]] <- fold_results

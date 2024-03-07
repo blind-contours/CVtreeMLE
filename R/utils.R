@@ -5,7 +5,7 @@
 #' @param n_folds Total number of folds specified
 #' @export
 
-calculatePooledEstimate <- function(est, se,  n_folds, n_intxn ) {
+calculatePooledEstimate <- function(est, se, n_folds, n_intxn) {
   # Identifying the row with the current pooled TMLE
   # pooledRow <- results_df[results_df$Fold == "Pooled TMLE",]
 
@@ -21,11 +21,11 @@ calculatePooledEstimate <- function(est, se,  n_folds, n_intxn ) {
 
   # Weights
   w_1 <- 1 / var_pooled
-  w_0 <- 1/ var_null
+  w_0 <- 1 / var_null
 
   # Calculate new pooled estimate and its variance
   pooled_estimate <- est
-  psi_null <- 0  # Assuming null value is 0 for additive estimates
+  psi_null <- 0 # Assuming null value is 0 for additive estimates
   new_pooled_psi <- (w_1 * pooled_estimate + w_0 * psi_null) / (w_1 + w_0)
   var_new_pooled <- 1 / (w_1 + w_0)
 

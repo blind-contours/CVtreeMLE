@@ -63,6 +63,9 @@ fit_min_ave_tree_algorithm <- function(at,
     future::plan(future::sequential, gc = TRUE)
   }
 
+  # we need to impute any covariates before beginning the search algorithm
+  at <- at %>%
+    mutate(across(all_of(w), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
 
   calculate_average <- function(region, w_names, var, outcome) {
     if (nrow(region) == 0) { # No data in this region
@@ -131,7 +134,7 @@ fit_min_ave_tree_algorithm <- function(at,
           next
         }
 
-        covars <- c(w_names, a[a!=var])
+        covars <- c(w_names, a[a != var])
 
         model <- ranger(
           formula = as.formula(paste(
@@ -204,11 +207,15 @@ fit_min_ave_tree_algorithm <- function(at,
                                         parent_mean = ifelse(min_max == "min", Inf, -Inf),
                                         min_max) {
     # Calculate the parent mean before attempting to find the best split
-    region_stats <- calculate_average(data, w_names = w_names,
-                                          var = split_variables, outcome)
+    region_stats <- calculate_average(data,
+      w_names = w_names,
+      var = split_variables, outcome
+    )
 
-    print(paste("Depth:", depth, "Parent mean:", parent_mean, "Parent N:",
-                nrow(data)))
+    print(paste(
+      "Depth:", depth, "Parent mean:", parent_mean, "Parent N:",
+      nrow(data)
+    ))
 
     if (depth == max_depth || nrow(data) == 0) {
       current_rule <- list(
@@ -323,9 +330,8 @@ fit_min_ave_tree_algorithm <- function(at,
 
   if (min_max == "min") {
     region <- tree[which.min(tree$Average), ]
-  }else{
+  } else {
     region <- tree[which.max(tree$Average), ]
-
   }
 
   rules <- data.frame(matrix(nrow = nrow(region), ncol = 7))
@@ -337,14 +343,20 @@ fit_min_ave_tree_algorithm <- function(at,
   rules$rule <- paste("rule", seq(nrow(region)), sep = "")
   rules$coefficient <- region$Average
   rules$description <- region$Rule
-  rules$effect_modifiers <- as.numeric(str_detect(region$Rule,
-                                                  paste(w, collapse = "|")))
+  rules$effect_modifiers <- as.numeric(str_detect(
+    region$Rule,
+    paste(w, collapse = "|")
+  ))
   rules$direction <- 1
   rules$RMSE <- NA
   rules$fold <- fold
-  rules$test <- sort(paste(str_extract_all(region$Rule,
-                                           paste(c(a, w), collapse = "|"))[[1]],
-                           collapse = "-"))
+  rules$test <- sort(paste(
+    str_extract_all(
+      region$Rule,
+      paste(c(a, w), collapse = "|")
+    )[[1]],
+    collapse = "-"
+  ))
 
 
   if (dim(rules)[1] == 0) {

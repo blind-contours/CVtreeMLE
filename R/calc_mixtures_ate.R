@@ -47,7 +47,7 @@ calc_mixtures_ate <- function(input_mix_rules,
   fold_mix_rules <-
     data.table::rbindlist(unlist(input_mix_rules, recursive = FALSE))
 
-  fold_mix_data <-bind_rows(unlist(input_mix_data, recursive = FALSE))
+  fold_mix_data <- bind_rows(unlist(input_mix_data, recursive = FALSE))
 
   ## Calculate Pooled TMLE Across Max Region
 
@@ -192,13 +192,13 @@ calc_mixtures_ate <- function(input_mix_rules,
 
       # Weights
       w_1 <- 1 / var_pooled
-      w_0 <- 1/ var_null
+      w_0 <- 1 / var_null
 
       # Calculate new pooled estimate and its variance
       pooled_estimate <- ate_results$ate
       null_samples <- 0
       new_pooled_psi <- (w_1 * pooled_estimate + w_0 * null_samples) / (w_1 + w_0)
-      var_new_pooled <- 1 / (w_1 +sum(w_0))
+      var_new_pooled <- 1 / (w_1 + sum(w_0))
 
       # Calculate standard error and confidence intervals
       se_new_pooled <- sqrt(var_new_pooled)
@@ -214,7 +214,6 @@ calc_mixtures_ate <- function(input_mix_rules,
       mixture_results_inv_variance$`P-value`[group] <- round(p_value_pooled, 6)
       mixture_results_inv_variance$`Vars`[group] <- vars
       mixture_results_inv_variance$`RMSE`[group] <- round(rmse, 3)
-
     }
 
     mixture_data_list[[group]] <- mix_rule_data

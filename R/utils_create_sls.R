@@ -6,18 +6,18 @@
 #' fast but also flexible.
 #'
 #' @return List of ensemble estimators
+#' @import sl3
 #' @export
 
 create_sls <- function() {
   lrnr_ranger <- sl3::Lrnr_ranger$new()
   lrnr_glm <- sl3::make_learner(sl3::Lrnr_glm)
   lrnr_elasticnet <- sl3::make_learner(sl3::Lrnr_glmnet, alpha = .5)
-  lrnr_glm <- Lrnr_glm$new()
 
   grid_params <- list(
     max_depth = c(3, 5, 8),
     eta = c(0.001, 0.1, 0.3),
-    nrounds = c(100,200, 500)
+    nrounds = c(100, 200, 500)
   )
 
   grid <- expand.grid(grid_params, KEEP.OUT.ATTRS = FALSE)

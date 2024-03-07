@@ -103,9 +103,9 @@ set.seed(429153)
 ```
 
 
-To illustrate how `CVtreeMLE` may be used to find and esitmate a region that, if intervened on would lead to the biggest reduction in an outcome we use simulated data that is described in our paper: 
+To illustrate how `CVtreeMLE` may be used to find and estimate a region that, if intervened on would lead to the biggest reduction in an outcome we use simulated data that is described in our paper: 
 
-arXiv:2302.07976
+https://arxiv.org/abs/2302.07976
 
 Briefly, 2 discrete exposures are created based on a multinomial regression from baseline covariates. We create an outcome with main effect and squared interactions. One region has the minimum expected outcome, when both exposures are equal to 1. 
 
@@ -117,18 +117,20 @@ labels <- apply(exposure_grid, 1, paste, collapse = " ")
 exposure_grid <- cbind.data.frame(exposure_grid, labels)
 
 # beta matrix
-c_matrix <- matrix(c(0.1,0.7,0.8,0.9),
-                   ncol  = 2,
-                   nrow = 2)
+c_matrix <- matrix(c(0.1, 0.7, 0.8, 0.9),
+  ncol = 2,
+  nrow = 2
+)
 
 # Generate simulated data -----------------
 P_0_sim <- gen_covariates(n) %>% # gen covariates
   gen_multinom(exposure_grid = exposure_grid) %>% # assign obs to exposure cube
-  assign_outcomes(exposure_grid = exposure_grid,
-                  c_matrix = c_matrix)
+  assign_outcomes(
+    exposure_grid = exposure_grid,
+    c_matrix = c_matrix
+  )
 
 intro_data <- P_0_sim$data
-
 ```
 
 ## Run `CVtreeMLE`

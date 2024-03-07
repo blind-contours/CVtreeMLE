@@ -40,18 +40,18 @@ calc_ate_estimates <- function(data,
     ics <- base::by(data, data$folds, function(data) {
       result <- (data[, "h_aw"] * (data[, y] - data[, "qbar_aw_star"])) +
         ((data[, "qbar_1w_star"] - data[, y]) - theta) # -
-        #(data[, y] - mean(data[, y]))
+      # (data[, y] - mean(data[, y]))
       result
     })
   } else {
     if (naive == TRUE) {
       ics <- (data[, "h_aw"] * (data[, y] - data[, "qbar_aw"]) +
         (data[, "qbar_1w_star"] - data[, y]) - theta) #-
-       # (data[, y] - mean(data[, y]))
+      # (data[, y] - mean(data[, y]))
     } else {
       ics <- (data[, "h_aw"] * (data[, y] - data[, "qbar_aw_star"])) +
         ((data[, "qbar_1w_star"] - data[, y]) - theta) #-
-       # (data[, y] - mean(data[, y]))
+      # (data[, y] - mean(data[, y]))
     }
   }
 
@@ -76,7 +76,7 @@ calc_ate_estimates <- function(data,
   if (!is.null(p_adjust_n)) {
     p_value_adjust <-
       stats::p.adjust(p_value, method = "bonferroni", n = p_adjust_n)
-  }else{
+  } else {
     p_value_adjust <- NULL
   }
 

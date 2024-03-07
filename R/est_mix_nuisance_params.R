@@ -104,7 +104,7 @@ est_mix_nuisance_params <- function(at,
       at_mix$A_mix <- interaction_rule_at
       av_mix$A_mix <- interaction_rule_av
 
-      other_a <- a[a!= rule_data$test]
+      other_a <- a[a != rule_data$test]
 
       task_at <- sl3::make_sl3_Task(
         data = at_mix,
