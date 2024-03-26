@@ -18,9 +18,6 @@ used in the fluctuation model}
 
 \item{qbar_1w}{Initial predictions for Y|A = 1,W - A being deterministically
 set to 1}
-
-\item{qbar_0w}{Initial predictions for Y|A = 1,W - A being deterministically
-set to 0}
 }
 \value{
 A \code{numeric} vector of the same length as \code{vals}, where

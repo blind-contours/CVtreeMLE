@@ -12,7 +12,7 @@
 
 <meta name="author" content="David McCoy" />
 
-<meta name="date" content="2024-02-28" />
+<meta name="date" content="2024-03-07" />
 
 <title>Evaluating Causal Effects of Mixed Exposures using Data Adaptive Decision Trees and CV-TMLE</title>
 
@@ -588,12 +588,26 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 Exposures using Data Adaptive Decision Trees and CV-TMLE</h1>
 <h4 class="author"><a href="https://www.davidmccoy.org/">David
 McCoy</a></h4>
-<h4 class="date">2024-02-28</h4>
+<h4 class="date">2024-03-07</h4>
 
 
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
+<p>Researchers are often interested in understanding what set of
+thresholds in a mixed exposure are safest. That is, if a policy was to
+be implemented to attempt to reduce an exposure or exposures below a set
+limit, which intervention would have the largest minimizing effect.</p>
+<p>The problem of course is that this set of thresholds is not known
+beforehand. Therefore, it is necessary to both find the set of
+thresholds that, controlling for other exposures and covariates, would
+result in the lowest expected outcome.</p>
+<p>This requires data-adaptive target parameters where cross-validation
+is used. In one part of the data, we find the minimizing region and in
+another, we estimate a policy intervention effect for that region.</p>
+</div>
+<div id="data-adaptive-target-parameters" class="section level2">
+<h2>Data Adaptive Target Parameters</h2>
 <p>Data adaptive target parameters constitute a flexible framework for
 estimating the effects of a data adaptively determined target parameter.
 There is a literature on the dangers of deriving parameters
@@ -618,14 +632,17 @@ derived for the counterfactual mean outcome difference if all individual
 were exposed to the rule compared to the observed outcome under observed
 exposure distribution. We call our estimate the ARE, the average
 regional exposure effect.</p>
+</div>
+<div id="output" class="section level2">
+<h2>Output</h2>
 <p>Two types of results are given for the region found to minimize or
 maximize the expected outcome. K-fold specific results for a given ARE
 and variance estimates for a fold specific region. The pooled ARE takes
 the average across folds to gain power (reduce variance). The pooled ARE
 estimates the oracle target parameter which is the region that maximizes
 or minimizes the expected outcome. This of course can change across the
-folds and therefore this estimate, if there is inconcistency in the
-region estiamted, can lead to an amalgamation of different regions.
+folds and therefore this estimate, if there is inconsistency in the
+region estimated, can lead to an amalgamation of different regions.
 However, if there is strong signal for a particular region, the same
 exposures will be used in the region and therefore the pooled parameter
 gains power, leveraging the k-fold specific estimates.</p>
@@ -641,6 +658,9 @@ earlier work of <span class="citation">van der Laan and Rose
 see <span class="citation">Hubbard, Kherad-Pajouh, and Van Der Laan
 (2016)</span> and chapter 9 in <span class="citation">van der Laan and
 Rose (2018)</span>.</p>
+</div>
+<div id="mechanisms" class="section level2">
+<h2>Mechanisms</h2>
 <p>Briefly, what this package will do is first, given the provided data
 it will partition the data into folds based on the n_folds parameter
 provided. In the training fold, we apply a custom decision tree that
@@ -655,6 +675,9 @@ observed exposure. This is the ARE. This is done for each fold and we
 also pool across the folds. This procedure is done with CV-TMLE. The
 output are thresholds and the accompanying ARE for the region that has
 the maximimum or minimum expected outcome.</p>
+</div>
+<div id="working-example" class="section level2">
+<h2>Working Example</h2>
 <p>To start, let’s load the packages we’ll need and set a seed for
 simulation. We will use a real-world data example with known
 ground-truth to show the functionality of <code>CVtreeMLE</code>.</p>
@@ -669,542 +692,111 @@ ground-truth to show the functionality of <code>CVtreeMLE</code>.</p>
 <span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>seed <span class="ot">&lt;-</span> <span class="dv">5454433</span></span>
 <span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="fu">set.seed</span>(seed)</span></code></pre></div>
 </div>
-<div id="national-institute-of-environmental-health-data" class="section level2">
-<h2>National Institute of Environmental Health Data</h2>
-<p>We will use simulated data from the 2015 NIEHS Mixtures Workshop
-which was developed to determine if new mixture methods detect
-ground-truth interactions built into the simulated data. In this way we
-can simultaneously show <code>CVtreeMLE</code> output, interpretation
-and validity.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>niehs_data <span class="ot">&lt;-</span> NIEHS_data_1</span>
+<div id="nhanes-data" class="section level2">
+<h2>NHANES Data</h2>
+<p>Here we will try and replicate the analysis by Gibson et. al., <a href="https://ehjournal.biomedcentral.com/articles/10.1186/s12940-019-0515-1" class="uri">https://ehjournal.biomedcentral.com/articles/10.1186/s12940-019-0515-1</a></p>
+<p>and Mitro et. al, <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4858394/" class="uri">https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4858394/</a></p>
+<p>Who used the NHANES 2001-2002 data to investigate 18 POP exposures on
+telomere length.</p>
+<p>Because reduced telomere length is associated with more biological
+aging and higher morbidity, we will try and identify which region in the
+POP space would maximize telomere length. That is, we want to find the
+region that, if we created a regulation on those chemicals, would result
+in maximal change in elongating telomere length.</p>
+<p>Let’s first load the data and investigate the variables:</p>
+</div>
+<div id="nhanes-data-1" class="section level2">
+<h2>NHANES Data</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;NHANES_eurocim&quot;</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">head</span>(niehs_data) <span class="sc">%&gt;%</span></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  kableExtra<span class="sc">::</span><span class="fu">kbl</span>(<span class="at">caption =</span> <span class="st">&quot;NIEHS Data&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  kableExtra<span class="sc">::</span><span class="fu">kable_classic</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">html_font =</span> <span class="st">&quot;Cambria&quot;</span>)</span></code></pre></div>
-<table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
-<caption>
-NIEHS Data
-</caption>
-<thead>
-<tr>
-<th style="text-align:right;">
-obs
-</th>
-<th style="text-align:right;">
-Y
-</th>
-<th style="text-align:right;">
-X1
-</th>
-<th style="text-align:right;">
-X2
-</th>
-<th style="text-align:right;">
-X3
-</th>
-<th style="text-align:right;">
-X4
-</th>
-<th style="text-align:right;">
-X5
-</th>
-<th style="text-align:right;">
-X6
-</th>
-<th style="text-align:right;">
-X7
-</th>
-<th style="text-align:right;">
-Z
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-7.534686
-</td>
-<td style="text-align:right;">
-0.4157066
-</td>
-<td style="text-align:right;">
-0.5308077
-</td>
-<td style="text-align:right;">
-0.2223965
-</td>
-<td style="text-align:right;">
-1.1592634
-</td>
-<td style="text-align:right;">
-2.4577556
-</td>
-<td style="text-align:right;">
-0.9438601
-</td>
-<td style="text-align:right;">
-1.8714406
-</td>
-<td style="text-align:right;">
-0
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:right;">
-19.611934
-</td>
-<td style="text-align:right;">
-0.5293572
-</td>
-<td style="text-align:right;">
-0.9339570
-</td>
-<td style="text-align:right;">
-1.1210595
-</td>
-<td style="text-align:right;">
-1.3350074
-</td>
-<td style="text-align:right;">
-0.3096883
-</td>
-<td style="text-align:right;">
-0.5190970
-</td>
-<td style="text-align:right;">
-0.2418065
-</td>
-<td style="text-align:right;">
-0
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-3
-</td>
-<td style="text-align:right;">
-12.664050
-</td>
-<td style="text-align:right;">
-0.4849759
-</td>
-<td style="text-align:right;">
-0.7210988
-</td>
-<td style="text-align:right;">
-0.4629027
-</td>
-<td style="text-align:right;">
-1.0334138
-</td>
-<td style="text-align:right;">
-0.9492810
-</td>
-<td style="text-align:right;">
-0.3664090
-</td>
-<td style="text-align:right;">
-0.3502445
-</td>
-<td style="text-align:right;">
-0
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-4
-</td>
-<td style="text-align:right;">
-15.600288
-</td>
-<td style="text-align:right;">
-0.8275456
-</td>
-<td style="text-align:right;">
-1.0457137
-</td>
-<td style="text-align:right;">
-0.9699040
-</td>
-<td style="text-align:right;">
-0.9045099
-</td>
-<td style="text-align:right;">
-0.9107914
-</td>
-<td style="text-align:right;">
-0.4299847
-</td>
-<td style="text-align:right;">
-1.0007901
-</td>
-<td style="text-align:right;">
-0
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-5
-</td>
-<td style="text-align:right;">
-18.606498
-</td>
-<td style="text-align:right;">
-0.5190363
-</td>
-<td style="text-align:right;">
-0.7802400
-</td>
-<td style="text-align:right;">
-0.6142188
-</td>
-<td style="text-align:right;">
-0.3729743
-</td>
-<td style="text-align:right;">
-0.5038126
-</td>
-<td style="text-align:right;">
-0.3575472
-</td>
-<td style="text-align:right;">
-0.5906156
-</td>
-<td style="text-align:right;">
-0
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-6
-</td>
-<td style="text-align:right;">
-18.525890
-</td>
-<td style="text-align:right;">
-0.4009491
-</td>
-<td style="text-align:right;">
-0.8639886
-</td>
-<td style="text-align:right;">
-0.5501847
-</td>
-<td style="text-align:right;">
-0.9011016
-</td>
-<td style="text-align:right;">
-1.2907615
-</td>
-<td style="text-align:right;">
-0.7990418
-</td>
-<td style="text-align:right;">
-1.5097039
-</td>
-<td style="text-align:right;">
-0
-</td>
-</tr>
-</tbody>
-</table>
-<p>For detailed information on this simulated data please see:</p>
-<p><a href="https://github.com/niehs-prime/2015-NIEHS-MIxtures-Workshop" class="uri">https://github.com/niehs-prime/2015-NIEHS-MIxtures-Workshop</a></p>
-<p>Briefly, this synthetic data can be considered the results of a
-prospective cohort epidemiologic study. The outcome cannot cause the
-exposures (as might occur in a cross-sectional study). Correlations
-between exposure variables can be thought of as caused by common sources
-or modes of exposure. The nuisance variable Z can be assumed to be a
-potential confounder and not a collider. There are 7 exposures which
-have a complicated dependency structure. <span class="math inline">\(X_3\)</span> and <span class="math inline">\(X_6\)</span> do not have an impact on the
-outcome.</p>
-<p>One issue is that many machine learning algorithms will fail given
-only 1 variable passed as a feature so let’s add some other
-covariates.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>niehs_data<span class="sc">$</span>Z2 <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(<span class="fu">nrow</span>(niehs_data),</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="at">size =</span> <span class="dv">1</span>,</span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">prob =</span> <span class="fl">0.3</span></span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>)</span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>niehs_data<span class="sc">$</span>Z3 <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(<span class="fu">nrow</span>(niehs_data),</span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">size =</span> <span class="dv">1</span>,</span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  <span class="at">prob =</span> <span class="fl">0.1</span></span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>)</span></code></pre></div>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>exposures <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;LBX074LA&quot;</span>, <span class="co"># PCB74 Lipid Adj (ng/g)</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>               <span class="st">&quot;LBX099LA&quot;</span>, <span class="co"># PCB99 Lipid Adj (ng/g)</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>               <span class="st">&quot;LBX118LA&quot;</span>, <span class="co"># PCB118 Lipid Adj (ng/g)</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>               <span class="st">&quot;LBX138LA&quot;</span>, <span class="co"># PCB138 Lipid Adj (ng/g)</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>               <span class="st">&quot;LBX153LA&quot;</span>, <span class="co"># PCB153 Lipid Adj (ng/g)</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>               <span class="st">&quot;LBX170LA&quot;</span>, <span class="co"># PCB170 Lipid Adj (ng/g)</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>               <span class="st">&quot;LBX180LA&quot;</span>, <span class="co"># PCB180 Lipid Adj (ng/g)</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>               <span class="st">&quot;LBX187LA&quot;</span>, <span class="co"># PCB187 Lipid Adj (ng/g)</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>               <span class="st">&quot;LBX194LA&quot;</span>, <span class="co"># PCB194 Lipid Adj (ng/g)</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>               <span class="st">&quot;LBXD03LA&quot;</span>, <span class="co"># 1,2,3,6,7,8-hxcdd Lipid Adj (pg/g)</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>               <span class="st">&quot;LBXD05LA&quot;</span>, <span class="co"># 1,2,3,4,6,7,8-hpcdd Lipid Adj (pg/g)</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>               <span class="st">&quot;LBXD07LA&quot;</span>, <span class="co"># 1,2,3,4,6,7,8,9-ocdd Lipid Adj (pg/g)</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>               <span class="st">&quot;LBXF03LA&quot;</span>, <span class="co"># 2,3,4,7,8-pncdf Lipid Adj (pg/g)</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>               <span class="st">&quot;LBXF04LA&quot;</span>, <span class="co"># 1,2,3,4,7,8-hxcdf Lipid Adj (pg/g)</span></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>               <span class="st">&quot;LBXF05LA&quot;</span>, <span class="co"># 1,2,3,6,7,8-hxcdf Lipid Adj (pg/g)</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>               <span class="st">&quot;LBXF08LA&quot;</span>, <span class="co"># 1,2,3,4,6,7,8-hxcdf Lipid Adj (pg/g)</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>               <span class="st">&quot;LBXHXCLA&quot;</span>, <span class="co"># 3,3&#39;,4,4&#39;,5,5&#39;-hxcb Lipid Adj (pg/g)</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>               <span class="st">&quot;LBXPCBLA&quot;</span>) <span class="co"># 3,3&#39;,4,4&#39;,5-pcnb Lipid Adj (pg/g)</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>NHANES_eurocim <span class="ot">&lt;-</span> NHANES_eurocim[<span class="fu">complete.cases</span>(NHANES_eurocim[, exposures]), ]</span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a>outcome <span class="ot">&lt;-</span> <span class="st">&quot;TELOMEAN&quot;</span></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a>covariates <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;LBXWBCSI&quot;</span>, <span class="co"># White blood cell count (SI)</span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a>                <span class="st">&quot;LBXLYPCT&quot;</span>, <span class="co"># Lymphocyte percent (%)</span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a>                <span class="st">&quot;LBXMOPCT&quot;</span>, <span class="co"># Monocyte percent (%)</span></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a>                <span class="st">&quot;LBXEOPCT&quot;</span>, <span class="co"># Eosinophils percent (%)</span></span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a>                <span class="st">&quot;LBXBAPCT&quot;</span>, <span class="co"># Basophils percent (%)</span></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a>                <span class="st">&quot;LBXNEPCT&quot;</span>, <span class="co"># Segmented neutrophils percent (%)</span></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a>                <span class="st">&quot;male&quot;</span>, <span class="co"># Sex</span></span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a>                <span class="st">&quot;age_cent&quot;</span>, <span class="co"># Age at Screening, centered</span></span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a>                <span class="st">&quot;race_cat&quot;</span>, <span class="co"># race</span></span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a>                <span class="st">&quot;bmi_cat3&quot;</span>, <span class="co"># Body Mass Index (kg/m**2)</span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a>                <span class="st">&quot;ln_lbxcot&quot;</span>, <span class="co"># Cotinine (ng/mL), log-transformed</span></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a>                <span class="st">&quot;edu_cat&quot;</span>) <span class="co"># Education Level - Adults 20+</span></span></code></pre></div>
+<p>To improve consistency in the region we find to be the maximizing
+region, it is best to remove an exposure of highly correlated sets, we
+do that here:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Calculate the correlation matrix for the exposures</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>cor_matrix <span class="ot">&lt;-</span> <span class="fu">cor</span>(NHANES_eurocim[, exposures], <span class="at">use =</span> <span class="st">&quot;complete.obs&quot;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co"># Set a threshold for high correlation</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>threshold <span class="ot">&lt;-</span> <span class="fl">0.8</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co"># Find pairs of highly correlated exposures</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>highly_correlated_pairs <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">abs</span>(cor_matrix) <span class="sc">&gt;</span> threshold <span class="sc">&amp;</span> <span class="fu">lower.tri</span>(cor_matrix), <span class="at">arr.ind =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co"># Initiate a vector to keep track of exposures to remove</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>exposures_to_remove <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co"># Loop through the highly correlated pairs and decide which exposure to remove</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="cf">for</span> (pair <span class="cf">in</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(highly_correlated_pairs))) {</span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>  row <span class="ot">&lt;-</span> highly_correlated_pairs[pair, <span class="st">&quot;row&quot;</span>]</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>  col <span class="ot">&lt;-</span> highly_correlated_pairs[pair, <span class="st">&quot;col&quot;</span>]</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span>(<span class="fu">colnames</span>(cor_matrix)[row] <span class="sc">%in%</span> exposures_to_remove)) {</span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>    exposures_to_remove <span class="ot">&lt;-</span> <span class="fu">c</span>(exposures_to_remove, <span class="fu">colnames</span>(cor_matrix)[row])</span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>  }</span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a>}</span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co"># Keep only uncorrelated exposures</span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a>exposures_to_keep <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(exposures, exposures_to_remove)</span></code></pre></div>
 </div>
 <div id="run-cvtreemle" class="section level2">
-<h2>Run <code>CVtreeMLE</code></h2>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>ptm <span class="ot">&lt;-</span> <span class="fu">proc.time</span>()</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>niehs_results <span class="ot">&lt;-</span> <span class="fu">CVtreeMLE</span>(</span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">data =</span> <span class="fu">as.data.frame</span>(niehs_data),</span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">w =</span> <span class="fu">c</span>(<span class="st">&quot;Z&quot;</span>, <span class="st">&quot;Z2&quot;</span>, <span class="st">&quot;Z3&quot;</span>),</span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">a =</span> <span class="fu">c</span>(<span class="fu">paste</span>(<span class="st">&quot;X&quot;</span>, <span class="fu">seq</span>(<span class="dv">7</span>), <span class="at">sep =</span> <span class="st">&quot;&quot;</span>)),</span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">y =</span> <span class="st">&quot;Y&quot;</span>,</span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="at">n_folds =</span> <span class="dv">5</span>,</span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>  <span class="at">seed =</span> seed,</span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>  <span class="at">parallel_cv =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>  <span class="at">parallel =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  <span class="at">family =</span> <span class="st">&quot;continuous&quot;</span>,</span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>  <span class="at">num_cores =</span> <span class="dv">8</span>,</span>
-<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>  <span class="at">min_max =</span> <span class="st">&quot;min&quot;</span>,</span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>  <span class="at">min_obs =</span> <span class="dv">25</span></span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>)</span>
-<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Depth: 0 Parent mean: Inf Parent N: 400&quot;</span></span>
-<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Best split found at depth: 0 Split on: X3 at point: 0.19&quot;</span></span>
-<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Going deeper from depth: 0 with left rule: X3 &lt;= 0.19 &amp; &quot;</span></span>
-<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Going deeper from depth: 0 with right rule: X3 &gt; 0.19 &amp; &quot;</span></span>
-<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Depth: 1 Parent mean: 12.4004844250252 Parent N: 29&quot;</span></span>
-<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co">#&gt; [1] &quot;No best split found at depth: 1&quot;</span></span>
-<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Depth: 1 Parent mean: 12.4004844250252 Parent N: 371&quot;</span></span>
-<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="co">#&gt; [1] &quot;No best split found at depth: 1&quot;</span></span>
-<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Depth: 0 Parent mean: Inf Parent N: 400&quot;</span></span>
-<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Best split found at depth: 0 Split on: X2 at point: 0.41&quot;</span></span>
-<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Going deeper from depth: 0 with left rule: X2 &lt;= 0.41 &amp; &quot;</span></span>
-<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Going deeper from depth: 0 with right rule: X2 &gt; 0.41 &amp; &quot;</span></span>
-<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Depth: 1 Parent mean: 12.3730729629427 Parent N: 27&quot;</span></span>
-<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a><span class="co">#&gt; [1] &quot;No best split found at depth: 1&quot;</span></span>
-<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Depth: 1 Parent mean: 12.3730729629427 Parent N: 373&quot;</span></span>
-<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a><span class="co">#&gt; [1] &quot;No best split found at depth: 1&quot;</span></span>
-<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Depth: 0 Parent mean: Inf Parent N: 400&quot;</span></span>
-<span id="cb4-34"><a href="#cb4-34" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Best split found at depth: 0 Split on: X2 at point: 0.4&quot;</span></span>
-<span id="cb4-35"><a href="#cb4-35" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Going deeper from depth: 0 with left rule: X2 &lt;= 0.4 &amp; &quot;</span></span>
-<span id="cb4-36"><a href="#cb4-36" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Going deeper from depth: 0 with right rule: X2 &gt; 0.4 &amp; &quot;</span></span>
-<span id="cb4-37"><a href="#cb4-37" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Depth: 1 Parent mean: 11.668194297295 Parent N: 25&quot;</span></span>
-<span id="cb4-38"><a href="#cb4-38" tabindex="-1"></a><span class="co">#&gt; [1] &quot;No best split found at depth: 1&quot;</span></span>
-<span id="cb4-39"><a href="#cb4-39" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Depth: 1 Parent mean: 11.668194297295 Parent N: 375&quot;</span></span>
-<span id="cb4-40"><a href="#cb4-40" tabindex="-1"></a><span class="co">#&gt; [1] &quot;No best split found at depth: 1&quot;</span></span>
-<span id="cb4-41"><a href="#cb4-41" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Depth: 0 Parent mean: Inf Parent N: 400&quot;</span></span>
-<span id="cb4-42"><a href="#cb4-42" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Best split found at depth: 0 Split on: X1 at point: 0.18&quot;</span></span>
-<span id="cb4-43"><a href="#cb4-43" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Going deeper from depth: 0 with left rule: X1 &lt;= 0.18 &amp; &quot;</span></span>
-<span id="cb4-44"><a href="#cb4-44" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Going deeper from depth: 0 with right rule: X1 &gt; 0.18 &amp; &quot;</span></span>
-<span id="cb4-45"><a href="#cb4-45" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Depth: 1 Parent mean: 11.8737320938925 Parent N: 29&quot;</span></span>
-<span id="cb4-46"><a href="#cb4-46" tabindex="-1"></a><span class="co">#&gt; [1] &quot;No best split found at depth: 1&quot;</span></span>
-<span id="cb4-47"><a href="#cb4-47" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Depth: 1 Parent mean: 11.8737320938925 Parent N: 371&quot;</span></span>
-<span id="cb4-48"><a href="#cb4-48" tabindex="-1"></a><span class="co">#&gt; [1] &quot;No best split found at depth: 1&quot;</span></span>
-<span id="cb4-49"><a href="#cb4-49" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Depth: 0 Parent mean: Inf Parent N: 400&quot;</span></span>
-<span id="cb4-50"><a href="#cb4-50" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Best split found at depth: 0 Split on: X2 at point: 0.41&quot;</span></span>
-<span id="cb4-51"><a href="#cb4-51" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Going deeper from depth: 0 with left rule: X2 &lt;= 0.41 &amp; &quot;</span></span>
-<span id="cb4-52"><a href="#cb4-52" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Going deeper from depth: 0 with right rule: X2 &gt; 0.41 &amp; &quot;</span></span>
-<span id="cb4-53"><a href="#cb4-53" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Depth: 1 Parent mean: 11.7150451328596 Parent N: 28&quot;</span></span>
-<span id="cb4-54"><a href="#cb4-54" tabindex="-1"></a><span class="co">#&gt; [1] &quot;No best split found at depth: 1&quot;</span></span>
-<span id="cb4-55"><a href="#cb4-55" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Depth: 1 Parent mean: 11.7150451328596 Parent N: 372&quot;</span></span>
-<span id="cb4-56"><a href="#cb4-56" tabindex="-1"></a><span class="co">#&gt; [1] &quot;No best split found at depth: 1&quot;</span></span>
-<span id="cb4-57"><a href="#cb4-57" tabindex="-1"></a><span class="fu">proc.time</span>() <span class="sc">-</span> ptm</span>
-<span id="cb4-58"><a href="#cb4-58" tabindex="-1"></a><span class="co">#&gt;    user  system elapsed </span></span>
-<span id="cb4-59"><a href="#cb4-59" tabindex="-1"></a><span class="co">#&gt;   8.398   0.609 179.919</span></span></code></pre></div>
+<h2>Run CVtreeMLE</h2>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>nhanes_results <span class="ot">&lt;-</span> <span class="fu">CVtreeMLE</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="at">data =</span> NHANES_eurocim, <span class="do">## dataframe</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">w =</span> covariates,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">a =</span> exposures_to_keep,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">y =</span> outcome,</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">n_folds =</span> <span class="dv">7</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">seed =</span> <span class="dv">34421</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="at">parallel_cv =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>  <span class="at">parallel =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>  <span class="at">family =</span> <span class="st">&quot;continuous&quot;</span>,</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>  <span class="at">num_cores =</span> <span class="dv">8</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  <span class="at">min_max =</span> <span class="st">&quot;max&quot;</span>, <span class="co"># we are going for the maximum</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>  <span class="at">min_obs =</span> <span class="fu">nrow</span>(NHANES_eurocim) <span class="sc">*</span> .<span class="dv">1</span> <span class="co"># minimum number of individuals in a region to warrant split</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>)</span></code></pre></div>
 </div>
-<div id="mixture-results" class="section level2">
-<h2>Mixture Results</h2>
-<p>First let’s look at the oracle estimate. This is the pooled CV-TMLE
-estimates for our parameter which is the region that maximizes or
-minimizes the expected outcome - again this could be different if there
-is incosistencies in estimates across the folds.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>pooled_mixture_results <span class="ot">&lt;-</span> niehs_results<span class="sc">$</span><span class="st">`</span><span class="at">Oracle Region Results</span><span class="st">`</span></span>
+<div id="investigating-results" class="section level2">
+<h2>Investigating Results</h2>
+<p>Let’s first look at the results for each fold:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>k_fold_results <span class="ot">&lt;-</span> nhanes_results<span class="sc">$</span><span class="st">`</span><span class="at">V-Specific Mix Results</span><span class="st">`</span></span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>pooled_mixture_results <span class="sc">%&gt;%</span></span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  kableExtra<span class="sc">::</span><span class="fu">kbl</span>(<span class="at">caption =</span> <span class="st">&quot;Oracle Mixture Results&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>k_fold_results <span class="sc">%&gt;%</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  kableExtra<span class="sc">::</span><span class="fu">kbl</span>(<span class="at">caption =</span> <span class="st">&quot;K-fold Results&quot;</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  kableExtra<span class="sc">::</span><span class="fu">kable_classic</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">html_font =</span> <span class="st">&quot;Cambria&quot;</span>)</span></code></pre></div>
-<table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
-<caption>
-Oracle Mixture Results
-</caption>
-<thead>
-<tr>
-<th style="text-align:right;">
-Region ARE
-</th>
-<th style="text-align:right;">
-Standard Error
-</th>
-<th style="text-align:right;">
-Lower CI
-</th>
-<th style="text-align:right;">
-Upper CI
-</th>
-<th style="text-align:right;">
-P-value
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:right;">
-0.333
-</td>
-<td style="text-align:right;">
-4.366
-</td>
-<td style="text-align:right;">
--8.224
-</td>
-<td style="text-align:right;">
-8.891
-</td>
-<td style="text-align:right;">
-0.939132
-</td>
-</tr>
-</tbody>
-</table>
-<p>This shows that the estimate for the pooled region that minimizes the
-expected outcome is -3.77, which is not significant.</p>
-<p>We can look at what regions comprise this oracle region:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>region_specific_pooling <span class="ot">&lt;-</span> niehs_results<span class="sc">$</span><span class="st">`</span><span class="at">Pooled TMLE Mixture Results</span><span class="st">`</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>region_specific_pooling <span class="sc">%&gt;%</span></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  kableExtra<span class="sc">::</span><span class="fu">kbl</span>(<span class="at">caption =</span> <span class="st">&quot;Region Specific Mixture Results&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  kableExtra<span class="sc">::</span><span class="fu">kable_classic</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">html_font =</span> <span class="st">&quot;Cambria&quot;</span>)</span></code></pre></div>
-<table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
-<caption>
-Region Specific Mixture Results
-</caption>
-<thead>
-<tr>
-<th style="text-align:right;">
-Mixture ATE
-</th>
-<th style="text-align:right;">
-Standard Error
-</th>
-<th style="text-align:right;">
-Lower CI
-</th>
-<th style="text-align:right;">
-Upper CI
-</th>
-<th style="text-align:right;">
-P-value
-</th>
-<th style="text-align:right;">
-P-value Adj
-</th>
-<th style="text-align:left;">
-Vars
-</th>
-<th style="text-align:right;">
-RMSE
-</th>
-<th style="text-align:left;">
-Average_Rule
-</th>
-<th style="text-align:right;">
-Proportion_Folds
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:right;">
-1.026
-</td>
-<td style="text-align:right;">
-9.876
-</td>
-<td style="text-align:right;">
--18.330
-</td>
-<td style="text-align:right;">
-20.382
-</td>
-<td style="text-align:right;">
-0.917285
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:left;">
-X1
-</td>
-<td style="text-align:right;">
-3.283
-</td>
-<td style="text-align:left;">
-X1 &lt;= 0.18
-</td>
-<td style="text-align:right;">
-0.2
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-0.289
-</td>
-<td style="text-align:right;">
-5.520
-</td>
-<td style="text-align:right;">
--10.531
-</td>
-<td style="text-align:right;">
-11.108
-</td>
-<td style="text-align:right;">
-0.958281
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:left;">
-X2
-</td>
-<td style="text-align:right;">
-3.009
-</td>
-<td style="text-align:left;">
-X2 &lt;=0.407(0.4,0.41)
-</td>
-<td style="text-align:right;">
-0.6
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
-0.038
-</td>
-<td style="text-align:right;">
-10.432
-</td>
-<td style="text-align:right;">
--20.408
-</td>
-<td style="text-align:right;">
-20.485
-</td>
-<td style="text-align:right;">
-0.997075
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:left;">
-X3
-</td>
-<td style="text-align:right;">
-2.815
-</td>
-<td style="text-align:left;">
-X3 &lt;= 0.19
-</td>
-<td style="text-align:right;">
-0.2
-</td>
-</tr>
-</tbody>
-</table>
-<p>This shows 80% of the folds find a region for X2 and 20% for X1, this
-becomes more consistent if higher folds are used.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>k_fold_results <span class="ot">&lt;-</span> niehs_results<span class="sc">$</span><span class="st">`</span><span class="at">V-Specific Mix Results</span><span class="st">`</span></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>k_fold_results <span class="sc">%&gt;%</span></span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  kableExtra<span class="sc">::</span><span class="fu">kbl</span>(<span class="at">caption =</span> <span class="st">&quot;K-fold Results&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  kableExtra<span class="sc">::</span><span class="fu">kable_classic</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">html_font =</span> <span class="st">&quot;Cambria&quot;</span>)</span></code></pre></div>
 <table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
 <caption>
 K-fold Results
@@ -1246,162 +838,360 @@ variables
 <tbody>
 <tr>
 <td style="text-align:right;">
-0.038
+-0.109
 </td>
 <td style="text-align:right;">
-10.432
+1.268
 </td>
 <td style="text-align:right;">
--20.408
+-2.593
 </td>
 <td style="text-align:right;">
-20.485
+2.375
 </td>
 <td style="text-align:right;">
-0.997075
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-2.815
-</td>
-<td style="text-align:left;">
-X3 &lt;= 0.19
+0.931485
 </td>
 <td style="text-align:right;">
 1
 </td>
+<td style="text-align:right;">
+0.442
+</td>
 <td style="text-align:left;">
-X3
+LBXD03LA &lt;= 12.9
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+LBXD03LA
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
-0.030
+-0.170
 </td>
 <td style="text-align:right;">
-9.759
+1.625
 </td>
 <td style="text-align:right;">
--19.097
+-3.354
 </td>
 <td style="text-align:right;">
-19.158
+3.015
 </td>
 <td style="text-align:right;">
-0.997526
+0.916867
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-3.099
+0.533
 </td>
 <td style="text-align:left;">
-X2 &lt;= 0.41
+LBXD03LA &lt;= 13.2
 </td>
 <td style="text-align:right;">
 2
 </td>
 <td style="text-align:left;">
-X2
+LBXD03LA
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
-0.354
+-0.679
 </td>
 <td style="text-align:right;">
-9.774
+2.523
 </td>
 <td style="text-align:right;">
--18.803
+-5.624
 </td>
 <td style="text-align:right;">
-19.511
+4.266
 </td>
 <td style="text-align:right;">
-0.971125
+0.787749
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-2.712
+0.886
 </td>
 <td style="text-align:left;">
-X2 &lt;= 0.4
+LBXD03LA &lt;= 13
 </td>
 <td style="text-align:right;">
 3
 </td>
 <td style="text-align:left;">
-X2
+LBXD03LA
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
-1.026
+-0.485
 </td>
 <td style="text-align:right;">
-9.876
+1.917
 </td>
 <td style="text-align:right;">
--18.330
+-4.241
 </td>
 <td style="text-align:right;">
-20.382
+3.272
 </td>
 <td style="text-align:right;">
-0.917285
+0.800305
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-3.283
+0.672
 </td>
 <td style="text-align:left;">
-X1 &lt;= 0.18
+LBXD03LA &lt;= 12.9
 </td>
 <td style="text-align:right;">
 4
 </td>
 <td style="text-align:left;">
-X1
+LBXD03LA
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
-0.717
+-0.406
 </td>
 <td style="text-align:right;">
-9.243
+2.259
 </td>
 <td style="text-align:right;">
--17.398
+-4.834
 </td>
 <td style="text-align:right;">
-18.832
+4.022
 </td>
 <td style="text-align:right;">
-0.938135
+0.857362
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-3.237
+0.726
 </td>
 <td style="text-align:left;">
-X2 &lt;= 0.41
+LBXD03LA &lt;= 13
 </td>
 <td style="text-align:right;">
 5
 </td>
 <td style="text-align:left;">
-X2
+LBXD03LA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+-0.122
+</td>
+<td style="text-align:right;">
+1.379
+</td>
+<td style="text-align:right;">
+-2.824
+</td>
+<td style="text-align:right;">
+2.580
+</td>
+<td style="text-align:right;">
+0.929303
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.463
+</td>
+<td style="text-align:left;">
+LBXD03LA &lt;= 13
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:left;">
+LBXD03LA
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+-0.552
+</td>
+<td style="text-align:right;">
+2.054
+</td>
+<td style="text-align:right;">
+-4.578
+</td>
+<td style="text-align:right;">
+3.474
+</td>
+<td style="text-align:right;">
+0.788106
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0.734
+</td>
+<td style="text-align:left;">
+LBXD03LA &lt;= 13
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:left;">
+LBXD03LA
+</td>
+</tr>
+</tbody>
+</table>
+<p>This shows in all folds that LBXDO3LA was found to have the region
+which maximizes telomere length if all individuals were forced to be
+exposed to levels less than approximately 13. LBXDO3LA is
+1,2,3,6,7,8-hxcdd Lipid Adj (pg/g) which is a Furan.</p>
+<p>The pooled result is interpretable because it will be the average of
+estimates in the regions for the same variable:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>pooled_mixture_results <span class="ot">&lt;-</span> nhanes_results<span class="sc">$</span><span class="st">`</span><span class="at">Oracle Region Results</span><span class="st">`</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>pooled_mixture_results <span class="sc">%&gt;%</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  kableExtra<span class="sc">::</span><span class="fu">kbl</span>(<span class="at">caption =</span> <span class="st">&quot;Oracle Mixture Results&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  kableExtra<span class="sc">::</span><span class="fu">kable_classic</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">html_font =</span> <span class="st">&quot;Cambria&quot;</span>)</span></code></pre></div>
+<table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Oracle Mixture Results
+</caption>
+<thead>
+<tr>
+<th style="text-align:right;">
+Region ARE
+</th>
+<th style="text-align:right;">
+Standard Error
+</th>
+<th style="text-align:right;">
+Lower CI
+</th>
+<th style="text-align:right;">
+Upper CI
+</th>
+<th style="text-align:right;">
+P-value
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+-0.563
+</td>
+<td style="text-align:right;">
+1.062
+</td>
+<td style="text-align:right;">
+-2.644
+</td>
+<td style="text-align:right;">
+1.518
+</td>
+<td style="text-align:right;">
+0.595802
+</td>
+</tr>
+</tbody>
+</table>
+<p>We can also examine the pooled estimates by exposure set with average
+rules in each set:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>region_specific_pooling <span class="ot">&lt;-</span> nhanes_results<span class="sc">$</span><span class="st">`</span><span class="at">Pooled TMLE Mixture Results</span><span class="st">`</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>region_specific_pooling <span class="sc">%&gt;%</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  kableExtra<span class="sc">::</span><span class="fu">kbl</span>(<span class="at">caption =</span> <span class="st">&quot;Region Specific Mixture Results&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  kableExtra<span class="sc">::</span><span class="fu">kable_classic</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>, <span class="at">html_font =</span> <span class="st">&quot;Cambria&quot;</span>)</span></code></pre></div>
+<table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Region Specific Mixture Results
+</caption>
+<thead>
+<tr>
+<th style="text-align:right;">
+Mixture ATE
+</th>
+<th style="text-align:right;">
+Standard Error
+</th>
+<th style="text-align:right;">
+Lower CI
+</th>
+<th style="text-align:right;">
+Upper CI
+</th>
+<th style="text-align:right;">
+P-value
+</th>
+<th style="text-align:right;">
+P-value Adj
+</th>
+<th style="text-align:left;">
+Vars
+</th>
+<th style="text-align:right;">
+RMSE
+</th>
+<th style="text-align:left;">
+Average_Rule
+</th>
+<th style="text-align:right;">
+Proportion_Folds
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+-0.563
+</td>
+<td style="text-align:right;">
+1.062
+</td>
+<td style="text-align:right;">
+-2.644
+</td>
+<td style="text-align:right;">
+1.518
+</td>
+<td style="text-align:right;">
+0.595802
+</td>
+<td style="text-align:right;">
+0.595802
+</td>
+<td style="text-align:left;">
+LBXD03LA
+</td>
+<td style="text-align:right;">
+0.918
+</td>
+<td style="text-align:left;">
+LBXD03LA &lt;=13(12.9,13.2)
+</td>
+<td style="text-align:right;">
+1
 </td>
 </tr>
 </tbody>
@@ -1414,12 +1204,7 @@ using the training data as we rotate through the folds,
 <code>CVtreeMLE</code> will give, in the event that a signal actually
 exists, more consistent results when higher n_fold values are used.
 Thus, we recommend using 10-fold CV when possible for more consistent
-and interpretable results. Here, 5-fold was used simply for convenience
-in compiling and testing.</p>
-<p>It should be noted that, especially in the marginal results, if the
-analyst chooses to report on results for one fold, which does have valid
-inference, the variability of the thresholds and estimates across the
-folds should also be provided for full transparency.</p>
+and interpretable results.</p>
 </div>
 <div id="runtime-performance-guidelines" class="section level2">
 <h2>Runtime Performance Guidelines</h2>

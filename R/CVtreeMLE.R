@@ -19,15 +19,6 @@
 #'  as exposures.
 #' @param y A character indicating which variable in the data to use as the
 #' outcome.
-#' @param fit_marginals TRUE/FALSE whether or not to find cut-points at
-#' ATEs for each data-adaptive level of the dose-response relationship for
-#' each individual exposure. Default is FALSE.
-#' @param which_marginals If fit marginals is TRUE, which marginals should
-#' CVtreeMLE identify partition nodes in? Takes in a list of the exposures.
-#' @param direction Positive or negative, whether to select the tree with the
-#' maximum (positive) coefficient attached to it in the ensemble or the
-#' minimum (negative). If positive, positive ATEs are given, if negative,
-#' negative ATEs are given.
 #' @param a_stack Stack of estimators used in the Super Learner during
 #' the iterative backfitting for `Y|A`, this should be an SL3 object.
 #' If not provided, \code{utils_create_sls} is used to create default
@@ -44,11 +35,7 @@
 #' @param seed Pass in a seed number for consistency of results. If not provided
 #' a default seed is generated.
 #' @param family Family ('binomial' or 'continuous').
-#' @param verbose If true, a message will be printed indicating what process
-#' is being started by CVtreeMLE. During the iterative backfitting procedure
-#' the iteration in each fold along with the difference in model fit and
-#' rules determined will be printed. After the iterative backfitting procedures
-#' a table of rules determined in each fold will be printed.
+#' @param region If a predetermined region is of interest, put here: like "A < 0.02"
 #' @param parallel Use parallel processing if a backend is registered; enabled
 #' by default.
 #' @param parallel_cv Use parallel processing on CV procedure vs. parallel
@@ -63,6 +50,8 @@
 #' rule with lower and upper bounds for each cutpoint. The union rule creates
 #' a new rule that is the space that contains all the rules found across the
 #' fold and is therefore more conservative.
+#' @param min_max Which oracle region to go after the one that minimizes or maximizes the outcome.
+#' @param min_obs Minimum number of observations to have in a region.
 #' @details The function performs the following functions.
 #'  \enumerate{
 #'  \item Imputes missing values with the mean and creates dummy indicator
@@ -362,19 +351,6 @@ CVtreeMLE <- function(w,
     )
   }
 
-
-  if (dim(fold_mixture_rules)[1] == 0) {
-    no_mixture_rules <- TRUE
-  } else {
-    no_mixture_rules <- FALSE
-  }
-
-
-  if (no_mixture_rules == TRUE) {
-    return("No Mixture Threshold Found")
-  }
-
-
   # Estimate nuisance parameters ---------------------------
 
 
@@ -465,17 +441,13 @@ CVtreeMLE <- function(w,
       data = data,
       mix_comps = c(a, w),
       mixture_results,
-      n_folds = n_folds,
-      no_mixture_rules
-    )
+      n_folds = n_folds)
 
     inv_var_mixture_results <- common_mixture_rules(group_list,
       data = data,
       mix_comps = c(a, w),
       inv_var_mixture_results,
-      n_folds = n_folds,
-      no_mixture_rules
-    )
+      n_folds = n_folds)
   }
 
   mix_rules <- unlist(mix_rules, recursive = FALSE, use.names = FALSE)

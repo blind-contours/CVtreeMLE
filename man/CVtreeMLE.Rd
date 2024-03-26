@@ -82,23 +82,11 @@ rule with lower and upper bounds for each cutpoint. The union rule creates
 a new rule that is the space that contains all the rules found across the
 fold and is therefore more conservative.}
 
-\item{fit_marginals}{TRUE/FALSE whether or not to find cut-points at
-ATEs for each data-adaptive level of the dose-response relationship for
-each individual exposure. Default is FALSE.}
+\item{min_max}{Which oracle region to go after the one that minimizes or maximizes the outcome.}
 
-\item{which_marginals}{If fit marginals is TRUE, which marginals should
-CVtreeMLE identify partition nodes in? Takes in a list of the exposures.}
+\item{region}{If a predetermined region is of interest, put here: like "A < 0.02"}
 
-\item{direction}{Positive or negative, whether to select the tree with the
-maximum (positive) coefficient attached to it in the ensemble or the
-minimum (negative). If positive, positive ATEs are given, if negative,
-negative ATEs are given.}
-
-\item{verbose}{If true, a message will be printed indicating what process
-is being started by CVtreeMLE. During the iterative backfitting procedure
-the iteration in each fold along with the difference in model fit and
-rules determined will be printed. After the iterative backfitting procedures
-a table of rules determined in each fold will be printed.}
+\item{min_obs}{Minimum number of observations to have in a region.}
 }
 \value{
 Object of class \code{CVtreeMLE}, containing a list of table results

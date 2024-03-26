@@ -10,8 +10,7 @@ common_mixture_rules(
   data = data,
   mix_comps = mix_comps,
   mixture_results,
-  n_folds,
-  no_mixture_rules
+  n_folds
 )
 }
 \arguments{
@@ -24,8 +23,6 @@ common_mixture_rules(
 \item{mixture_results}{data frame of results found for mixture rules}
 
 \item{n_folds}{Number of folds used in cross-validation}
-
-\item{no_mixture_rules}{TRUE/FALSE if no mixture rule was found}
 }
 \value{
 Rules object. TODO: add more detail here.

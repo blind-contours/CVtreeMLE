@@ -16,6 +16,8 @@ calc_ate_estimates(data, ate_var, y, p_adjust_n, v_fold = FALSE, naive = FALSE)
 \item{p_adjust_n}{Number repeated measures to adjust p-value}
 
 \item{v_fold}{TRUE/FALSE whether to calculate v-fold specific ATE estimates}
+
+\item{naive}{This is for a one step estimator so Psi is calculated without TMLE update}
 }
 \value{
 A \code{numeric} vector of the same length as \code{vals}, where

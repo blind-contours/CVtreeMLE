@@ -17,61 +17,108 @@ library(purrr)
 seed <- 5454433
 set.seed(seed)
 
-## ----load_NIEHS_data, warning=FALSE-------------------------------------------
-niehs_data <- NIEHS_data_1
+## ----NHANES data and variables------------------------------------------------
+data("NHANES_eurocim")
 
-head(niehs_data) %>%
-  kableExtra::kbl(caption = "NIEHS Data") %>%
-  kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
+exposures <- c("LBX074LA", # PCB74 Lipid Adj (ng/g)
+               "LBX099LA", # PCB99 Lipid Adj (ng/g)
+               "LBX118LA", # PCB118 Lipid Adj (ng/g)
+               "LBX138LA", # PCB138 Lipid Adj (ng/g)
+               "LBX153LA", # PCB153 Lipid Adj (ng/g)
+               "LBX170LA", # PCB170 Lipid Adj (ng/g)
+               "LBX180LA", # PCB180 Lipid Adj (ng/g)
+               "LBX187LA", # PCB187 Lipid Adj (ng/g)
+               "LBX194LA", # PCB194 Lipid Adj (ng/g)
+               "LBXD03LA", # 1,2,3,6,7,8-hxcdd Lipid Adj (pg/g)
+               "LBXD05LA", # 1,2,3,4,6,7,8-hpcdd Lipid Adj (pg/g)
+               "LBXD07LA", # 1,2,3,4,6,7,8,9-ocdd Lipid Adj (pg/g)
+               "LBXF03LA", # 2,3,4,7,8-pncdf Lipid Adj (pg/g)
+               "LBXF04LA", # 1,2,3,4,7,8-hxcdf Lipid Adj (pg/g)
+               "LBXF05LA", # 1,2,3,6,7,8-hxcdf Lipid Adj (pg/g)
+               "LBXF08LA", # 1,2,3,4,6,7,8-hxcdf Lipid Adj (pg/g)
+               "LBXHXCLA", # 3,3',4,4',5,5'-hxcb Lipid Adj (pg/g)
+               "LBXPCBLA") # 3,3',4,4',5-pcnb Lipid Adj (pg/g)
 
-## ----add_covariates, warning=FALSE--------------------------------------------
-niehs_data$Z2 <- rbinom(nrow(niehs_data),
-  size = 1,
-  prob = 0.3
-)
+NHANES_eurocim <- NHANES_eurocim[complete.cases(NHANES_eurocim[, exposures]), ]
 
-niehs_data$Z3 <- rbinom(nrow(niehs_data),
-  size = 1,
-  prob = 0.1
-)
+outcome <- "TELOMEAN"
 
-## ----run_simulation, warnings = FALSE-----------------------------------------
-ptm <- proc.time()
+covariates <- c("LBXWBCSI", # White blood cell count (SI)
+                "LBXLYPCT", # Lymphocyte percent (%)
+                "LBXMOPCT", # Monocyte percent (%)
+                "LBXEOPCT", # Eosinophils percent (%)
+                "LBXBAPCT", # Basophils percent (%)
+                "LBXNEPCT", # Segmented neutrophils percent (%)
+                "male", # Sex
+                "age_cent", # Age at Screening, centered
+                "race_cat", # race
+                "bmi_cat3", # Body Mass Index (kg/m**2)
+                "ln_lbxcot", # Cotinine (ng/mL), log-transformed
+                "edu_cat") # Education Level - Adults 20+
 
-niehs_results <- CVtreeMLE(
-  data = as.data.frame(niehs_data),
-  w = c("Z", "Z2", "Z3"),
-  a = c(paste("X", seq(7), sep = "")),
-  y = "Y",
-  n_folds = 5,
-  seed = seed,
+
+
+## ----remove correlated exposures----------------------------------------------
+# Calculate the correlation matrix for the exposures
+cor_matrix <- cor(NHANES_eurocim[, exposures], use = "complete.obs")
+
+# Set a threshold for high correlation
+threshold <- 0.8
+
+# Find pairs of highly correlated exposures
+highly_correlated_pairs <- which(abs(cor_matrix) > threshold & lower.tri(cor_matrix), arr.ind = TRUE)
+
+# Initiate a vector to keep track of exposures to remove
+exposures_to_remove <- c()
+
+# Loop through the highly correlated pairs and decide which exposure to remove
+for (pair in seq_len(nrow(highly_correlated_pairs))) {
+  row <- highly_correlated_pairs[pair, "row"]
+  col <- highly_correlated_pairs[pair, "col"]
+
+  if (!(colnames(cor_matrix)[row] %in% exposures_to_remove)) {
+    exposures_to_remove <- c(exposures_to_remove, colnames(cor_matrix)[row])
+  }
+}
+
+# Keep only uncorrelated exposures
+exposures_to_keep <- setdiff(exposures, exposures_to_remove)
+
+
+## ----run CVtreeMLE for NHANES, warning=FALSE, message=FALSE-------------------
+nhanes_results <- CVtreeMLE(
+  data = NHANES_eurocim, ## dataframe
+  w = covariates,
+  a = exposures_to_keep,
+  y = outcome,
+  n_folds = 7,
+  seed = 34421,
   parallel_cv = TRUE,
   parallel = TRUE,
   family = "continuous",
   num_cores = 8,
-  min_max = "min",
-  min_obs = 25
+  min_max = "max", # we are going for the maximum
+  min_obs = nrow(NHANES_eurocim) * .1 # minimum number of individuals in a region to warrant split
 )
-proc.time() - ptm
+
+## ----k_fold_results-----------------------------------------------------------
+k_fold_results <- nhanes_results$`V-Specific Mix Results`
+
+k_fold_results %>%
+  kableExtra::kbl(caption = "K-fold Results") %>%
+  kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
 
 ## ----pooled_mixture_results---------------------------------------------------
-pooled_mixture_results <- niehs_results$`Oracle Region Results`
+pooled_mixture_results <- nhanes_results$`Oracle Region Results`
 
 pooled_mixture_results %>%
   kableExtra::kbl(caption = "Oracle Mixture Results") %>%
   kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
 
 ## ----region_specific_pooling--------------------------------------------------
-region_specific_pooling <- niehs_results$`Pooled TMLE Mixture Results`
+region_specific_pooling <- nhanes_results$`Pooled TMLE Mixture Results`
 
 region_specific_pooling %>%
   kableExtra::kbl(caption = "Region Specific Mixture Results") %>%
-  kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
-
-## ----k_fold_results-----------------------------------------------------------
-k_fold_results <- niehs_results$`V-Specific Mix Results`
-
-k_fold_results %>%
-  kableExtra::kbl(caption = "K-fold Results") %>%
   kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
 

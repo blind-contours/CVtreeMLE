@@ -6,15 +6,10 @@
 #' @param a Variable names in the mixture
 #' @param w Variable names in the covariates
 #' @param y Variable name for the outcome
-#' @param direction Positive/negative - max or min coefficient to keep in
-#' the ensemble
-#' @param w_stack Stack of algorithms made in SL 3 used in ensemble machine
-#' learning to fit Y|W
 #' @param fold Current fold in the cross-validation
-#' @param max_iter Max number of iterations of iterative backfitting algorithm
-#' @param verbose Run in verbose setting
+#' @param min_max Min or Max oracle region to go for
+#' @param min_obs Minimum number of observations needed to make a split
 #' @param parallel_cv TRUE/FALSE indicator to parallelize cv
-#' @param seed Seed number for consistent results
 #' @importFrom magrittr %>%
 #' @importFrom rlang .data
 #' @import dplyr
@@ -54,7 +49,6 @@ fit_min_ave_tree_algorithm <- function(at,
                                        a,
                                        w,
                                        y,
-                                       family,
                                        fold,
                                        parallel_cv,
                                        min_max,
@@ -212,11 +206,6 @@ fit_min_ave_tree_algorithm <- function(at,
       var = split_variables, outcome
     )
 
-    print(paste(
-      "Depth:", depth, "Parent mean:", parent_mean, "Parent N:",
-      nrow(data)
-    ))
-
     if (depth == max_depth || nrow(data) == 0) {
       current_rule <- list(
         "Value" = mean(data[[outcome]], na.rm = TRUE),
@@ -237,16 +226,6 @@ fit_min_ave_tree_algorithm <- function(at,
       parent_average = parent_mean,
       min_max = min_max
     )
-
-    # Debug: Print if a best split is found or not
-    if (is.null(best_split)) {
-      print(paste("No best split found at depth:", depth))
-    } else {
-      print(paste(
-        "Best split found at depth:", depth, "Split on:",
-        best_split$variable, "at point:", best_split$point
-      ))
-    }
 
     if (is.null(best_split)) { # If no best split found, return the current path
       current_rule <- list(
@@ -273,18 +252,6 @@ fit_min_ave_tree_algorithm <- function(at,
       best_split$point, " & "
     )
 
-    # Debug: Print before making recursive calls
-    print(paste(
-      "Going deeper from depth:", depth,
-      "with left rule:", left_rule
-    ))
-    print(paste(
-      "Going deeper from depth:", depth,
-      "with right rule:", right_rule
-    ))
-
-    # Recursively build the left and right branches,
-    # carrying forward the path and depth
 
     left_rules <- recursive_split_all_rules(
       data = splits$left,

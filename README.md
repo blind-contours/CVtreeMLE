@@ -33,25 +33,34 @@ coverage](https://codecov.io/gh/blind-contours/CVtreeMLE/branch/main/graph/badge
 
 ## What is `CVtreeMLE`?
 
+This package operationalizes the methodology presented here:
+
+<https://arxiv.org/abs/2302.07976>
+
 People often encounter multiple simultaneous exposures (e.g. several
 drugs or pollutants). Policymakers are interested in setting safe
 limits, interdictions, or recommended dosage combinations based on a
 combination of thresholds, one per exposure. Setting these thresholds is
 difficult because all relevant interactions between exposures must be
 accounted for. Previous statistical methods have used parametric
-estimators which do not directly address the question of superadditive
-or subadditive effects in a mixture, rely on unrealistic assumptions,
-and do not result in a threshold based statistical quantity that is
-directly relevant to policy regulators.
+estimators which do not directly address the question of safe exposure
+limits, rely on unrealistic assumptions, and do not result in a
+threshold based statistical quantity that is directly relevant to policy
+regulators.
 
 Here we present an estimator that a) identifies thresholds that
-minimize/maximize the expected outcome marginalized over covariates and
-other exposures; and which b) unbiasedly and efficiently estimates a
-policy intervention which compares the expected outcome if everyone was
-forced to these safe levels compared to the observed outcome under
-observed exposure distribution. This is done by combining a custom
-g-computation tree-based search algorithm with a targeted maximum
-likelihood estimator using cross-validation.
+minimize/maximize the expected outcome controlling for covariates and
+other exposures; and which b) efficiently estimates a policy
+intervention which compares the expected outcome if everyone was forced
+to these safe levels compared to the observed outcome under observed
+exposure distribution.
+
+This is done by using cross-validation where in training folds of the
+data, a custom g-computation tree-based search algorithm finds the
+minimizing region, and an estimation sample is used to estimate the
+policy intervention using targeted maximum likelihood estimation.
+
+## Inputs and Outputs
 
 This package takes in a mixed exposure, covariates, outcome, super
 learner stacks of learners if determined (if not default are used),
@@ -111,154 +120,718 @@ First load the package and other packages needed
 ``` r
 library(CVtreeMLE)
 library(sl3)
-library(pre)
-library(partykit)
 library(kableExtra)
 library(ggplot2)
-library(here)
-source(here("sandbox", "simulate_2d_data.R"))
-
-set.seed(429153)
+seed <- 98484
+set.seed(seed)
 ```
 
-To illustrate how `CVtreeMLE` may be used to find and esitmate a region
+To illustrate how `CVtreeMLE` may be used to find and estimate a region
 that, if intervened on would lead to the biggest reduction in an outcome
-we use simulated data that is described in our paper:
+we use synthetic data from the National Institute of Environmental
+Health:
 
-arXiv:2302.07976
+## National Institute of Environmental Health Data
 
-Briefly, 2 discrete exposures are created based on a multinomial
-regression from baseline covariates. We create an outcome with main
-effect and squared interactions. One region has the minimum expected
-outcome, when both exposures are equal to 1.
+The 2015 NIEHS Mixtures Workshop was developed to determine if new
+mixture methods detect ground-truth interactions built into the
+simulated data. In this way we can simultaneously show `CVtreeMLE`
+output, interpretation and validity.
 
-``` r
+For detailed information on this simulated data please see:
 
-n <- 400
-exposure_grid <- expand.grid(seq(5), seq(5))
-labels <- apply(exposure_grid, 1, paste, collapse = " ")
-exposure_grid <- cbind.data.frame(exposure_grid, labels)
-
-# beta matrix
-c_matrix <- matrix(c(0.1,0.7,0.8,0.9),
-                   ncol  = 2,
-                   nrow = 2)
-
-# Generate simulated data -----------------
-P_0_sim <- gen_covariates(n) %>% # gen covariates
-  gen_multinom(exposure_grid = exposure_grid) %>% # assign obs to exposure cube
-  assign_outcomes(exposure_grid = exposure_grid,
-                  c_matrix = c_matrix)
-#> Warning: `rbernoulli()` was deprecated in purrr 1.0.0.
-#> This warning is displayed once every 8 hours.
-#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-#> generated.
-
-intro_data <- P_0_sim$data
-```
-
-## Run `CVtreeMLE`
-
-We will now pass the simulated data and variable names for each node in
-O = W,A,Y to the `CVtreeMLE` function.
+<https://github.com/niehs-prime/2015-NIEHS-MIxtures-Workshop>
 
 ``` r
-ptm <- proc.time()
+niehs_data <- NIEHS_data_1
 
-sim_results <- CVtreeMLE(
-  data = intro_data,
-  w = c("age", "sex", "bmi"),
-  a = c("region1", "region2"),
-  y = "outcome_obs",
-  n_folds = 5,
-  parallel_cv = TRUE,
-  seed = 2333,
-  parallel_type = "multi_session",
-  family = "continuous",
-  num_cores = 2
-)
-#> [1] "Depth: 0 Parent mean: Inf Parent N: 320"
-#> [1] "Best split found at depth: 0 Split on: region2 at point: 1"
-#> [1] "Going deeper from depth: 0 with left rule: region2 <= 1 & "
-#> [1] "Going deeper from depth: 0 with right rule: region2 > 1 & "
-#> [1] "Depth: 1 Parent mean: 16.2745921683027 Parent N: 65"
-#> [1] "Best split found at depth: 1 Split on: region1 at point: 3"
-#> [1] "Going deeper from depth: 1 with left rule: region2 <= 1 & region1 <= 3 & "
-#> [1] "Going deeper from depth: 1 with right rule: region2 <= 1 & region1 > 3 & "
-#> [1] "Depth: 2 Parent mean: 12.6368174660957 Parent N: 28"
-#> [1] "No best split found at depth: 2"
-#> [1] "Depth: 2 Parent mean: 12.6368174660957 Parent N: 37"
-#> [1] "No best split found at depth: 2"
-#> [1] "Depth: 1 Parent mean: 16.2745921683027 Parent N: 255"
-#> [1] "No best split found at depth: 1"
-#> [1] "Depth: 0 Parent mean: Inf Parent N: 320"
-#> [1] "Best split found at depth: 0 Split on: region2 at point: 1"
-#> [1] "Going deeper from depth: 0 with left rule: region2 <= 1 & "
-#> [1] "Going deeper from depth: 0 with right rule: region2 > 1 & "
-#> [1] "Depth: 1 Parent mean: 16.6119824135153 Parent N: 61"
-#> [1] "No best split found at depth: 1"
-#> [1] "Depth: 1 Parent mean: 16.6119824135153 Parent N: 259"
-#> [1] "No best split found at depth: 1"
-#> [1] "Depth: 0 Parent mean: Inf Parent N: 320"
-#> [1] "Best split found at depth: 0 Split on: region2 at point: 1"
-#> [1] "Going deeper from depth: 0 with left rule: region2 <= 1 & "
-#> [1] "Going deeper from depth: 0 with right rule: region2 > 1 & "
-#> [1] "Depth: 1 Parent mean: 16.9582644829873 Parent N: 63"
-#> [1] "No best split found at depth: 1"
-#> [1] "Depth: 1 Parent mean: 16.9582644829873 Parent N: 257"
-#> [1] "No best split found at depth: 1"
-#> [1] "Depth: 0 Parent mean: Inf Parent N: 320"
-#> [1] "Best split found at depth: 0 Split on: region2 at point: 1"
-#> [1] "Going deeper from depth: 0 with left rule: region2 <= 1 & "
-#> [1] "Going deeper from depth: 0 with right rule: region2 > 1 & "
-#> [1] "Depth: 1 Parent mean: 16.3762713516552 Parent N: 66"
-#> [1] "Best split found at depth: 1 Split on: region1 at point: 3"
-#> [1] "Going deeper from depth: 1 with left rule: region2 <= 1 & region1 <= 3 & "
-#> [1] "Going deeper from depth: 1 with right rule: region2 <= 1 & region1 > 3 & "
-#> [1] "Depth: 2 Parent mean: 12.9263815293611 Parent N: 27"
-#> [1] "No best split found at depth: 2"
-#> [1] "Depth: 2 Parent mean: 12.9263815293611 Parent N: 39"
-#> [1] "No best split found at depth: 2"
-#> [1] "Depth: 1 Parent mean: 16.3762713516552 Parent N: 254"
-#> [1] "No best split found at depth: 1"
-#> [1] "Depth: 0 Parent mean: Inf Parent N: 320"
-#> [1] "Best split found at depth: 0 Split on: region2 at point: 1"
-#> [1] "Going deeper from depth: 0 with left rule: region2 <= 1 & "
-#> [1] "Going deeper from depth: 0 with right rule: region2 > 1 & "
-#> [1] "Depth: 1 Parent mean: 16.2722177201016 Parent N: 57"
-#> [1] "Best split found at depth: 1 Split on: region1 at point: 3"
-#> [1] "Going deeper from depth: 1 with left rule: region2 <= 1 & region1 <= 3 & "
-#> [1] "Going deeper from depth: 1 with right rule: region2 <= 1 & region1 > 3 & "
-#> [1] "Depth: 2 Parent mean: 12.5806656759671 Parent N: 25"
-#> [1] "No best split found at depth: 2"
-#> [1] "Depth: 2 Parent mean: 12.5806656759671 Parent N: 32"
-#> [1] "No best split found at depth: 2"
-#> [1] "Depth: 1 Parent mean: 16.2722177201016 Parent N: 263"
-#> [1] "No best split found at depth: 1"
-
-proc.time() - ptm
-#>    user  system elapsed 
-#>   4.785   0.604  82.810
-```
-
-We can look at the pooled TMLE results for this model. Let’s see if
-`CVtreeMLE` identified the thresholds for the minimizing region:
-
-``` r
-mixture_results <- sim_results$`Pooled TMLE Mixture Results`
-mixture_results %>%
-  kbl(caption = "Oracle Results") %>%
-  kable_classic(full_width = FALSE, html_font = "Cambria")
+head(niehs_data) %>%
+  kableExtra::kbl(caption = "NIEHS Data") %>%
+  kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
 ```
 
 <table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
 <caption>
-Oracle Results
+NIEHS Data
 </caption>
 <thead>
 <tr>
 <th style="text-align:right;">
-Mixture ATE
+obs
+</th>
+<th style="text-align:right;">
+Y
+</th>
+<th style="text-align:right;">
+X1
+</th>
+<th style="text-align:right;">
+X2
+</th>
+<th style="text-align:right;">
+X3
+</th>
+<th style="text-align:right;">
+X4
+</th>
+<th style="text-align:right;">
+X5
+</th>
+<th style="text-align:right;">
+X6
+</th>
+<th style="text-align:right;">
+X7
+</th>
+<th style="text-align:right;">
+Z
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+7.534686
+</td>
+<td style="text-align:right;">
+0.4157066
+</td>
+<td style="text-align:right;">
+0.5308077
+</td>
+<td style="text-align:right;">
+0.2223965
+</td>
+<td style="text-align:right;">
+1.1592634
+</td>
+<td style="text-align:right;">
+2.4577556
+</td>
+<td style="text-align:right;">
+0.9438601
+</td>
+<td style="text-align:right;">
+1.8714406
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+19.611934
+</td>
+<td style="text-align:right;">
+0.5293572
+</td>
+<td style="text-align:right;">
+0.9339570
+</td>
+<td style="text-align:right;">
+1.1210595
+</td>
+<td style="text-align:right;">
+1.3350074
+</td>
+<td style="text-align:right;">
+0.3096883
+</td>
+<td style="text-align:right;">
+0.5190970
+</td>
+<td style="text-align:right;">
+0.2418065
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+12.664050
+</td>
+<td style="text-align:right;">
+0.4849759
+</td>
+<td style="text-align:right;">
+0.7210988
+</td>
+<td style="text-align:right;">
+0.4629027
+</td>
+<td style="text-align:right;">
+1.0334138
+</td>
+<td style="text-align:right;">
+0.9492810
+</td>
+<td style="text-align:right;">
+0.3664090
+</td>
+<td style="text-align:right;">
+0.3502445
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+15.600288
+</td>
+<td style="text-align:right;">
+0.8275456
+</td>
+<td style="text-align:right;">
+1.0457137
+</td>
+<td style="text-align:right;">
+0.9699040
+</td>
+<td style="text-align:right;">
+0.9045099
+</td>
+<td style="text-align:right;">
+0.9107914
+</td>
+<td style="text-align:right;">
+0.4299847
+</td>
+<td style="text-align:right;">
+1.0007901
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+18.606498
+</td>
+<td style="text-align:right;">
+0.5190363
+</td>
+<td style="text-align:right;">
+0.7802400
+</td>
+<td style="text-align:right;">
+0.6142188
+</td>
+<td style="text-align:right;">
+0.3729743
+</td>
+<td style="text-align:right;">
+0.5038126
+</td>
+<td style="text-align:right;">
+0.3575472
+</td>
+<td style="text-align:right;">
+0.5906156
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+18.525890
+</td>
+<td style="text-align:right;">
+0.4009491
+</td>
+<td style="text-align:right;">
+0.8639886
+</td>
+<td style="text-align:right;">
+0.5501847
+</td>
+<td style="text-align:right;">
+0.9011016
+</td>
+<td style="text-align:right;">
+1.2907615
+</td>
+<td style="text-align:right;">
+0.7990418
+</td>
+<td style="text-align:right;">
+1.5097039
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+</tbody>
+</table>
+
+Briefly, this synthetic data can be considered the results of a
+prospective cohort epidemiologic study. The outcome cannot cause the
+exposures (as might occur in a cross-sectional study). Correlations
+between exposure variables can be thought of as caused by common sources
+or modes of exposure. The nuisance variable Z can be assumed to be a
+potential confounder and not a collider. There are 7 exposures which
+have a complicated dependency structure. $X_3$ and $X_6$ do not have an
+impact on the outcome.
+
+One issue is that many machine learning algorithms will fail given only
+1 variable passed as a feature so let’s add some other covariates.
+
+``` r
+niehs_data$Z2 <- rbinom(nrow(niehs_data),
+  size = 1,
+  prob = 0.3
+)
+
+niehs_data$Z3 <- rbinom(nrow(niehs_data),
+  size = 1,
+  prob = 0.1
+)
+```
+
+## Run `CVtreeMLE`
+
+``` r
+ptm <- proc.time()
+
+niehs_results <- CVtreeMLE(
+  data = as.data.frame(niehs_data),
+  w = c("Z", "Z2", "Z3"),
+  a = c(paste("X", seq(7), sep = "")),
+  y = "Y",
+  n_folds = 10,
+  seed = seed,
+  parallel_cv = TRUE,
+  parallel = TRUE,
+  family = "continuous",
+  num_cores = 8,
+  min_max = "min",
+  min_obs = 25
+)
+proc.time() - ptm
+#>    user  system elapsed 
+#>  13.698   0.689 409.696
+```
+
+## Mixture Results
+
+First let’s look at the k-fold specific estimates:
+
+``` r
+k_fold_results <- niehs_results$`V-Specific Mix Results`
+
+k_fold_results %>%
+  kableExtra::kbl(caption = "K-fold Results") %>%
+  kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
+```
+
+<table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+K-fold Results
+</caption>
+<thead>
+<tr>
+<th style="text-align:right;">
+are
+</th>
+<th style="text-align:right;">
+se
+</th>
+<th style="text-align:right;">
+lower_ci
+</th>
+<th style="text-align:right;">
+upper_ci
+</th>
+<th style="text-align:right;">
+p_val
+</th>
+<th style="text-align:right;">
+p_val_adj
+</th>
+<th style="text-align:right;">
+rmse
+</th>
+<th style="text-align:left;">
+mix_rule
+</th>
+<th style="text-align:right;">
+fold
+</th>
+<th style="text-align:left;">
+variables
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+-0.036
+</td>
+<td style="text-align:right;">
+11.477
+</td>
+<td style="text-align:right;">
+-22.530
+</td>
+<td style="text-align:right;">
+22.458
+</td>
+<td style="text-align:right;">
+0.997515
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+2.689
+</td>
+<td style="text-align:left;">
+X2 \<= 0.42
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+X2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+-0.173
+</td>
+<td style="text-align:right;">
+7.816
+</td>
+<td style="text-align:right;">
+-15.492
+</td>
+<td style="text-align:right;">
+15.146
+</td>
+<td style="text-align:right;">
+0.982327
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+2.759
+</td>
+<td style="text-align:left;">
+X2 \<= 0.41
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:left;">
+X2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.486
+</td>
+<td style="text-align:right;">
+15.208
+</td>
+<td style="text-align:right;">
+-29.322
+</td>
+<td style="text-align:right;">
+30.293
+</td>
+<td style="text-align:right;">
+0.974526
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+2.906
+</td>
+<td style="text-align:left;">
+X2 \<= 0.41
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:left;">
+X2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.969
+</td>
+<td style="text-align:right;">
+15.328
+</td>
+<td style="text-align:right;">
+-29.074
+</td>
+<td style="text-align:right;">
+31.012
+</td>
+<td style="text-align:right;">
+0.949580
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+3.469
+</td>
+<td style="text-align:left;">
+X2 \<= 0.39
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:left;">
+X2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.543
+</td>
+<td style="text-align:right;">
+13.659
+</td>
+<td style="text-align:right;">
+-26.229
+</td>
+<td style="text-align:right;">
+27.314
+</td>
+<td style="text-align:right;">
+0.968304
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+3.358
+</td>
+<td style="text-align:left;">
+X2 \<= 0.41
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:left;">
+X2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.537
+</td>
+<td style="text-align:right;">
+15.434
+</td>
+<td style="text-align:right;">
+-29.713
+</td>
+<td style="text-align:right;">
+30.787
+</td>
+<td style="text-align:right;">
+0.972228
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+3.110
+</td>
+<td style="text-align:left;">
+X2 \<= 0.42
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:left;">
+X2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.129
+</td>
+<td style="text-align:right;">
+15.465
+</td>
+<td style="text-align:right;">
+-30.182
+</td>
+<td style="text-align:right;">
+30.439
+</td>
+<td style="text-align:right;">
+0.993363
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+3.191
+</td>
+<td style="text-align:left;">
+X2 \<= 0.39
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:left;">
+X2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+-0.029
+</td>
+<td style="text-align:right;">
+13.987
+</td>
+<td style="text-align:right;">
+-27.443
+</td>
+<td style="text-align:right;">
+27.386
+</td>
+<td style="text-align:right;">
+0.998359
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+2.529
+</td>
+<td style="text-align:left;">
+X2 \<= 0.39
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:left;">
+X2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.661
+</td>
+<td style="text-align:right;">
+12.529
+</td>
+<td style="text-align:right;">
+-23.895
+</td>
+<td style="text-align:right;">
+25.217
+</td>
+<td style="text-align:right;">
+0.957948
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+2.647
+</td>
+<td style="text-align:left;">
+X2 \<= 0.39
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:left;">
+X2
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1.384
+</td>
+<td style="text-align:right;">
+16.027
+</td>
+<td style="text-align:right;">
+-30.029
+</td>
+<td style="text-align:right;">
+32.797
+</td>
+<td style="text-align:right;">
+0.931196
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+3.422
+</td>
+<td style="text-align:left;">
+X2 \<= 0.39
+</td>
+<td style="text-align:right;">
+10
+</td>
+<td style="text-align:left;">
+X2
+</td>
+</tr>
+</tbody>
+</table>
+
+This indicates that the exposure X2 was found in every fold to have the
+most minimizing impact on endocrine disruption if all individuals were
+were forced to be exposed to levels less around 0.41. This resembles a
+policy where, if everyone were still exposed to the other exposures but
+we created a regulation that restricted individuals to only exposure of
+X2 less than 0.41.
+
+The pooled estimates, leveraging all the folds for our estimates oracle
+target parameter looks like:
+
+``` r
+pooled_mixture_results <- niehs_results$`Oracle Region Results`
+
+pooled_mixture_results %>%
+  kableExtra::kbl(caption = "Oracle Mixture Results") %>%
+  kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
+```
+
+<table class=" lightable-classic" style="font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
+<caption>
+Oracle Mixture Results
+</caption>
+<thead>
+<tr>
+<th style="text-align:right;">
+Region ARE
 </th>
 <th style="text-align:right;">
 Standard Error
@@ -272,117 +845,28 @@ Upper CI
 <th style="text-align:right;">
 P-value
 </th>
-<th style="text-align:right;">
-P-value Adj
-</th>
-<th style="text-align:left;">
-Vars
-</th>
-<th style="text-align:right;">
-RMSE
-</th>
-<th style="text-align:left;">
-Average_Rule
-</th>
-<th style="text-align:right;">
-Proportion_Folds
-</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align:right;">
--19.372
+0.248
 </td>
 <td style="text-align:right;">
-3.804
+4.351
 </td>
 <td style="text-align:right;">
--26.827
+-8.28
 </td>
 <td style="text-align:right;">
--11.916
+8.777
 </td>
 <td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-1e-06
-</td>
-<td style="text-align:left;">
-region2
-</td>
-<td style="text-align:right;">
-11.370
-</td>
-<td style="text-align:left;">
-region2 \<=1(1,1)
-</td>
-<td style="text-align:right;">
-0.4
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
--1.230
-</td>
-<td style="text-align:right;">
-0.192
-</td>
-<td style="text-align:right;">
--1.605
-</td>
-<td style="text-align:right;">
--0.855
-</td>
-<td style="text-align:right;">
-0
-</td>
-<td style="text-align:right;">
-0e+00
-</td>
-<td style="text-align:left;">
-region2-region1
-</td>
-<td style="text-align:right;">
-0.238
-</td>
-<td style="text-align:left;">
-region1 \<=3(3,3) & region2 \<=1(1,1)
-</td>
-<td style="text-align:right;">
-0.6
+0.954462
 </td>
 </tr>
 </tbody>
 </table>
-
-Above is the ARE for the region, region 1 = 1 and region 2 = 1. This was
-found in all the folds so there is no variability in our oracle
-estimate. The ARE is -0.2 which indicates that if we were to make a
-policy that forced everyone into exposure levels of 1 for both exposures
-the expected outcome would be 0.2 less than the current average.
-
-We can also look at the v-fold specific results:
-
-``` r
-sim_results$`V-Specific Mix Results`
-#>       are    se lower_ci upper_ci    p_val p_val_adj   rmse
-#> 1  -0.920 0.313   -1.535   -0.306 0.003322  0.016611  0.236
-#> 2 -20.565 5.532  -31.407   -9.723 0.000201  0.001006 11.648
-#> 3 -18.192 5.193  -28.371   -8.013 0.000460  0.002302 11.067
-#> 4  -0.388 0.327   -1.029    0.252 0.234842  1.000000  0.521
-#> 5  -2.096 0.345   -2.772   -1.419 0.000000  0.000000  0.203
-#>                      mix_rule fold       variables
-#> 1 region2 <= 1 & region1 <= 3    1 region2-region1
-#> 2                region2 <= 1    2         region2
-#> 3                region2 <= 1    3         region2
-#> 4 region2 <= 1 & region1 <= 3    4 region2-region1
-#> 5 region2 <= 1 & region1 <= 3    5 region2-region1
-```
-
-Here we see the fold specific estimates which are used in the pooled
-TMLE output we saw earlier.
 
 Additional details for this and other features are given in the
 vignette.
@@ -411,13 +895,14 @@ prior to submitting a pull request.
 
 After using the `CVtreeMLE` R package, please cite the following:
 
-(**article?**){McCoy2023, doi = {10.21105/joss.04181}, url =
-{<https://doi.org/10.21105/joss.04181>}, year = {2023}, publisher = {The
-Open Journal}, volume = {8}, number = {82}, pages = {4181}, author =
-{David McCoy and Alan Hubbard and Mark Van der Laan}, title =
-{CVtreeMLE: Efficient Estimation of Mixed Exposures using Data Adaptive
-Decision Trees and Cross-Validated Targeted Maximum Likelihood
-Estimation in R}, journal = {Journal of Open Source Software} }
+    @article{McCoy2023, 
+    doi = {10.21105/joss.04181}, 
+    url = {https://doi.org/10.21105/joss.04181}, 
+    year = {2023}, publisher = {The Open Journal}, 
+    volume = {8}, number = {82}, pages = {4181}, 
+    author = {David McCoy and Alan Hubbard and Mark Van der Laan}, 
+    title = {CVtreeMLE: Efficient Estimation of Mixed Exposures using Data Adaptive Decision Trees and Cross-Validated Targeted Maximum Likelihood Estimation in R}, 
+    journal = {Journal of Open Source Software} }
 
 ------------------------------------------------------------------------
 

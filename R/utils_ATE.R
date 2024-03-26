@@ -8,6 +8,7 @@
 #' @param y Variable name in `data` for the raw outcome
 #' @param p_adjust_n Number repeated measures to adjust p-value
 #' @param v_fold TRUE/FALSE whether to calculate v-fold specific ATE estimates
+#' @param naive This is for a one step estimator so Psi is calculated without TMLE update
 #'
 #' @return A \code{numeric} vector of the same length as \code{vals}, where
 #'  the returned values are bounded to machine precision. This is intended to
@@ -149,8 +150,6 @@ calc_clever_covariate <- function(ghat_1_w,
 #' @param qbar_aw Initial predictions for Y|A,W - A being observed A
 #' @param qbar_1w Initial predictions for Y|A = 1,W - A being deterministically
 #' set to 1
-#' @param qbar_0w Initial predictions for Y|A = 1,W - A being deterministically
-#' set to 0
 
 #' @return A \code{numeric} vector of the same length as \code{vals}, where
 #'  the returned values are bounded to machine precision. This is intended to

@@ -21,6 +21,20 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
+Researchers are often interested in understanding what set of thresholds in a mixed exposure are safest. That is, 
+if a policy was to be implemented to attempt to reduce an exposure or exposures below a set limit, which intervention 
+would have the largest minimizing effect. 
+
+The problem of course is that this set of thresholds is not known beforehand. Therefore, 
+it is necessary to both find the set of thresholds that, controlling for other exposures and covariates, 
+would result in the lowest expected outcome. 
+
+This requires data-adaptive target parameters where cross-validation is used. In one part of the data, 
+we find the minimizing region and in another, we estimate a policy intervention effect for that region. 
+
+## Data Adaptive Target Parameters
+
+
 Data adaptive target parameters constitute a flexible framework for 
 estimating the effects of a data adaptively determined target parameter. 
 There is a literature on the dangers of deriving parameters data-adaptively 
@@ -44,9 +58,11 @@ for which targeted minimum loss-based estimates (TMLE)  are derived for
 the counterfactual mean outcome difference if all individual were exposed 
 to the rule compared to the observed outcome under observed exposure distribution. We call our estimate the ARE, the average regional exposure effect. 
 
+## Output
+
 Two types of results are given for the region found to minimize or maximize the expected outcome. K-fold specific results for a given ARE and
 variance estimates for a fold specific region. The pooled ARE takes the
-average across folds to gain power (reduce variance). The pooled ARE estimates the oracle target parameter which is the region that maximizes or minimizes the expected outcome. This of course can change across the folds and therefore this estimate, if there is inconcistency in the region estiamted, can lead to an amalgamation of different regions. However, if there is strong signal for a particular region, the same exposures will be used in the region and therefore the pooled parameter gains power, leveraging the k-fold specific estimates. 
+average across folds to gain power (reduce variance). The pooled ARE estimates the oracle target parameter which is the region that maximizes or minimizes the expected outcome. This of course can change across the folds and therefore this estimate, if there is inconsistency in the region estimated, can lead to an amalgamation of different regions. However, if there is strong signal for a particular region, the same exposures will be used in the region and therefore the pooled parameter gains power, leveraging the k-fold specific estimates. 
 
 We give both so that 
 researchers can look to see how consistent rules are given sample splitting 
@@ -58,12 +74,17 @@ or the earlier work of @vdl2011targeted, @vdl2018targeted, and
 @vdl2022targeted. For more background on data-adaptive target parameters see 
 @Hubbard2016 and chapter 9 in @vdl2018targeted.
 
+
+## Mechanisms
+
 Briefly, what this package will do is first, given the provided data it will partition 
 the data into folds based on the n_folds parameter provided. In the training fold, 
 we apply a custom decision tree that greedily partitions the exposure space, at each partition
 it uses g-computation to estimate the expected outcome for that region controlling for covariates. 
 It finds the region that maximizes or minimizes the expected outcome. This is done for each fold. 
 Then for each region that maximizes or minimizes the expected outcome in each fold, we estimate the effect comparing the expected outcome if everyone was forced to be in that region compared to the observed outcome under observed exposure. This is the ARE. This is done for each fold and we also pool across the folds. This procedure is done with CV-TMLE. The output are thresholds and the accompanying ARE for the region that has the maximimum or minimum expected outcome. 
+
+## Working Example
 
 To start, let's load the packages we'll need and set a seed for simulation.
 We will use a real-world data example with known ground-truth to show the 
@@ -82,107 +103,154 @@ seed <- 5454433
 set.seed(seed)
 ```
 
-## National Institute of Environmental Health Data
+## NHANES Data
 
-We will use simulated data from the 2015 NIEHS Mixtures Workshop which was 
-developed to determine if new mixture methods detect ground-truth interactions
-built into the simulated data. In this way we can simultaneously show
-`CVtreeMLE` output, interpretation and validity. 
+Here we will try and replicate the analysis by Gibson et. al., 
+https://ehjournal.biomedcentral.com/articles/10.1186/s12940-019-0515-1
+
+and Mitro et. al, 
+https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4858394/
+
+Who used the NHANES 2001-2002 data to investigate 18 POP exposures on telomere length. 
+
+Because reduced telomere length is associated with more biological aging and higher morbidity, we 
+will try and identify which region in the POP space would maximize telomere length. That is, 
+we want to find the region that, if we created a regulation on those chemicals, would result in maximal change in elongating telomere length. 
+
+Let's first load the data and investigate the variables: 
+
+## NHANES Data 
+```{r NHANES data and variables}
+data("NHANES_eurocim")
+
+exposures <- c("LBX074LA", # PCB74 Lipid Adj (ng/g)
+               "LBX099LA", # PCB99 Lipid Adj (ng/g)
+               "LBX118LA", # PCB118 Lipid Adj (ng/g)
+               "LBX138LA", # PCB138 Lipid Adj (ng/g)
+               "LBX153LA", # PCB153 Lipid Adj (ng/g)
+               "LBX170LA", # PCB170 Lipid Adj (ng/g)
+               "LBX180LA", # PCB180 Lipid Adj (ng/g)
+               "LBX187LA", # PCB187 Lipid Adj (ng/g)
+               "LBX194LA", # PCB194 Lipid Adj (ng/g)
+               "LBXD03LA", # 1,2,3,6,7,8-hxcdd Lipid Adj (pg/g)
+               "LBXD05LA", # 1,2,3,4,6,7,8-hpcdd Lipid Adj (pg/g)
+               "LBXD07LA", # 1,2,3,4,6,7,8,9-ocdd Lipid Adj (pg/g)
+               "LBXF03LA", # 2,3,4,7,8-pncdf Lipid Adj (pg/g)
+               "LBXF04LA", # 1,2,3,4,7,8-hxcdf Lipid Adj (pg/g)
+               "LBXF05LA", # 1,2,3,6,7,8-hxcdf Lipid Adj (pg/g)
+               "LBXF08LA", # 1,2,3,4,6,7,8-hxcdf Lipid Adj (pg/g)
+               "LBXHXCLA", # 3,3',4,4',5,5'-hxcb Lipid Adj (pg/g)
+               "LBXPCBLA") # 3,3',4,4',5-pcnb Lipid Adj (pg/g)
+
+NHANES_eurocim <- NHANES_eurocim[complete.cases(NHANES_eurocim[, exposures]), ]
+
+outcome <- "TELOMEAN"
+
+covariates <- c("LBXWBCSI", # White blood cell count (SI)
+                "LBXLYPCT", # Lymphocyte percent (%)
+                "LBXMOPCT", # Monocyte percent (%)
+                "LBXEOPCT", # Eosinophils percent (%)
+                "LBXBAPCT", # Basophils percent (%)
+                "LBXNEPCT", # Segmented neutrophils percent (%)
+                "male", # Sex
+                "age_cent", # Age at Screening, centered
+                "race_cat", # race
+                "bmi_cat3", # Body Mass Index (kg/m**2)
+                "ln_lbxcot", # Cotinine (ng/mL), log-transformed
+                "edu_cat") # Education Level - Adults 20+
 
 
-```{r load_NIEHS_data, warning=FALSE}
-niehs_data <- NIEHS_data_1
-
-head(niehs_data) %>%
-  kableExtra::kbl(caption = "NIEHS Data") %>%
-  kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
 ```
-For detailed information on this simulated data please see: 
 
+To improve consistency in the region we find to be the maximizing region, it is best to remove an exposure of highly correlated sets, we do that here: 
 
-https://github.com/niehs-prime/2015-NIEHS-MIxtures-Workshop
+```{r remove correlated exposures}
+# Calculate the correlation matrix for the exposures
+cor_matrix <- cor(NHANES_eurocim[, exposures], use = "complete.obs")
 
-Briefly, this synthetic data can be considered the results of a prospective
-cohort epidemiologic study. The outcome cannot cause the exposures (as might
-occur in a cross-sectional study). Correlations between exposure variables can
-be thought of as caused by common sources or modes of exposure. The nuisance 
-variable Z can be assumed to be a potential confounder and not a collider.
-There are 7 exposures which have a complicated dependency structure. $X_3$ and
-$X_6$ do not have an impact on the outcome. 
+# Set a threshold for high correlation
+threshold <- 0.8
 
-One issue is that many machine learning algorithms will fail given only 1 
-variable passed as a feature so let's add some other covariates.
+# Find pairs of highly correlated exposures
+highly_correlated_pairs <- which(abs(cor_matrix) > threshold & lower.tri(cor_matrix), arr.ind = TRUE)
 
-```{r add_covariates, warning=FALSE}
-niehs_data$Z2 <- rbinom(nrow(niehs_data),
-  size = 1,
-  prob = 0.3
-)
+# Initiate a vector to keep track of exposures to remove
+exposures_to_remove <- c()
 
-niehs_data$Z3 <- rbinom(nrow(niehs_data),
-  size = 1,
-  prob = 0.1
-)
+# Loop through the highly correlated pairs and decide which exposure to remove
+for (pair in seq_len(nrow(highly_correlated_pairs))) {
+  row <- highly_correlated_pairs[pair, "row"]
+  col <- highly_correlated_pairs[pair, "col"]
+
+  if (!(colnames(cor_matrix)[row] %in% exposures_to_remove)) {
+    exposures_to_remove <- c(exposures_to_remove, colnames(cor_matrix)[row])
+  }
+}
+
+# Keep only uncorrelated exposures
+exposures_to_keep <- setdiff(exposures, exposures_to_remove)
+
 ```
 
 
-## Run `CVtreeMLE`
+## Run CVtreeMLE 
 
-
-```{r run_simulation, warnings = FALSE}
-ptm <- proc.time()
-
-niehs_results <- CVtreeMLE(
-  data = as.data.frame(niehs_data),
-  w = c("Z", "Z2", "Z3"),
-  a = c(paste("X", seq(7), sep = "")),
-  y = "Y",
-  n_folds = 5,
-  seed = seed,
+```{r run CVtreeMLE for NHANES, warning=FALSE, message=FALSE}
+nhanes_results <- CVtreeMLE(
+  data = NHANES_eurocim, ## dataframe
+  w = covariates,
+  a = exposures_to_keep,
+  y = outcome,
+  n_folds = 7,
+  seed = 34421,
   parallel_cv = TRUE,
   parallel = TRUE,
   family = "continuous",
   num_cores = 8,
-  min_max = "min",
-  min_obs = 25
+  min_max = "max", # we are going for the maximum
+  min_obs = nrow(NHANES_eurocim) * .1 # minimum number of individuals in a region to warrant split
 )
-proc.time() - ptm
 ```
 
-## Mixture Results
 
-First let's look at the oracle estimate. This is the pooled CV-TMLE estimates for our parameter which is the region that maximizes or minimizes the expected outcome - again this could be different if there is incosistencies in estimates across the folds. 
+## Investigating Results
+
+Let's first look at the results for each fold: 
+
+
+```{r k_fold_results}
+k_fold_results <- nhanes_results$`V-Specific Mix Results`
+
+k_fold_results %>%
+  kableExtra::kbl(caption = "K-fold Results") %>%
+  kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
+```
+
+This shows in all folds that LBXDO3LA was found to have the region which maximizes telomere length if all individuals were forced to be exposed to levels less than approximately 13. LBXDO3LA is 1,2,3,6,7,8-hxcdd Lipid Adj (pg/g) which is a Furan. 
+
+
+The pooled result is interpretable because it will be the average of estimates in the regions for the same variable:
 
 ```{r pooled_mixture_results}
-pooled_mixture_results <- niehs_results$`Oracle Region Results`
+pooled_mixture_results <- nhanes_results$`Oracle Region Results`
 
 pooled_mixture_results %>%
   kableExtra::kbl(caption = "Oracle Mixture Results") %>%
   kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
 ```
 
-This shows that the estimate for the pooled region that minimizes the expected outcome is -3.77, which is not significant. 
 
-
-We can look at what regions comprise this oracle region: 
+We can also examine the pooled estimates by exposure set with average rules in each set:
 
 ```{r region_specific_pooling}
-region_specific_pooling <- niehs_results$`Pooled TMLE Mixture Results`
+region_specific_pooling <- nhanes_results$`Pooled TMLE Mixture Results`
 
 region_specific_pooling %>%
   kableExtra::kbl(caption = "Region Specific Mixture Results") %>%
   kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
 ```
-This shows 80\% of the folds find a region for X2 and 20\% for X1, this becomes more consistent if higher folds are used. 
 
 
-```{r k_fold_results}
-k_fold_results <- niehs_results$`V-Specific Mix Results`
-
-k_fold_results %>%
-  kableExtra::kbl(caption = "K-fold Results") %>%
-  kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
-```
 
 ## Estimate Stability
 
@@ -190,13 +258,8 @@ Because we are identifying thresholds mixture space
 data-adaptively using the training data as we rotate through the folds, 
 `CVtreeMLE` will give, in the event that a signal actually exists, more 
 consistent results when higher n_fold values are used. Thus, we recommend using
-10-fold CV when possible for more consistent and interpretable results. Here, 
-5-fold was used simply for convenience in compiling and testing. 
+10-fold CV when possible for more consistent and interpretable results.
 
-It should be noted that, especially in the marginal results, if the analyst
-chooses to report on results for one fold, which does have valid inference, 
-the variability of the thresholds and estimates across the folds should 
-also be provided for full transparency. 
 
 
 ## Runtime Performance Guidelines

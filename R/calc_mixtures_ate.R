@@ -15,7 +15,6 @@
 #' @param y Outcome variable
 #' across the folds
 #' @param n_folds Number of folds used in cross-validation
-#' @param no_mixture_rules TRUE/FALSE whether no mixture rules were found
 #' across all the folds
 #'
 #' @importFrom data.table rbindlist

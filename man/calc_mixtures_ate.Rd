@@ -15,9 +15,7 @@ across the folds}
 \item{y}{Outcome variable
 across the folds}
 
-\item{n_folds}{Number of folds used in cross-validation}
-
-\item{no_mixture_rules}{TRUE/FALSE whether no mixture rules were found
+\item{n_folds}{Number of folds used in cross-validation
 across all the folds}
 }
 \value{

@@ -15,7 +15,6 @@
 #' @param data Full data
 #' @param mix_comps Mixture components of A
 #' @param n_folds Number of folds used in cross-validation
-#' @param no_mixture_rules TRUE/FALSE if no mixture rule was found
 #' @param mixture_results data frame of results found for mixture rules
 #' @importFrom data.table rbindlist
 #' @importFrom dplyr group_by bind_rows
@@ -33,8 +32,7 @@ common_mixture_rules <- function(group_list,
                                  data = data,
                                  mix_comps = mix_comps,
                                  mixture_results,
-                                 n_folds,
-                                 no_mixture_rules) {
+                                 n_folds) {
   mixture_all_rules <- list()
   mixture_any_rules <- list()
 

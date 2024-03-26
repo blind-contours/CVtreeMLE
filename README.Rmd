@@ -15,7 +15,8 @@ knitr::opts_chunk$set(
 )
 ```
 
-# `CVtreeMLE` <img src="man/figures/CVtreeMLE_sticker.png" height="300" align="right"/>
+# `CVtreeMLE` <img src="man/figures/CVtreeMLE_sticker.png" style="float:right; height:200px;">
+
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/blind-contours/CVtreeMLE/workflows/R-CMD-check/badge.svg)](https://github.com/blind-contours/CVtreeMLE/actions)
 [![Coverage Status](https://codecov.io/gh/blind-contours/CVtreeMLE/branch/main/graph/badge.svg?token=HJP5PYQSG4)](https://codecov.io/github/blind-contours/CVtreeMLE?branch=master)
@@ -36,10 +37,17 @@ __Author:__ [David McCoy](https://davidmccoy.org)
 ---
 
 ## What is `CVtreeMLE`?
-People often encounter multiple simultaneous exposures (e.g. several drugs or pollutants). Policymakers are interested in setting safe limits, interdictions, or recommended dosage combinations based on a combination of thresholds, one per exposure. Setting these thresholds is difficult because all relevant interactions between exposures must be accounted for. Previous statistical methods have used parametric estimators which do not directly address the question of superadditive or subadditive effects in a mixture, rely on unrealistic assumptions, and do not result in a threshold based statistical quantity that is directly 
-relevant to policy regulators. 
+This package operationalizes the methodology presented here: 
 
-Here we present an estimator that a) identifies thresholds that minimize/maximize the expected outcome marginalized over covariates and other exposures; and which b) unbiasedly and efficiently estimates a policy intervention which compares the expected outcome if everyone was forced to these safe levels compared to the observed outcome under observed exposure distribution. This is done by combining a custom g-computation tree-based search algorithm with a targeted maximum likelihood estimator using cross-validation.
+https://arxiv.org/abs/2302.07976
+
+People often encounter multiple simultaneous exposures (e.g. several drugs or pollutants). Policymakers are interested in setting safe limits, interdictions, or recommended dosage combinations based on a combination of thresholds, one per exposure. Setting these thresholds is difficult because all relevant interactions between exposures must be accounted for. Previous statistical methods have used parametric estimators which do not directly address the question of safe exposure limits, rely on unrealistic assumptions, and do not result in a threshold based statistical quantity that is directly relevant to policy regulators. 
+
+Here we present an estimator that a) identifies thresholds that minimize/maximize the expected outcome controlling for covariates and other exposures; and which b) efficiently estimates a policy intervention which compares the expected outcome if everyone was forced to these safe levels compared to the observed outcome under observed exposure distribution. 
+
+This is done by using cross-validation where in training folds of the data, a custom g-computation tree-based search algorithm finds the minimizing region, and an estimation sample is used to estimate the policy intervention using targeted maximum likelihood estimation.
+
+## Inputs and Outputs
 
 This package takes in a mixed exposure, covariates, outcome, super learner stacks
 of learners if determined (if not default are used), number of folds, minimum observations in a region, if the desired region is minimizer or maximizer and parallelization parameters.
@@ -92,91 +100,107 @@ First load the package and other packages needed
 ```{r libraries, warning=FALSE, message=FALSE}
 library(CVtreeMLE)
 library(sl3)
-library(pre)
-library(partykit)
 library(kableExtra)
 library(ggplot2)
-library(here)
-source(here("sandbox", "simulate_2d_data.R"))
-
-set.seed(429153)
+seed <- 98484
+set.seed(seed)
 ```
 
 
-To illustrate how `CVtreeMLE` may be used to find and estimate a region that, if intervened on would lead to the biggest reduction in an outcome we use simulated data that is described in our paper: 
+To illustrate how `CVtreeMLE` may be used to find and estimate a region that, if intervened on would lead to the biggest reduction in an outcome we use synthetic data from the National Institute of Environmental Health: 
 
-https://arxiv.org/abs/2302.07976
+## National Institute of Environmental Health Data
 
-Briefly, 2 discrete exposures are created based on a multinomial regression from baseline covariates. We create an outcome with main effect and squared interactions. One region has the minimum expected outcome, when both exposures are equal to 1. 
+The 2015 NIEHS Mixtures Workshop was 
+developed to determine if new mixture methods detect ground-truth interactions
+built into the simulated data. In this way we can simultaneously show
+`CVtreeMLE` output, interpretation and validity. 
 
-```{r simulate data}
+For detailed information on this simulated data please see: 
 
-n <- 400
-exposure_grid <- expand.grid(seq(5), seq(5))
-labels <- apply(exposure_grid, 1, paste, collapse = " ")
-exposure_grid <- cbind.data.frame(exposure_grid, labels)
+https://github.com/niehs-prime/2015-NIEHS-MIxtures-Workshop
 
-# beta matrix
-c_matrix <- matrix(c(0.1, 0.7, 0.8, 0.9),
-  ncol = 2,
-  nrow = 2
+
+```{r load_NIEHS_data, warning=FALSE}
+niehs_data <- NIEHS_data_1
+
+head(niehs_data) %>%
+  kableExtra::kbl(caption = "NIEHS Data") %>%
+  kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
+```
+
+
+Briefly, this synthetic data can be considered the results of a prospective
+cohort epidemiologic study. The outcome cannot cause the exposures (as might
+occur in a cross-sectional study). Correlations between exposure variables can
+be thought of as caused by common sources or modes of exposure. The nuisance 
+variable Z can be assumed to be a potential confounder and not a collider.
+There are 7 exposures which have a complicated dependency structure. $X_3$ and
+$X_6$ do not have an impact on the outcome. 
+
+One issue is that many machine learning algorithms will fail given only 1 
+variable passed as a feature so let's add some other covariates.
+
+```{r add_covariates, warning=FALSE}
+niehs_data$Z2 <- rbinom(nrow(niehs_data),
+  size = 1,
+  prob = 0.3
 )
 
-# Generate simulated data -----------------
-P_0_sim <- gen_covariates(n) %>% # gen covariates
-  gen_multinom(exposure_grid = exposure_grid) %>% # assign obs to exposure cube
-  assign_outcomes(
-    exposure_grid = exposure_grid,
-    c_matrix = c_matrix
-  )
-
-intro_data <- P_0_sim$data
+niehs_data$Z3 <- rbinom(nrow(niehs_data),
+  size = 1,
+  prob = 0.1
+)
 ```
+
 
 ## Run `CVtreeMLE`
 
-We will now pass the simulated data and variable names for each 
-node in O = W,A,Y to the `CVtreeMLE` function. 
 
-```{r run_simulation, message=FALSE, warning=FALSE}
+```{r run_simulation, warnings = FALSE, message=FALSE}
 ptm <- proc.time()
 
-sim_results <- CVtreeMLE(
-  data = intro_data,
-  w = c("age", "sex", "bmi"),
-  a = c("region1", "region2"),
-  y = "outcome_obs",
-  n_folds = 5,
+niehs_results <- CVtreeMLE(
+  data = as.data.frame(niehs_data),
+  w = c("Z", "Z2", "Z3"),
+  a = c(paste("X", seq(7), sep = "")),
+  y = "Y",
+  n_folds = 10,
+  seed = seed,
   parallel_cv = TRUE,
-  seed = 2333,
-  parallel_type = "multi_session",
+  parallel = TRUE,
   family = "continuous",
-  num_cores = 2
+  num_cores = 8,
+  min_max = "min",
+  min_obs = 25
 )
-
 proc.time() - ptm
 ```
 
+## Mixture Results
 
-We can look at the pooled TMLE results for this model. Let's see if 
-`CVtreeMLE` identified the thresholds for the minimizing region: 
+First let's look at the k-fold specific estimates:
 
-```{r pooled_mixture_results}
-mixture_results <- sim_results$`Pooled TMLE Mixture Results`
-mixture_results %>%
-  kbl(caption = "Oracle Results") %>%
-  kable_classic(full_width = FALSE, html_font = "Cambria")
+```{r k_fold_results}
+k_fold_results <- niehs_results$`V-Specific Mix Results`
+
+k_fold_results %>%
+  kableExtra::kbl(caption = "K-fold Results") %>%
+  kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
 ```
 
-Above is the ARE for the region, region 1 = 1 and region 2 = 1. This was found in all the folds so there is no variability in our oracle estimate. The ARE is -0.2 which indicates that if we were to make a policy that forced everyone into exposure levels of 1 for both exposures the expected outcome would be 0.2 less than the current average. 
+This indicates that the exposure X2 was found in every fold to have the most minimizing impact on endocrine disruption if all individuals were were forced to be exposed to levels less around 0.41. This resembles a policy where, if everyone were still exposed to the other exposures but we created a regulation that restricted individuals to only exposure of X2 less than 0.41.  
 
-We can also look at the v-fold specific results: 
+The pooled estimates, leveraging all the folds for our estimates oracle target parameter looks like:
 
-```{r fold_specific_results}
-sim_results$`V-Specific Mix Results`
+```{r oracle_results}
+pooled_mixture_results <- niehs_results$`Oracle Region Results`
+
+pooled_mixture_results %>%
+  kableExtra::kbl(caption = "Oracle Mixture Results") %>%
+  kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
 ```
 
-Here we see the fold specific estimates which are used in the pooled TMLE output we saw earlier. 
 
 Additional details for this and other features are given in the vignette. 
 
@@ -209,14 +233,14 @@ prior to submitting a pull request.
 After using the `CVtreeMLE` R package, please cite the following:
 
       
-@article{McCoy2023, 
-doi = {10.21105/joss.04181}, 
-url = {https://doi.org/10.21105/joss.04181}, 
-year = {2023}, publisher = {The Open Journal}, 
-volume = {8}, number = {82}, pages = {4181}, 
-author = {David McCoy and Alan Hubbard and Mark Van der Laan}, 
-title = {CVtreeMLE: Efficient Estimation of Mixed Exposures using Data Adaptive Decision Trees and Cross-Validated Targeted Maximum Likelihood Estimation in R}, 
-journal = {Journal of Open Source Software} }
+    @article{McCoy2023, 
+    doi = {10.21105/joss.04181}, 
+    url = {https://doi.org/10.21105/joss.04181}, 
+    year = {2023}, publisher = {The Open Journal}, 
+    volume = {8}, number = {82}, pages = {4181}, 
+    author = {David McCoy and Alan Hubbard and Mark Van der Laan}, 
+    title = {CVtreeMLE: Efficient Estimation of Mixed Exposures using Data Adaptive Decision Trees and Cross-Validated Targeted Maximum Likelihood Estimation in R}, 
+    journal = {Journal of Open Source Software} }
 
 ---
 

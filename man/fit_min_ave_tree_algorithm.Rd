@@ -4,17 +4,7 @@
 \alias{fit_min_ave_tree_algorithm}
 \title{Fit minimum average tree}
 \usage{
-fit_min_ave_tree_algorithm(
-  at,
-  a,
-  w,
-  y,
-  family,
-  fold,
-  parallel_cv,
-  min_max,
-  min_obs
-)
+fit_min_ave_tree_algorithm(at, a, w, y, fold, parallel_cv, min_max, min_obs)
 }
 \arguments{
 \item{at}{Training dataframe}
@@ -29,17 +19,9 @@ fit_min_ave_tree_algorithm(
 
 \item{parallel_cv}{TRUE/FALSE indicator to parallelize cv}
 
-\item{direction}{Positive/negative - max or min coefficient to keep in
-the ensemble}
+\item{min_max}{Min or Max oracle region to go for}
 
-\item{w_stack}{Stack of algorithms made in SL 3 used in ensemble machine
-learning to fit Y|W}
-
-\item{max_iter}{Max number of iterations of iterative backfitting algorithm}
-
-\item{verbose}{Run in verbose setting}
-
-\item{seed}{Seed number for consistent results}
+\item{min_obs}{Minimum number of observations needed to make a split}
 }
 \value{
 A list of the mixture rule results within a fold including:

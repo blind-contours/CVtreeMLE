@@ -23,8 +23,6 @@ average_mixture_rules(
 \item{n_folds}{Number of folds used in cross-validation}
 
 \item{mixture_results}{data frame of results found for mixture rules}
-
-\item{no_mixture_rules}{TRUE/FALSE if no mixture rule was found}
 }
 \value{
 Rules object. TODO: add more detail here.
