@@ -32,7 +32,10 @@ Imports:
     viridis,
     assertthat,
     foreach,
-    ranger
+    ranger,
+    arm,
+    xgboost,
+    nnls
 Suggests:
     rmarkdown,
     knitr,

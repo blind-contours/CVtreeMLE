@@ -85,14 +85,9 @@ There are many dependencies for `CVtreeMLE` so it’s easier to break up
 installation of the various packages to ensure proper installation.
 
 `CVtreeMLE` uses the `sl3` package to build ensemble machine learners
-for each nuisance parameter. We have to install off the development
-branch, first download these two packages for `sl3`
+for each nuisance parameter.
 
-``` r
-install.packages(c("ranger", "arm", "xgboost", "nnls"))
-```
-
-Now install `sl3` on devel:
+Install `sl3` on devel:
 
 ``` r
 remotes::install_github("tlverse/sl3@devel")
@@ -102,13 +97,6 @@ Make sure `sl3` installs correctly then install `CVtreeMLE`
 
 ``` r
 remotes::install_github("blind-contours/CVtreeMLE@main")
-```
-
-`CVtreeMLE` has some other miscellaneous dependencies that are used in
-the examples as well as in the plotting functions.
-
-``` r
-install.packages(c("kableExtra", "hrbrthemes", "viridis"))
 ```
 
 ------------------------------------------------------------------------
@@ -429,7 +417,7 @@ niehs_results <- CVtreeMLE(
 )
 proc.time() - ptm
 #>    user  system elapsed 
-#>  13.698   0.689 409.696
+#>  16.809   1.084 465.339
 ```
 
 ## Mixture Results
@@ -886,7 +874,7 @@ guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/main/CONTRIBUTIN
 
 Contributions are very welcome. Interested contributors should consult
 our [contribution
-guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/main/CONTRIBUTING.md)
+guidelines](https://github.com/blind-contours/CVtreeMLE/blob/main/contributing.md)
 prior to submitting a pull request.
 
 ------------------------------------------------------------------------
@@ -910,10 +898,6 @@ After using the `CVtreeMLE` R package, please cite the following:
 
 - [R/`sl3`](https://github.com/tlverse/sl3) - An R package providing
   implementation for Super Learner ensemble machine learning algorithms.
-
-- [R/`SuperLearner`](https://github.com/ecpolley/SuperLearner) - Legacy
-  R package providing implementation for Super Learner ensemble machine
-  learning algorithms.
 
 ------------------------------------------------------------------------
 
