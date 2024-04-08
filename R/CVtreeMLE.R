@@ -52,6 +52,7 @@
 #' fold and is therefore more conservative.
 #' @param min_max Which oracle region to go after the one that minimizes or maximizes the outcome.
 #' @param min_obs Minimum number of observations to have in a region.
+#' @param max_depth Maximum depth to partition the exposures
 #' @details The function performs the following functions.
 #'  \enumerate{
 #'  \item Imputes missing values with the mean and creates dummy indicator
@@ -208,7 +209,8 @@ CVtreeMLE <- function(w,
                       pooled_rule_type = "average",
                       min_max = "min",
                       region = NULL,
-                      min_obs = 25) {
+                      min_obs = 25,
+                      max_depth = 2) {
   if (any(sapply(data[, a], is.factor))) {
     print("Factor variable detected in exposures, converting to numeric")
     data[, a] <- sapply(data[, a], as.numeric)
@@ -305,7 +307,8 @@ CVtreeMLE <- function(w,
             fold = fold_k,
             parallel_cv = parallel_cv,
             min_max = min_max,
-            min_obs = min_obs
+            min_obs = min_obs,
+            max_depth = max_depth
           )
 
 

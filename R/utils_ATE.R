@@ -156,19 +156,36 @@ calc_clever_covariate <- function(ghat_1_w,
 #'  avoid numerical instability issues.
 #' @export
 fit_least_fav_submodel <- function(h_aw, data, y, qbar_aw, qbar_1w) {
-  data$y_scaled <- scale_to_unit(data[y])[[1]]
+  is_binary <- all(data[[y]] %in% c(0, 1))
 
-  logit_update <-
-    stats::glm(
-      y_scaled ~ -1 + h_aw,
-      family = "quasibinomial",
-      data = data,
-      weights = scale_to_unit(qbar_aw)
-    )
+  # Apply scaling for continuous outcomes
+  if (!is_binary) {
+    data$y_scaled <- scale_to_unit(data[[y]])
+    qbar_aw_scaled <- scale_to_unit(qbar_aw)
+    qbar_1w_scaled <- scale_to_unit(qbar_1w)
+  } else {
+    data$y_scaled <- data[[y]]
+    qbar_aw_scaled <- qbar_aw
+    qbar_1w_scaled <- qbar_1w
+  }
 
-  epsilon <- logit_update$coef
-  qbar_aw_star <- qbar_aw + epsilon * h_aw
-  qbar_1w_star <- qbar_1w + epsilon * h_aw
+  logit_update <- glm(
+    y_scaled ~ -1 + h_aw,
+    family = "quasibinomial",
+    data = data,
+    weights = qbar_aw_scaled
+  )
+
+  epsilon <- coef(logit_update)
+
+  # Apply update step based on the type of outcome
+  if (is_binary) {
+    qbar_aw_star <- 1 / (1 + exp(-(log(qbar_aw / (1 - qbar_aw)) + epsilon * h_aw)))
+    qbar_1w_star <- 1 / (1 + exp(-(log(qbar_1w / (1 - qbar_1w)) + epsilon * h_aw)))
+  } else {
+    qbar_aw_star <- qbar_aw + epsilon * h_aw
+    qbar_1w_star <- qbar_1w + epsilon * h_aw
+  }
 
   return(list(
     "qbar_aw_star" = qbar_aw_star,

@@ -52,7 +52,8 @@ fit_min_ave_tree_algorithm <- function(at,
                                        fold,
                                        parallel_cv,
                                        min_max,
-                                       min_obs) {
+                                       min_obs,
+                                       max_depth = 2) {
   if (parallel_cv == TRUE) {
     future::plan(future::sequential, gc = TRUE)
   }
@@ -135,12 +136,18 @@ fit_min_ave_tree_algorithm <- function(at,
             outcome, "~ split_indicator +",
             paste(covars, collapse = "+")
           )),
-          data = data, num.trees = 200
+          data = data, num.trees = 400
         )
 
+        data_1 <- data
+        data_1$split_indicator <- 1
+
+        data_0 <- data
+        data_0$split_indicator <- 0
+
         # Calculate the average predictions for left and right
-        left_average <- mean(model$predictions[data$split_indicator == 1])
-        right_average <- mean(model$predictions[data$split_indicator == 0])
+        left_average <- mean(predict(model, data = data_1)$predictions)
+        right_average <- mean(predict(model, data = data_0)$predictions)
 
         if (min_max == "min") {
           # Compare and update the best split
@@ -287,7 +294,7 @@ fit_min_ave_tree_algorithm <- function(at,
     data = at,
     split_variables = a,
     w_names = w,
-    max_depth = 5,
+    max_depth = max_depth,
     outcome = y,
     min_max = min_max,
     min_obs = min_obs
