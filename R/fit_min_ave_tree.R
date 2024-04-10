@@ -62,16 +62,62 @@ fit_min_ave_tree_algorithm <- function(at,
   at <- at %>%
     mutate(across(all_of(w), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
 
-  calculate_average <- function(region, w_names, var, outcome) {
-    if (nrow(region) == 0) { # No data in this region
-      return(list(average = Inf, n = 0)) # Use Inf as the default for average.
-    } else {
+  calculate_average <- function(region, w_names, var, outcome, depth) {
+
+    if (depth == 0 ) {
+      region_average <- mean(region[[outcome]])
+      n <- nrow(region)
+    }else{
+
       region_data <- region[, c(w_names, var, outcome)]
+
+      outcome_model <- ranger(
+          formula = as.formula(paste(outcome, "~.")),
+          data = region_data, num.trees = 400
+        )
+
+        propensity_model <- ranger(
+          formula = as.formula(paste(
+            "split_indicator ~ ",
+            paste(w_names, collapse = "+")
+          )),
+          data = data, num.trees = 400
+        )
+
+        propensity_predictions <- propensity_model$predictions
+        propensity_predictions <- ifelse(propensity_predictions < 0.0001, 0.0001, propensity_predictions)
+        propensity_predictions <- ifelse(propensity_predictions > 0.99, 0.99, propensity_predictions)
+
+        split_1_haw <- calc_clever_covariate(ghat_1_w = 1/propensity_predictions,
+                              data = data, exposure = "split_indicator",h_aw_trunc_lvl = 10)
+
+        split_0_haw <- calc_clever_covariate(ghat_1_w = 1/1-propensity_predictions,
+                                             data = data, exposure = "split_indicator",h_aw_trunc_lvl = 10)
+
+
+        data_1 <- data
+        data_1$split_indicator <- 1
+
+        data_0 <- data
+        data_0$split_indicator <- 0
+
+        outcome_preds_aw <- predict(outcome_model, data = data)$predictions
+        outcome_preds_1w <- predict(outcome_model, data = data_1)$predictions
+        outcome_preds_0w <- predict(outcome_model, data = data_0)$predictions
+
+        tmle_update_1 <- fit_least_fav_submodel(h_aw = split_1_haw, data = data, y = outcome, qbar_aw = outcome_preds_aw, qbar_1w = outcome_preds_1w)
+        tmle_update_0 <- fit_least_fav_submodel(h_aw = split_0_haw, data = data, y = outcome, qbar_aw = outcome_preds_aw, qbar_1w = outcome_preds_0w)
+
+        # Calculate the average predictions for left and right
+        left_average <- mean(tmle_update_1$qbar_1w_star)
+        right_average <- mean(tmle_update_0$qbar_1w_star)
+
       rf <- ranger(as.formula(paste(outcome, "~.")), data = region_data)
 
       region_average <- mean(rf$predictions)
-      return(list(average = region_average, n = nrow(region)))
     }
+      return(list(average = region_average, n = n))
+
   }
 
   split_data <- function(data, split_var, split_point) {
@@ -87,8 +133,7 @@ fit_min_ave_tree_algorithm <- function(at,
 
   rules_to_dataframe <- function(rules_list) {
     rules_df <- data.frame(
-      Average = numeric(),
-      ParentAverage = numeric(),
+      RegionMean = numeric(),
       N = integer(),
       Rule = character(),
       Depth = integer(),
@@ -97,8 +142,7 @@ fit_min_ave_tree_algorithm <- function(at,
 
     for (rule in rules_list) {
       rules_df <- rbind(rules_df, data.frame(
-        Average = rule$RegionMean,
-        ParentAverage = rule$ParentMean,
+        RegionMean = rule$RegionMean,
         N = rule$N,
         Rule = rule$Rule,
         Depth = rule$Depth,
@@ -125,13 +169,13 @@ fit_min_ave_tree_algorithm <- function(at,
 
         # Check for minimum observations in each split
         if (sum(data$split_indicator) < min_obs || sum(!data$split_indicator)
-        < min_obs) {
+        < min_obs || length(unique(data[[outcome]])) == 1) {
           next
         }
 
-        covars <- c(w_names, a[a != var])
+        covars <- c(w_names,  a[a != var])
 
-        model <- ranger(
+        outcome_model <- ranger(
           formula = as.formula(paste(
             outcome, "~ split_indicator +",
             paste(covars, collapse = "+")
@@ -139,15 +183,41 @@ fit_min_ave_tree_algorithm <- function(at,
           data = data, num.trees = 400
         )
 
+        propensity_model <- ranger(
+          formula = as.formula(paste(
+            "split_indicator ~ ",
+            paste(w_names, collapse = "+")
+          )),
+          data = data, num.trees = 400
+        )
+
+        propensity_predictions <- propensity_model$predictions
+        propensity_predictions <- ifelse(propensity_predictions < 0.0001, 0.0001, propensity_predictions)
+        propensity_predictions <- ifelse(propensity_predictions > 0.99, 0.99, propensity_predictions)
+
+        split_1_haw <- calc_clever_covariate(ghat_1_w = 1/propensity_predictions,
+                              data = data, exposure = "split_indicator",h_aw_trunc_lvl = 10)
+
+        split_0_haw <- calc_clever_covariate(ghat_1_w = 1/1-propensity_predictions,
+                                             data = data, exposure = "split_indicator",h_aw_trunc_lvl = 10)
+
+
         data_1 <- data
         data_1$split_indicator <- 1
 
         data_0 <- data
         data_0$split_indicator <- 0
 
+        outcome_preds_aw <- predict(outcome_model, data = data)$predictions
+        outcome_preds_1w <- predict(outcome_model, data = data_1)$predictions
+        outcome_preds_0w <- predict(outcome_model, data = data_0)$predictions
+
+        tmle_update_1 <- fit_least_fav_submodel(h_aw = split_1_haw, data = data, y = outcome, qbar_aw = outcome_preds_aw, qbar_1w = outcome_preds_1w)
+        tmle_update_0 <- fit_least_fav_submodel(h_aw = split_0_haw, data = data, y = outcome, qbar_aw = outcome_preds_aw, qbar_1w = outcome_preds_0w)
+
         # Calculate the average predictions for left and right
-        left_average <- mean(predict(model, data = data_1)$predictions)
-        right_average <- mean(predict(model, data = data_0)$predictions)
+        left_average <- mean(tmle_update_1$qbar_1w_star)
+        right_average <- mean(tmle_update_0$qbar_1w_star)
 
         if (min_max == "min") {
           # Compare and update the best split
@@ -201,45 +271,40 @@ fit_min_ave_tree_algorithm <- function(at,
                                         split_variables,
                                         w_names,
                                         depth = 0,
-                                        max_depth = 2,
+                                        max_depth = 3,
                                         outcome,
                                         path = "",
                                         min_obs = min_obs,
-                                        parent_mean = ifelse(min_max == "min", Inf, -Inf),
-                                        min_max) {
+                                        min_max = "min",
+                                        parent_average = NULL) {
     # Calculate the parent mean before attempting to find the best split
-    region_stats <- calculate_average(data,
-      w_names = w_names,
-      var = split_variables, outcome
-    )
+    if(depth == 0){
+      parent_average <- mean(data[[outcome]])
+      n <- nrow(data)
+    }
+
 
     if (depth == max_depth || nrow(data) == 0) {
       current_rule <- list(
-        "Value" = mean(data[[outcome]], na.rm = TRUE),
-        "RegionMean" = region_stats$average, # Updated to use parent_stats
-        "ParentMean" = parent_mean,
-        "N" = region_stats$n, # Updated to use parent_stats
+        "RegionMean" = parent_average, # Updated to use parent_stats
+        "N" = nrow(data), # Updated to use parent_stats
         "Rule" = clean_rule(path),
         "Depth" = depth
       )
-      # Debug: Print when returning a base case rule
-      print(paste("Returning base case rule at depth:", depth))
       return(list(current_rule))
     }
 
     # Find the best split using the parent mean calculated earlier
     best_split <- find_best_split(data, split_variables, w_names, outcome,
       min_obs,
-      parent_average = parent_mean,
+      parent_average = parent_average,
       min_max = min_max
     )
 
     if (is.null(best_split)) { # If no best split found, return the current path
       current_rule <- list(
-        "Value" = mean(data[[outcome]], na.rm = TRUE),
-        "RegionMean" = region_stats$average, # Updated to use parent_stats
-        "ParentMean" = parent_mean,
-        "N" = region_stats$n, # Updated to use parent_stats
+        "RegionMean" = parent_average,
+        "N" = nrow(data),
         "Rule" = clean_rule(path),
         "Depth" = depth
       )
@@ -249,41 +314,51 @@ fit_min_ave_tree_algorithm <- function(at,
     # Perform the split
     splits <- split_data(data, best_split$variable, best_split$point)
 
-    # Construct the rules for the left and right branches
-    left_rule <- paste0(
-      path, best_split$variable, " <= ",
-      best_split$point, " & "
-    )
-    right_rule <- paste0(
-      path, best_split$variable, " > ",
-      best_split$point, " & "
-    )
 
+    if (best_split$side == "left") {
 
-    left_rules <- recursive_split_all_rules(
-      data = splits$left,
-      split_variables = split_variables,
-      w_names = w_names,
-      depth = depth + 1,
-      max_depth = max_depth,
-      outcome,
-      left_rule,
-      min_obs,
-      parent_mean = best_split$average,
-      min_max = min_max
-    )
-    right_rules <- recursive_split_all_rules(
+      # Construct the rules for the left and right branches
+      left_rule <- paste0(
+        path, best_split$variable, " <= ",
+        best_split$point, " & "
+      )
+
+      left_rules <- recursive_split_all_rules(
+        data = splits$left,
+        split_variables = split_variables,
+        w_names = w_names,
+        depth = depth + 1,
+        max_depth = max_depth,
+        outcome = outcome,
+        path = left_rule,
+        min_obs = min_obs,
+        parent_average = best_split$average,
+        min_max = min_max
+      )
+
+      right_rules <- NULL
+    }else{
+      right_rule <- paste0(
+        path, best_split$variable, " > ",
+        best_split$point, " & "
+      )
+      right_rules <- recursive_split_all_rules(
       data = splits$right,
       split_variables = split_variables,
       w_names = w_names,
       depth = depth + 1,
       max_depth = max_depth,
-      outcome,
-      right_rule,
-      min_obs,
-      parent_mean = best_split$average,
+      outcome = outcome,
+      path = right_rule,
+      min_obs = min_obs,
+      parent_average = best_split$average,
       min_max = min_max
-    )
+      )
+      left_rules <- NULL
+      }
+
+
+
 
     # Combine the rules from the left and right branches and return them
     return(c(left_rules, right_rules))
@@ -303,9 +378,9 @@ fit_min_ave_tree_algorithm <- function(at,
   tree <- rules_to_dataframe(min_ave_tree_results)
 
   if (min_max == "min") {
-    region <- tree[which.min(tree$Average), ]
+    region <- tree[which.min(tree$RegionMean), ]
   } else {
-    region <- tree[which.max(tree$Average), ]
+    region <- tree[which.max(tree$RegionMean), ]
   }
 
   rules <- data.frame(matrix(nrow = nrow(region), ncol = 7))
@@ -315,7 +390,7 @@ fit_min_ave_tree_algorithm <- function(at,
   )
 
   rules$rule <- paste("rule", seq(nrow(region)), sep = "")
-  rules$coefficient <- region$Average
+  rules$coefficient <- region$RegionMean
   rules$description <- region$Rule
   rules$effect_modifiers <- as.numeric(str_detect(
     region$Rule,
