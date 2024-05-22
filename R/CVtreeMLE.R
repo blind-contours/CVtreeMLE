@@ -191,7 +191,7 @@
 
 # Start CVtreeMLE ---------------------------
 
-CVtreeMLE <- function(w,
+  CVtreeMLE <- function(w,
                       a,
                       y,
                       data,
@@ -209,7 +209,6 @@ CVtreeMLE <- function(w,
                       pooled_rule_type = "average",
                       min_max = "min",
                       region = NULL,
-                      min_obs = 25,
                       max_depth = 2) {
   if (any(sapply(data[, a], is.factor))) {
     print("Factor variable detected in exposures, converting to numeric")

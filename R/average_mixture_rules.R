@@ -81,7 +81,7 @@ average_mixture_rules <- function(group_list,
         min <- round(min(all_min_values, na.rm = TRUE), 3)
         max <- round(max(all_min_values, na.rm = TRUE), 3)
 
-        avg_rule_for_var <- paste0(var, " >=", mean, "(", min, ",", max, ")")
+        avg_rule_for_var <- paste0(var, " >", mean, "(", min, ",", max, ")")
       }
 
       if (exists("avg_rule_for_var") == FALSE) {

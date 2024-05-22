@@ -75,16 +75,16 @@ colnames(result_df) <- c("Rule", "EY_PIE", "EY_region")
 result_df$EY_PIE <- as.numeric(result_df$EY_PIE)
 result_df$EY_region <- as.numeric(result_df$EY_region)
 
-p0_min_ate <- result_df[which.min(result_df$EY_PIE),]
-true_rule <- "region1  <= 1 & region2 <= 1"
-true_ate <- -23.30897
-true_min_ave <- 10.00767
+p0_min_ate <- result_df[which.max(result_df$EY_PIE),]
+true_rule <- "region1  >= 5 & region2 >= 5"
+true_ate <- 38.00052
+true_min_ave <- 70.10784
 
 # perform simulation across sample sizes
 sim_results_df <- data.frame()
 cross_validations <- c(2,4,5,10,10,10, 10)
 
-data$A <- ifelse(data$region1 <= 3 & data$region2 <= 1, 1, 0)
+data$A <- ifelse(data$region1 >= 3 & data$region2 >= 4, 1, 0)
 data_1 <- data
 data_1$A <- 1
 

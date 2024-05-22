@@ -15,8 +15,9 @@ source(here("sandbox", "simulate_2d_data.R"))
 # devtools::install(upgrade = "never")
 
 # simulation parameters
-n_sim <- 20 # number of simulations
-n_obs <- c(200, 350, 500, 750, 1000, 1500, 2000, 3000, 5000)
+n_sim <- 5 # number of simulations
+n_obs <- c( 500, 750, 1000, 1500, 2000, 3000, 5000)
+cross_validations <- c(2,4,5,10,10,10, 10)
 
 # Establish globals ---------------------------
 
@@ -60,7 +61,7 @@ for (i in m1_seq) {
     for (k in m1_dir) {
       for (l in m2_dir) {
         rule <- (paste("region1 ",k, i, "&", "region2", l, j))
-        ate_res <- calc_empir_truth(data, rule)
+        ate_res <- calc_empir_truth(data, rule, exposure_dim = 2)
         result_list[[iter]] <- c(rule, ate_res)
         iter <- iter + 1
 
@@ -70,18 +71,23 @@ for (i in m1_seq) {
 }
 
 result_df <- as.data.frame(do.call(rbind,result_list))
-colnames(result_df) <- c("Rule", "EY_region", "EY_compl", "ATE")
-result_df$ATE <- as.numeric(result_df$ATE)
-p0_max_ate <- result_df[which.max(result_df$ATE),]
+colnames(result_df) <- c("Rule", "PIE", "Region_Mean")
+result_df$PIE <- as.numeric(result_df$PIE)
+p0_max_ate <- result_df[which.max(result_df$PIE),]
+
 true_rule <- p0_max_ate$Rule
-true_ate <- p0_max_ate$ATE
+true_pie <- unlist(p0_max_ate$PIE)
+true_region_mean <- unlist(p0_max_ate$Region_Mean)
 # perform simulation across sample sizes
 sim_results_df <- data.frame()
 
-for (sample_size in n_obs) {
+for (i in seq_along(n_obs)) {
+  sample_size <- n_obs[i]
+  cv <- cross_validations[i]
   # get results in parallel
   results <- list()
   print(sample_size)
+
 
   for(this_iter in seq_len(n_sim)) {
     print(this_iter)
@@ -104,11 +110,16 @@ for (sample_size in n_obs) {
     est_out <- fit_estimators(data = as.data.frame(data_sim),
                               covars = c("age", "sex", "bmi"),
                               exposures = c("region1", "region2"),
-                              outcome = "outcome_obs",
+                              outcome = "outcome_true",
                               seed = seed,
                               P_0_data = P_0_data_filt,
                               true_rule = true_rule,
-                              true_ate = true_ate)
+                              true_ate = true_ate,
+                              true_region = true_min_ave,
+                              exposure_dim = exposure_dim,
+                              cv = cv,
+                              region = true_rule,
+                              min_max = "max")
 
     est_out$n_obs <- sample_size
 
