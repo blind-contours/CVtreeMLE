@@ -413,11 +413,12 @@ niehs_results <- CVtreeMLE(
   family = "continuous",
   num_cores = 8,
   min_max = "min",
+  max_depth = 2, 
   min_obs = 25
 )
 proc.time() - ptm
 #>    user  system elapsed 
-#>  16.809   1.084 465.339
+#>  56.395   2.454 949.862
 ```
 
 ## Mixture Results
@@ -473,322 +474,322 @@ variables
 <tbody>
 <tr>
 <td style="text-align:right;">
--0.036
+-4.385
 </td>
 <td style="text-align:right;">
-11.477
+27.971
 </td>
 <td style="text-align:right;">
--22.530
+-59.207
 </td>
 <td style="text-align:right;">
-22.458
+50.438
 </td>
 <td style="text-align:right;">
-0.997515
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-2.689
-</td>
-<td style="text-align:left;">
-X2 \<= 0.42
+0.875440
 </td>
 <td style="text-align:right;">
 1
 </td>
+<td style="text-align:right;">
+4.687
+</td>
 <td style="text-align:left;">
-X2
+X1 \<= 1 & X7 \<= 0.44
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+X1-X7
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
--0.173
+-2.763
 </td>
 <td style="text-align:right;">
-7.816
+17.035
 </td>
 <td style="text-align:right;">
--15.492
+-36.152
 </td>
 <td style="text-align:right;">
-15.146
+30.626
 </td>
 <td style="text-align:right;">
-0.982327
+0.871169
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-2.759
+3.591
 </td>
 <td style="text-align:left;">
-X2 \<= 0.41
+X1 \<= 1 & X7 \<= 0.4
 </td>
 <td style="text-align:right;">
 2
 </td>
 <td style="text-align:left;">
-X2
+X1-X7
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
-0.486
+-2.433
 </td>
 <td style="text-align:right;">
-15.208
+20.638
 </td>
 <td style="text-align:right;">
--29.322
+-42.882
 </td>
 <td style="text-align:right;">
-30.293
+38.017
 </td>
 <td style="text-align:right;">
-0.974526
+0.906172
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-2.906
+3.590
 </td>
 <td style="text-align:left;">
-X2 \<= 0.41
+X1 \<= 1 & X7 \<= 0.46
 </td>
 <td style="text-align:right;">
 3
 </td>
 <td style="text-align:left;">
-X2
+X1-X7
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
-0.969
+-3.522
 </td>
 <td style="text-align:right;">
-15.328
+24.119
 </td>
 <td style="text-align:right;">
--29.074
+-50.794
 </td>
 <td style="text-align:right;">
-31.012
+43.750
 </td>
 <td style="text-align:right;">
-0.949580
+0.883911
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-3.469
+4.450
 </td>
 <td style="text-align:left;">
-X2 \<= 0.39
+X1 \<= 1 & X7 \<= 0.32
 </td>
 <td style="text-align:right;">
 4
 </td>
 <td style="text-align:left;">
-X2
+X1-X7
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
-0.543
+-4.111
 </td>
 <td style="text-align:right;">
-13.659
+24.333
 </td>
 <td style="text-align:right;">
--26.229
+-51.803
 </td>
 <td style="text-align:right;">
-27.314
+43.581
 </td>
 <td style="text-align:right;">
-0.968304
+0.865844
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-3.358
+4.187
 </td>
 <td style="text-align:left;">
-X2 \<= 0.41
+X1 \<= 1 & X7 \<= 0.35
 </td>
 <td style="text-align:right;">
 5
 </td>
 <td style="text-align:left;">
-X2
+X1-X7
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
-0.537
+-3.070
 </td>
 <td style="text-align:right;">
-15.434
+22.819
 </td>
 <td style="text-align:right;">
--29.713
+-47.796
 </td>
 <td style="text-align:right;">
-30.787
+41.655
 </td>
 <td style="text-align:right;">
-0.972228
+0.892970
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-3.110
+4.286
 </td>
 <td style="text-align:left;">
-X2 \<= 0.42
+X1 \<= 0.94 & X7 \<= 0.46
 </td>
 <td style="text-align:right;">
 6
 </td>
 <td style="text-align:left;">
-X2
+X1-X7
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
-0.129
+-4.029
 </td>
 <td style="text-align:right;">
-15.465
+18.957
 </td>
 <td style="text-align:right;">
--30.182
+-41.184
 </td>
 <td style="text-align:right;">
-30.439
+33.126
 </td>
 <td style="text-align:right;">
-0.993363
+0.831687
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-3.191
+3.676
 </td>
 <td style="text-align:left;">
-X2 \<= 0.39
+X1 \<= 0.98 & X7 \<= 0.35
 </td>
 <td style="text-align:right;">
 7
 </td>
 <td style="text-align:left;">
-X2
+X1-X7
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
--0.029
+-4.406
 </td>
 <td style="text-align:right;">
-13.987
+26.862
 </td>
 <td style="text-align:right;">
--27.443
+-57.054
 </td>
 <td style="text-align:right;">
-27.386
+48.243
 </td>
 <td style="text-align:right;">
-0.998359
+0.869716
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-2.529
+4.501
 </td>
 <td style="text-align:left;">
-X2 \<= 0.39
+X1 \<= 1 & X7 \<= 0.42
 </td>
 <td style="text-align:right;">
 8
 </td>
 <td style="text-align:left;">
-X2
+X1-X7
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
-0.661
+-3.970
 </td>
 <td style="text-align:right;">
-12.529
+19.874
 </td>
 <td style="text-align:right;">
--23.895
+-42.923
 </td>
 <td style="text-align:right;">
-25.217
+34.983
 </td>
 <td style="text-align:right;">
-0.957948
+0.841675
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-2.647
+3.659
 </td>
 <td style="text-align:left;">
-X2 \<= 0.39
+X1 \<= 1 & X7 \<= 0.35
 </td>
 <td style="text-align:right;">
 9
 </td>
 <td style="text-align:left;">
-X2
+X1-X7
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
-1.384
+-3.137
 </td>
 <td style="text-align:right;">
-16.027
+28.571
 </td>
 <td style="text-align:right;">
--30.029
+-59.135
 </td>
 <td style="text-align:right;">
-32.797
+52.860
 </td>
 <td style="text-align:right;">
-0.931196
+0.912557
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-3.422
+5.019
 </td>
 <td style="text-align:left;">
-X2 \<= 0.39
+X1 \<= 1 & X7 \<= 0.39
 </td>
 <td style="text-align:right;">
 10
 </td>
 <td style="text-align:left;">
-X2
+X1-X7
 </td>
 </tr>
 </tbody>
@@ -838,19 +839,19 @@ P-value
 <tbody>
 <tr>
 <td style="text-align:right;">
-0.248
+-3.752
 </td>
 <td style="text-align:right;">
-4.351
+7.417
 </td>
 <td style="text-align:right;">
--8.28
+-18.289
 </td>
 <td style="text-align:right;">
-8.777
+10.784
 </td>
 <td style="text-align:right;">
-0.954462
+0.612922
 </td>
 </tr>
 </tbody>
@@ -866,7 +867,7 @@ vignette.
 If you encounter any bugs or have any specific feature requests, please
 [file an issue](https://github.com/blind-contours/CVtreeMLE/issues).
 Further details on filing issues are provided in our [contribution
-guidelines](https://github.com/blind-contours/CVtreeMLE/blob/main/contributing.md).
+guidelines](https://github.com/blind-contours/%20CVtreeMLE/blob/main/CONTRIBUTING.md).
 
 ------------------------------------------------------------------------
 

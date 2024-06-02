@@ -162,6 +162,7 @@ niehs_results <- CVtreeMLE(
   family = "continuous",
   num_cores = 8,
   min_max = "min",
+  max_depth = 2, 
   min_obs = 25
 )
 proc.time() - ptm

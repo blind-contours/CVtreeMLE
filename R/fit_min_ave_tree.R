@@ -96,7 +96,7 @@ fit_min_ave_tree_algorithm <- function(at,
   }
 
   find_best_split <- function(data, split_variables, w_names,
-                              outcome, parent_average, min_max) {
+                              outcome, parent_average, min_max, min_obs) {
 
     # Initialize starting values
     best_split <- NULL
@@ -113,6 +113,10 @@ fit_min_ave_tree_algorithm <- function(at,
         # Create a binary indicator for the split
         data$split_indicator <- ifelse(data[[var]] <= split_point, 1, 0)
 
+        if (sum(data$split_indicator) < min_obs) {
+          next  # Skip if probabilities are too extreme
+        }
+
         # Fit propensity model to estimate P(A|W)
         propensity_model <- ranger(
           formula = as.formula(paste(
@@ -125,24 +129,17 @@ fit_min_ave_tree_algorithm <- function(at,
         propensity_predictions <- propensity_model$predictions
 
         # Ensure predicted probabilities are within a reasonable range
-        if (any(propensity_predictions < 0.001) || any(propensity_predictions > 0.99)) {
+        if (any(propensity_predictions < 0.01) || any(propensity_predictions > 0.99)) {
           next  # Skip if probabilities are too extreme
         }
 
         # Compute inverse probability weights
 
-        propensity_predictions <- ifelse(propensity_predictions < 0.001, 0.001, propensity_predictions)
+        propensity_predictions <- ifelse(propensity_predictions < 0.01, 0.01, propensity_predictions)
         propensity_predictions <- ifelse(propensity_predictions > 0.99, 0.99, propensity_predictions)
 
-        split_1_haw <- 1 / propensity_predictions
-        split_0_haw <- 1 / (1 - propensity_predictions)
-
-        split_1_haw <- calc_clever_covariate(ghat_1_w = split_1_haw,
-                              data = data, exposure = "split_indicator", h_aw_trunc_lvl = 10)
-
-        split_0_haw <- calc_clever_covariate(ghat_1_w = split_0_haw,
-                                             data = data, exposure = "split_indicator", h_aw_trunc_lvl = 10)
-
+        split_1_haw <- ifelse(data$split_indicator == 1, 1 / propensity_predictions, 0)
+        split_0_haw <- ifelse(data$split_indicator == 0, 1 / (1 - propensity_predictions), 0)
 
         # Fit outcome models for adjusted predictions
 
@@ -183,8 +180,8 @@ fit_min_ave_tree_algorithm <- function(at,
         theta_right <- right_average - parent_average
 
         # Calculate standard errors and p-values for each group
-        left_IC <- split_1_haw * (data[, y] - outcome_preds_aw + (outcome_preds_1w - data[, y]) - theta_left)
-        right_IC <- split_0_haw * (data[, y] - outcome_preds_aw + (outcome_preds_0w - data[, y]) - theta_right)
+        left_IC <- split_1_haw * (data[, y] - outcome_preds_aw) + (outcome_preds_1w -  left_average)
+        right_IC <- split_0_haw * (data[, y] - outcome_preds_aw) + (outcome_preds_0w - right_average)
 
         n_total <- dim(data)[1]
         n_left <- sum(data$split_indicator)
@@ -211,7 +208,7 @@ fit_min_ave_tree_algorithm <- function(at,
             )
           }
 
-          if (right_average < parent_average && right_average < min_average && p_value_right_average < best_p_value && p_value_left < 0.05) {
+          if (right_average < parent_average && right_average < min_average && p_value_right < best_p_value && p_value_right < 0.05) {
             min_average <- right_average
             best_p_value <- p_value_right
             best_split <- list(
@@ -230,7 +227,7 @@ fit_min_ave_tree_algorithm <- function(at,
             )
           }
 
-          if (right_average > parent_average && right_average > max_average &&  p_value_right < best_p_value && p_value_left < 0.05  ) {
+          if (right_average > parent_average && right_average > max_average &&  p_value_right < best_p_value && p_value_right < 0.05  ) {
             max_average <- right_average
             best_p_value <- p_value_right
             best_split <- list(
@@ -260,7 +257,8 @@ fit_min_ave_tree_algorithm <- function(at,
                                         outcome,
                                         path = "",
                                         min_max = "min",
-                                        parent_average = NULL) {
+                                        parent_average = NULL,
+                                        min_obs) {
     # Calculate the parent mean before attempting to find the best split
     if(depth == 0){
       parent_average <- mean(data[[outcome]])
@@ -284,7 +282,8 @@ fit_min_ave_tree_algorithm <- function(at,
                                   w_names = w_names,
                                   outcome = outcome,
                                   parent_average = parent_average,
-                                  min_max = min_max
+                                  min_max = min_max,
+                                  min_obs = min_obs
     )
 
     if (is.null(best_split)) { # If no best split found, return the current path
@@ -318,7 +317,8 @@ fit_min_ave_tree_algorithm <- function(at,
         outcome = outcome,
         path = left_rule,
         parent_average = best_split$average,
-        min_max = min_max
+        min_max = min_max,
+        min_obs = min_obs
       )
 
       right_rules <- NULL
@@ -336,7 +336,8 @@ fit_min_ave_tree_algorithm <- function(at,
       outcome = outcome,
       path = right_rule,
       parent_average = best_split$average,
-      min_max = min_max
+      min_max = min_max,
+      min_obs = min_obs
       )
       left_rules <- NULL
       }
@@ -355,7 +356,8 @@ fit_min_ave_tree_algorithm <- function(at,
     w_names = w,
     max_depth = max_depth,
     outcome = y,
-    min_max = min_max
+    min_max = min_max,
+    min_obs = min_obs
   )
 
   tree <- rules_to_dataframe(min_ave_tree_results)

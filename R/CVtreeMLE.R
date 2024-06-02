@@ -209,7 +209,8 @@
                       pooled_rule_type = "average",
                       min_max = "min",
                       region = NULL,
-                      max_depth = 2) {
+                      max_depth = 2,
+                      min_obs = 25) {
   if (any(sapply(data[, a], is.factor))) {
     print("Factor variable detected in exposures, converting to numeric")
     data[, a] <- sapply(data[, a], as.numeric)

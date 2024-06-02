@@ -40,19 +40,19 @@ calc_ate_estimates <- function(data,
   if (v_fold == TRUE) {
     ics <- base::by(data, data$folds, function(data) {
       result <- (data[, "h_aw"] * (data[, y] - data[, "qbar_aw_star"])) +
-        ((data[, "qbar_1w_star"] - data[, y]) - theta) # -
-      # (data[, y] - mean(data[, y]))
-      result
+        (data[, "qbar_1w_star"] - mean(data[, "qbar_1w_star"])) # -
+       #(data[, y] - mean(data[, y]))
+
     })
   } else {
     if (naive == TRUE) {
-      ics <- (data[, "h_aw"] * (data[, y] - data[, "qbar_aw"]) +
-        (data[, "qbar_1w_star"] - data[, y]) - theta) #-
-      # (data[, y] - mean(data[, y]))
+      ics <- (data[, "h_aw"] * (data[, y] - data[, "qbar_aw_star"])) +
+        (data[, "qbar_1w_star"] - mean(data[, "qbar_1w_star"]))  #-
+        #(data[, y] - mean(data[, y]))
     } else {
       ics <- (data[, "h_aw"] * (data[, y] - data[, "qbar_aw_star"])) +
-        ((data[, "qbar_1w_star"] - data[, y]) - theta) #-
-      # (data[, y] - mean(data[, y]))
+        (data[, "qbar_1w_star"] - mean(data[, "qbar_1w_star"])) # -
+        #(data[, y] - mean(data[, y]))
     }
   }
 
