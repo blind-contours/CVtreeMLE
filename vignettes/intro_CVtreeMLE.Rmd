@@ -196,19 +196,24 @@ exposures_to_keep <- setdiff(exposures, exposures_to_remove)
 ## Run CVtreeMLE 
 
 ```{r run CVtreeMLE for NHANES}
+
+# Convert continuous X variables to their corresponding deciles
+NHANES_eurocim[, exposures_to_keep] <- apply(NHANES_eurocim[, exposures_to_keep], 2, round, 1)
+
 nhanes_results <- CVtreeMLE(
   data = NHANES_eurocim, ## dataframe
   w = covariates,
   a = exposures_to_keep,
   y = outcome,
-  n_folds = 7,
+  n_folds = 5,
   seed = 34421,
   parallel_cv = TRUE,
   parallel = TRUE,
   family = "continuous",
   num_cores = 8,
-  min_max = "max", # we are going for the maximum
-  min_obs = nrow(NHANES_eurocim) * .1 # minimum number of individuals in a region to warrant split
+  min_max = "max",
+  min_obs = 20,
+  p_val_thresh = 1
 )
 ```
 
@@ -225,9 +230,6 @@ k_fold_results %>%
   kableExtra::kbl(caption = "K-fold Results") %>%
   kableExtra::kable_classic(full_width = FALSE, html_font = "Cambria")
 ```
-
-This shows in all folds that LBXDO3LA was found to have the region which maximizes telomere length if all individuals were forced to be exposed to levels less than approximately 13. LBXDO3LA is 1,2,3,6,7,8-hxcdd Lipid Adj (pg/g) which is a Furan. 
-
 
 The pooled result is interpretable because it will be the average of estimates in the regions for the same variable:
 

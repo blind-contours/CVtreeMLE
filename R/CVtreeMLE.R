@@ -210,7 +210,8 @@
                       min_max = "min",
                       region = NULL,
                       max_depth = 2,
-                      min_obs = 25) {
+                      min_obs = 25,
+                      p_val_thresh = 0.1) {
   if (any(sapply(data[, a], is.factor))) {
     print("Factor variable detected in exposures, converting to numeric")
     data[, a] <- sapply(data[, a], as.numeric)
@@ -308,7 +309,8 @@
             parallel_cv = parallel_cv,
             min_max = min_max,
             min_obs = min_obs,
-            max_depth = max_depth
+            max_depth = max_depth,
+            p_val_thresh = p_val_thresh
           )
 
 
@@ -354,6 +356,17 @@
   }
 
   # Estimate nuisance parameters ---------------------------
+
+  if (any(fold_mixture_rules$description == "")) {
+    results_list <- list(
+      "Pooled TMLE Mixture Results" = NULL,
+      "Pooled TMLE Inver Variance Results" = NULL,
+      "V-Specific Mix Results" = NULL,
+      "Oracle Region Results" = NULL,
+      "Mixture Rules" = NULL
+    )
+    return(results_list)
+  }
 
 
   results <- furrr::future_map(unique(data$folds), function(fold_k) {

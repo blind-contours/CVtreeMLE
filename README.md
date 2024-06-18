@@ -108,6 +108,7 @@ First load the package and other packages needed
 ``` r
 library(CVtreeMLE)
 library(sl3)
+library(dplyr)
 library(kableExtra)
 library(ggplot2)
 seed <- 98484
@@ -401,12 +402,16 @@ niehs_data$Z3 <- rbinom(nrow(niehs_data),
 ``` r
 ptm <- proc.time()
 
+# Convert continuous X variables to their corresponding deciles for example
+niehs_data <- niehs_data %>%
+  mutate(across(starts_with("X"), ~ ntile(., 10), .names = "decile_{col}"))
+
 niehs_results <- CVtreeMLE(
   data = as.data.frame(niehs_data),
   w = c("Z", "Z2", "Z3"),
-  a = c(paste("X", seq(7), sep = "")),
+  a = c("decile_X1", "decile_X2", "decile_X3", "decile_X4", "decile_X5", "decile_X6", "decile_X7"),
   y = "Y",
-  n_folds = 10,
+  n_folds = 7,
   seed = seed,
   parallel_cv = TRUE,
   parallel = TRUE,
@@ -418,7 +423,7 @@ niehs_results <- CVtreeMLE(
 )
 proc.time() - ptm
 #>    user  system elapsed 
-#>  56.395   2.454 949.862
+#>   7.184   0.816  91.497
 ```
 
 ## Mixture Results
@@ -474,322 +479,226 @@ variables
 <tbody>
 <tr>
 <td style="text-align:right;">
--4.385
+-2.876
 </td>
 <td style="text-align:right;">
-27.971
+20.006
 </td>
 <td style="text-align:right;">
--59.207
+-42.087
 </td>
 <td style="text-align:right;">
-50.438
+36.335
 </td>
 <td style="text-align:right;">
-0.875440
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-4.687
-</td>
-<td style="text-align:left;">
-X1 \<= 1 & X7 \<= 0.44
+0.885677
 </td>
 <td style="text-align:right;">
 1
 </td>
+<td style="text-align:right;">
+4.118
+</td>
 <td style="text-align:left;">
-X1-X7
+decile_X1 \<= 5 & decile_X7 \<= 3
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+decile_X1-decile_X7
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
--2.763
+-2.733
 </td>
 <td style="text-align:right;">
-17.035
+20.039
 </td>
 <td style="text-align:right;">
--36.152
+-42.009
 </td>
 <td style="text-align:right;">
-30.626
+36.544
 </td>
 <td style="text-align:right;">
-0.871169
+0.891537
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-3.591
+4.123
 </td>
 <td style="text-align:left;">
-X1 \<= 1 & X7 \<= 0.4
+decile_X1 \<= 5 & decile_X7 \<= 4
 </td>
 <td style="text-align:right;">
 2
 </td>
 <td style="text-align:left;">
-X1-X7
+decile_X1-decile_X7
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
--2.433
+-3.061
 </td>
 <td style="text-align:right;">
-20.638
+24.969
 </td>
 <td style="text-align:right;">
--42.882
+-51.999
 </td>
 <td style="text-align:right;">
-38.017
+45.878
 </td>
 <td style="text-align:right;">
-0.906172
+0.902437
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-3.590
+5.026
 </td>
 <td style="text-align:left;">
-X1 \<= 1 & X7 \<= 0.46
+decile_X1 \<= 5 & decile_X7 \<= 3
 </td>
 <td style="text-align:right;">
 3
 </td>
 <td style="text-align:left;">
-X1-X7
+decile_X1-decile_X7
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
--3.522
+-2.196
 </td>
 <td style="text-align:right;">
-24.119
+18.755
 </td>
 <td style="text-align:right;">
--50.794
+-38.955
 </td>
 <td style="text-align:right;">
-43.750
+34.564
 </td>
 <td style="text-align:right;">
-0.883911
+0.906806
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-4.450
+4.452
 </td>
 <td style="text-align:left;">
-X1 \<= 1 & X7 \<= 0.32
+decile_X1 \<= 5 & decile_X7 \<= 3
 </td>
 <td style="text-align:right;">
 4
 </td>
 <td style="text-align:left;">
-X1-X7
+decile_X1-decile_X7
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
--4.111
+-3.257
 </td>
 <td style="text-align:right;">
-24.333
+21.951
 </td>
 <td style="text-align:right;">
--51.803
+-46.280
 </td>
 <td style="text-align:right;">
-43.581
+39.765
 </td>
 <td style="text-align:right;">
-0.865844
+0.882028
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-4.187
+4.489
 </td>
 <td style="text-align:left;">
-X1 \<= 1 & X7 \<= 0.35
+decile_X1 \<= 5 & decile_X7 \<= 4
 </td>
 <td style="text-align:right;">
 5
 </td>
 <td style="text-align:left;">
-X1-X7
+decile_X1-decile_X7
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
--3.070
+-3.371
 </td>
 <td style="text-align:right;">
-22.819
+16.739
 </td>
 <td style="text-align:right;">
--47.796
+-36.178
 </td>
 <td style="text-align:right;">
-41.655
+29.436
 </td>
 <td style="text-align:right;">
-0.892970
+0.840393
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-4.286
+4.000
 </td>
 <td style="text-align:left;">
-X1 \<= 0.94 & X7 \<= 0.46
+decile_X1 \<= 5 & decile_X7 \<= 3
 </td>
 <td style="text-align:right;">
 6
 </td>
 <td style="text-align:left;">
-X1-X7
+decile_X1-decile_X7
 </td>
 </tr>
 <tr>
 <td style="text-align:right;">
--4.029
+-3.441
 </td>
 <td style="text-align:right;">
-18.957
+21.135
 </td>
 <td style="text-align:right;">
--41.184
+-44.864
 </td>
 <td style="text-align:right;">
-33.126
+37.982
 </td>
 <td style="text-align:right;">
-0.831687
+0.870658
 </td>
 <td style="text-align:right;">
 1
 </td>
 <td style="text-align:right;">
-3.676
+4.491
 </td>
 <td style="text-align:left;">
-X1 \<= 0.98 & X7 \<= 0.35
+decile_X1 \<= 5 & decile_X7 \<= 4
 </td>
 <td style="text-align:right;">
 7
 </td>
 <td style="text-align:left;">
-X1-X7
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
--4.406
-</td>
-<td style="text-align:right;">
-26.862
-</td>
-<td style="text-align:right;">
--57.054
-</td>
-<td style="text-align:right;">
-48.243
-</td>
-<td style="text-align:right;">
-0.869716
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-4.501
-</td>
-<td style="text-align:left;">
-X1 \<= 1 & X7 \<= 0.42
-</td>
-<td style="text-align:right;">
-8
-</td>
-<td style="text-align:left;">
-X1-X7
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
--3.970
-</td>
-<td style="text-align:right;">
-19.874
-</td>
-<td style="text-align:right;">
--42.923
-</td>
-<td style="text-align:right;">
-34.983
-</td>
-<td style="text-align:right;">
-0.841675
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-3.659
-</td>
-<td style="text-align:left;">
-X1 \<= 1 & X7 \<= 0.35
-</td>
-<td style="text-align:right;">
-9
-</td>
-<td style="text-align:left;">
-X1-X7
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
--3.137
-</td>
-<td style="text-align:right;">
-28.571
-</td>
-<td style="text-align:right;">
--59.135
-</td>
-<td style="text-align:right;">
-52.860
-</td>
-<td style="text-align:right;">
-0.912557
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-5.019
-</td>
-<td style="text-align:left;">
-X1 \<= 1 & X7 \<= 0.39
-</td>
-<td style="text-align:right;">
-10
-</td>
-<td style="text-align:left;">
-X1-X7
+decile_X1-decile_X7
 </td>
 </tr>
 </tbody>
@@ -839,19 +748,19 @@ P-value
 <tbody>
 <tr>
 <td style="text-align:right;">
--3.752
+-3.12
 </td>
 <td style="text-align:right;">
-7.417
+7.776
 </td>
 <td style="text-align:right;">
--18.289
+-18.361
 </td>
 <td style="text-align:right;">
-10.784
+12.121
 </td>
 <td style="text-align:right;">
-0.612922
+0.688247
 </td>
 </tr>
 </tbody>

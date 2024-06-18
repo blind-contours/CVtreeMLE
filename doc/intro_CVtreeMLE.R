@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -85,20 +85,25 @@ for (pair in seq_len(nrow(highly_correlated_pairs))) {
 exposures_to_keep <- setdiff(exposures, exposures_to_remove)
 
 
-## ----run CVtreeMLE for NHANES, warning=FALSE, message=FALSE-------------------
+## ----run CVtreeMLE for NHANES-------------------------------------------------
+
+# Convert continuous X variables to their corresponding deciles
+NHANES_eurocim[, exposures_to_keep] <- apply(NHANES_eurocim[, exposures_to_keep], 2, round, 1)
+
 nhanes_results <- CVtreeMLE(
   data = NHANES_eurocim, ## dataframe
   w = covariates,
   a = exposures_to_keep,
   y = outcome,
-  n_folds = 7,
+  n_folds = 5,
   seed = 34421,
   parallel_cv = TRUE,
   parallel = TRUE,
   family = "continuous",
   num_cores = 8,
-  min_max = "max", # we are going for the maximum
-  min_obs = nrow(NHANES_eurocim) * .1 # minimum number of individuals in a region to warrant split
+  min_max = "max",
+  min_obs = 20,
+  p_val_thresh = 1
 )
 
 ## ----k_fold_results-----------------------------------------------------------

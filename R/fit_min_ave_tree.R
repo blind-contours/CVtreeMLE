@@ -53,7 +53,8 @@ fit_min_ave_tree_algorithm <- function(at,
                                        parallel_cv,
                                        min_max,
                                        min_obs,
-                                       max_depth = 2) {
+                                       max_depth = 2,
+                                       p_val_thresh) {
   if (parallel_cv == TRUE) {
     future::plan(future::sequential, gc = TRUE)
   }
@@ -96,7 +97,7 @@ fit_min_ave_tree_algorithm <- function(at,
   }
 
   find_best_split <- function(data, split_variables, w_names,
-                              outcome, parent_average, min_max, min_obs) {
+                              outcome, parent_average, min_max, min_obs, p_val_thresh) {
 
     # Initialize starting values
     best_split <- NULL
@@ -199,7 +200,7 @@ fit_min_ave_tree_algorithm <- function(at,
         # Determine the best split based on the p-value and effect direction
         if (min_max == "min") {
           # Compare and update the best split
-          if (left_average < parent_average && left_average < min_average && p_value_left < best_p_value && p_value_left < 0.05) {
+          if (left_average < parent_average && left_average < min_average && p_value_left < best_p_value && p_value_left < p_val_thresh) {
             min_average <- left_average
             best_p_value <- p_value_left
             best_split <- list(
@@ -208,7 +209,7 @@ fit_min_ave_tree_algorithm <- function(at,
             )
           }
 
-          if (right_average < parent_average && right_average < min_average && p_value_right < best_p_value && p_value_right < 0.05) {
+          if (right_average < parent_average && right_average < min_average && p_value_right < best_p_value && p_value_right < p_val_thresh) {
             min_average <- right_average
             best_p_value <- p_value_right
             best_split <- list(
@@ -218,7 +219,7 @@ fit_min_ave_tree_algorithm <- function(at,
           }
         } else {
           # Compare and update the best split
-          if (left_average > parent_average && left_average > max_average && p_value_left < best_p_value && p_value_left < 0.05 ) {
+          if (left_average > parent_average && left_average > max_average && p_value_left < best_p_value && p_value_left < p_val_thresh ) {
             max_average <- left_average
             best_p_value <- p_value_left
             best_split <- list(
@@ -227,7 +228,7 @@ fit_min_ave_tree_algorithm <- function(at,
             )
           }
 
-          if (right_average > parent_average && right_average > max_average &&  p_value_right < best_p_value && p_value_right < 0.05  ) {
+          if (right_average > parent_average && right_average > max_average &&  p_value_right < best_p_value && p_value_right < p_val_thresh  ) {
             max_average <- right_average
             best_p_value <- p_value_right
             best_split <- list(
@@ -258,13 +259,13 @@ fit_min_ave_tree_algorithm <- function(at,
                                         path = "",
                                         min_max = "min",
                                         parent_average = NULL,
-                                        min_obs) {
+                                        min_obs,
+                                        p_val_thresh) {
     # Calculate the parent mean before attempting to find the best split
     if(depth == 0){
       parent_average <- mean(data[[outcome]])
       n <- nrow(data)
     }
-
 
     if (depth == max_depth || nrow(data) == 0) {
       current_rule <- list(
@@ -283,7 +284,8 @@ fit_min_ave_tree_algorithm <- function(at,
                                   outcome = outcome,
                                   parent_average = parent_average,
                                   min_max = min_max,
-                                  min_obs = min_obs
+                                  min_obs = min_obs,
+                                  p_val_thresh = p_val_thresh
     )
 
     if (is.null(best_split)) { # If no best split found, return the current path
@@ -318,7 +320,8 @@ fit_min_ave_tree_algorithm <- function(at,
         path = left_rule,
         parent_average = best_split$average,
         min_max = min_max,
-        min_obs = min_obs
+        min_obs = min_obs,
+        p_val_thresh = p_val_thresh
       )
 
       right_rules <- NULL
@@ -337,7 +340,8 @@ fit_min_ave_tree_algorithm <- function(at,
       path = right_rule,
       parent_average = best_split$average,
       min_max = min_max,
-      min_obs = min_obs
+      min_obs = min_obs,
+      p_val_thresh = p_val_thresh
       )
       left_rules <- NULL
       }
@@ -357,7 +361,8 @@ fit_min_ave_tree_algorithm <- function(at,
     max_depth = max_depth,
     outcome = y,
     min_max = min_max,
-    min_obs = min_obs
+    min_obs = min_obs,
+    p_val_thresh = p_val_thresh
   )
 
   tree <- rules_to_dataframe(min_ave_tree_results)

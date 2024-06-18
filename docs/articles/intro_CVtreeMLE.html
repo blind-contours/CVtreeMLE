@@ -64,7 +64,7 @@
       <img src="" class="logo" alt=""><h1>Evaluating Causal Effects of Mixed Exposures using Data Adaptive Decision Trees and CV-TMLE</h1>
                         <h4 data-toc-skip class="author"><a href="https://www.davidmccoy.org/" class="external-link">David McCoy</a></h4>
             
-            <h4 data-toc-skip class="date">2024-03-26</h4>
+            <h4 data-toc-skip class="date">2024-06-17</h4>
       
       
       <div class="d-none name"><code>intro_CVtreeMLE.Rmd</code></div>
@@ -266,39 +266,25 @@ do that here:</p>
 <h2 id="run-cvtreemle">Run CVtreeMLE<a class="anchor" aria-label="anchor" href="#run-cvtreemle"></a>
 </h2>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">nhanes_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/CVtreeMLE.html">CVtreeMLE</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span></span>
+<span><span class="co"># Convert continuous X variables to their corresponding deciles</span></span>
+<span><span class="va">NHANES_eurocim</span><span class="op">[</span>, <span class="va">exposures_to_keep</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">NHANES_eurocim</span><span class="op">[</span>, <span class="va">exposures_to_keep</span><span class="op">]</span>, <span class="fl">2</span>, <span class="va">round</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">nhanes_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/CVtreeMLE.html">CVtreeMLE</a></span><span class="op">(</span></span>
 <span>  data <span class="op">=</span> <span class="va">NHANES_eurocim</span>, <span class="co">## dataframe</span></span>
 <span>  w <span class="op">=</span> <span class="va">covariates</span>,</span>
 <span>  a <span class="op">=</span> <span class="va">exposures_to_keep</span>,</span>
 <span>  y <span class="op">=</span> <span class="va">outcome</span>,</span>
-<span>  n_folds <span class="op">=</span> <span class="fl">7</span>,</span>
+<span>  n_folds <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">34421</span>,</span>
 <span>  parallel_cv <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  family <span class="op">=</span> <span class="st">"continuous"</span>,</span>
 <span>  num_cores <span class="op">=</span> <span class="fl">8</span>,</span>
-<span>  min_max <span class="op">=</span> <span class="st">"max"</span>, <span class="co"># we are going for the maximum</span></span>
-<span>  min_obs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">NHANES_eurocim</span><span class="op">)</span> <span class="op">*</span> <span class="fl">.1</span> <span class="co"># minimum number of individuals in a region to warrant split</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 85%. Estimated remaining time: 11 minutes, 0 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 100%. Estimated remaining time: 0 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 100%. Estimated remaining time: 0 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 100%. Estimated remaining time: 0 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 88%. Estimated remaining time: 1 minute, 17 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 41%. Estimated remaining time: 1 hour, 26 minutes, 19 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 84%. Estimated remaining time: 6 minutes, 12 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 75%. Estimated remaining time: 3 minutes, 10 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 100%. Estimated remaining time: 9 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 78%. Estimated remaining time: 17 minutes, 25 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 100%. Estimated remaining time: 0 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 100%. Estimated remaining time: 0 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 99%. Estimated remaining time: 36 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 85%. Estimated remaining time: 5 minutes, 45 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 90%. Estimated remaining time: 1 minute, 3 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 100%. Estimated remaining time: 9 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 100%. Estimated remaining time: 0 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 97%. Estimated remaining time: 1 minute, 10 seconds.</span></span>
-<span><span class="co">#&gt; Growing trees.. Progress: 90%. Estimated remaining time: 1 minute, 3 seconds.</span></span></code></pre></div>
+<span>  min_max <span class="op">=</span> <span class="st">"max"</span>,</span>
+<span>  min_obs <span class="op">=</span> <span class="fl">20</span>,</span>
+<span>  p_val_thresh <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="investigating-results">Investigating Results<a class="anchor" aria-label="anchor" href="#investigating-results"></a>
@@ -314,269 +300,8 @@ do that here:</p>
 <caption>
 K-fold Results
 </caption>
-<thead><tr>
-<th style="text-align:right;">
-are
-</th>
-<th style="text-align:right;">
-se
-</th>
-<th style="text-align:right;">
-lower_ci
-</th>
-<th style="text-align:right;">
-upper_ci
-</th>
-<th style="text-align:right;">
-p_val
-</th>
-<th style="text-align:right;">
-p_val_adj
-</th>
-<th style="text-align:right;">
-rmse
-</th>
-<th style="text-align:left;">
-mix_rule
-</th>
-<th style="text-align:right;">
-fold
-</th>
-<th style="text-align:left;">
-variables
-</th>
-</tr></thead>
-<tbody>
-<tr>
-<td style="text-align:right;">
--0.109
-</td>
-<td style="text-align:right;">
-1.268
-</td>
-<td style="text-align:right;">
--2.593
-</td>
-<td style="text-align:right;">
-2.375
-</td>
-<td style="text-align:right;">
-0.931485
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.442
-</td>
-<td style="text-align:left;">
-LBXD03LA &lt;= 12.9
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:left;">
-LBXD03LA
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
--0.170
-</td>
-<td style="text-align:right;">
-1.625
-</td>
-<td style="text-align:right;">
--3.354
-</td>
-<td style="text-align:right;">
-3.015
-</td>
-<td style="text-align:right;">
-0.916867
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.533
-</td>
-<td style="text-align:left;">
-LBXD03LA &lt;= 13.2
-</td>
-<td style="text-align:right;">
-2
-</td>
-<td style="text-align:left;">
-LBXD03LA
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
--0.679
-</td>
-<td style="text-align:right;">
-2.523
-</td>
-<td style="text-align:right;">
--5.624
-</td>
-<td style="text-align:right;">
-4.266
-</td>
-<td style="text-align:right;">
-0.787749
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.886
-</td>
-<td style="text-align:left;">
-LBXD03LA &lt;= 13
-</td>
-<td style="text-align:right;">
-3
-</td>
-<td style="text-align:left;">
-LBXD03LA
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
--0.485
-</td>
-<td style="text-align:right;">
-1.917
-</td>
-<td style="text-align:right;">
--4.241
-</td>
-<td style="text-align:right;">
-3.272
-</td>
-<td style="text-align:right;">
-0.800305
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.672
-</td>
-<td style="text-align:left;">
-LBXD03LA &lt;= 12.9
-</td>
-<td style="text-align:right;">
-4
-</td>
-<td style="text-align:left;">
-LBXD03LA
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
--0.406
-</td>
-<td style="text-align:right;">
-2.259
-</td>
-<td style="text-align:right;">
--4.834
-</td>
-<td style="text-align:right;">
-4.022
-</td>
-<td style="text-align:right;">
-0.857362
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.726
-</td>
-<td style="text-align:left;">
-LBXD03LA &lt;= 13
-</td>
-<td style="text-align:right;">
-5
-</td>
-<td style="text-align:left;">
-LBXD03LA
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
--0.122
-</td>
-<td style="text-align:right;">
-1.379
-</td>
-<td style="text-align:right;">
--2.824
-</td>
-<td style="text-align:right;">
-2.580
-</td>
-<td style="text-align:right;">
-0.929303
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.463
-</td>
-<td style="text-align:left;">
-LBXD03LA &lt;= 13
-</td>
-<td style="text-align:right;">
-6
-</td>
-<td style="text-align:left;">
-LBXD03LA
-</td>
-</tr>
-<tr>
-<td style="text-align:right;">
--0.552
-</td>
-<td style="text-align:right;">
-2.054
-</td>
-<td style="text-align:right;">
--4.578
-</td>
-<td style="text-align:right;">
-3.474
-</td>
-<td style="text-align:right;">
-0.788106
-</td>
-<td style="text-align:right;">
-1
-</td>
-<td style="text-align:right;">
-0.734
-</td>
-<td style="text-align:left;">
-LBXD03LA &lt;= 13
-</td>
-<td style="text-align:right;">
-7
-</td>
-<td style="text-align:left;">
-LBXD03LA
-</td>
-</tr>
-</tbody>
+<tbody><tr></tr></tbody>
 </table>
-<p>This shows in all folds that LBXDO3LA was found to have the region
-which maximizes telomere length if all individuals were forced to be
-exposed to levels less than approximately 13. LBXDO3LA is
-1,2,3,6,7,8-hxcdd Lipid Adj (pg/g) which is a Furan.</p>
 <p>The pooled result is interpretable because it will be the average of
 estimates in the regions for the same variable:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -589,40 +314,7 @@ estimates in the regions for the same variable:</p>
 <caption>
 Oracle Mixture Results
 </caption>
-<thead><tr>
-<th style="text-align:right;">
-Region ARE
-</th>
-<th style="text-align:right;">
-Standard Error
-</th>
-<th style="text-align:right;">
-Lower CI
-</th>
-<th style="text-align:right;">
-Upper CI
-</th>
-<th style="text-align:right;">
-P-value
-</th>
-</tr></thead>
-<tbody><tr>
-<td style="text-align:right;">
--0.563
-</td>
-<td style="text-align:right;">
-1.062
-</td>
-<td style="text-align:right;">
--2.644
-</td>
-<td style="text-align:right;">
-1.518
-</td>
-<td style="text-align:right;">
-0.595802
-</td>
-</tr></tbody>
+<tbody><tr></tr></tbody>
 </table>
 <p>We can also examine the pooled estimates by exposure set with average
 rules in each set:</p>
@@ -636,70 +328,7 @@ rules in each set:</p>
 <caption>
 Region Specific Mixture Results
 </caption>
-<thead><tr>
-<th style="text-align:right;">
-Mixture ATE
-</th>
-<th style="text-align:right;">
-Standard Error
-</th>
-<th style="text-align:right;">
-Lower CI
-</th>
-<th style="text-align:right;">
-Upper CI
-</th>
-<th style="text-align:right;">
-P-value
-</th>
-<th style="text-align:right;">
-P-value Adj
-</th>
-<th style="text-align:left;">
-Vars
-</th>
-<th style="text-align:right;">
-RMSE
-</th>
-<th style="text-align:left;">
-Average_Rule
-</th>
-<th style="text-align:right;">
-Proportion_Folds
-</th>
-</tr></thead>
-<tbody><tr>
-<td style="text-align:right;">
--0.563
-</td>
-<td style="text-align:right;">
-1.062
-</td>
-<td style="text-align:right;">
--2.644
-</td>
-<td style="text-align:right;">
-1.518
-</td>
-<td style="text-align:right;">
-0.595802
-</td>
-<td style="text-align:right;">
-0.595802
-</td>
-<td style="text-align:left;">
-LBXD03LA
-</td>
-<td style="text-align:right;">
-0.918
-</td>
-<td style="text-align:left;">
-LBXD03LA &lt;=13(12.9,13.2)
-</td>
-<td style="text-align:right;">
-1
-</td>
-</tr></tbody>
+<tbody><tr></tr></tbody>
 </table>
 </div>
 <div class="section level2">

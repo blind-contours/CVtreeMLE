@@ -90,6 +90,7 @@ First load the package and other packages needed
 ```{r libraries, warning=FALSE, message=FALSE}
 library(CVtreeMLE)
 library(sl3)
+library(dplyr)
 library(kableExtra)
 library(ggplot2)
 seed <- 98484
@@ -150,12 +151,16 @@ niehs_data$Z3 <- rbinom(nrow(niehs_data),
 ```{r run_simulation, warnings = FALSE, message=FALSE}
 ptm <- proc.time()
 
+# Convert continuous X variables to their corresponding deciles for example
+niehs_data <- niehs_data %>%
+  mutate(across(starts_with("X"), ~ ntile(., 10), .names = "decile_{col}"))
+
 niehs_results <- CVtreeMLE(
   data = as.data.frame(niehs_data),
   w = c("Z", "Z2", "Z3"),
-  a = c(paste("X", seq(7), sep = "")),
+  a = c("decile_X1", "decile_X2", "decile_X3", "decile_X4", "decile_X5", "decile_X6", "decile_X7"),
   y = "Y",
-  n_folds = 10,
+  n_folds = 7,
   seed = seed,
   parallel_cv = TRUE,
   parallel = TRUE,
